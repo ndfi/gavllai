@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ניהול - לוח בית כנסת</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK v9 Compat -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+  :root {
+    --primary: #8b5e1a;
+    --primary-light: #c8a44a;
+    --primary-dark: #5a3a0a;
+    --bg: #f7f3ec;
+    --bg-card: #ffffff;
+    --text: #1a0e05;
+    --text-muted: #6b5a3a;
+    --border: #ddd0b0;
+    --success: #2e7d32;
+    --danger: #c62828;
+    --danger-light: #ffebee;
+    --shadow: 0 2px 12px rgba(139,94,26,0.12);
+    --radius: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ═══ HEADER ═══ */
+  .app-header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: #fff8e7;
+    padding: 20px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(90,58,10,0.4);
+  }
+
+  .app-header h1 {
+    font-size: 1.4rem;
+    font-weight: 900;
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+  }
+
+  .app-header p {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    font-weight: 300;
+  }
+
+  .header-ornament {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-ornament::before {
+    content: '✡';
+    font-size: 1.5rem;
+    opacity: 0.8;
+  }
+
+  /* ═══ CONTAINER ═══ */
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ═══ CARD ═══ */
+  .card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid rgba(200,164,74,0.15);
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #fdf6e3, #f5ead0);
+    border-bottom: 2px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-header .icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(139,94,26,0.3);
+  }
+
+  .card-header h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+
+  .card-header p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .card-body {
+    padding: 18px;
+  }
+
+  /* ═══ FORM ELEMENTS ═══ */
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+  }
+
+  input[type="time"],
+  input[type="text"],
+  textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 1rem;
+    color: var(--text);
+    background: #fafaf8;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    direction: rtl;
+  }
+
+  input[type="time"] {
+    direction: ltr;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--primary-dark);
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(200,164,74,0.2);
+    background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 70px;
+  }
+
+  /* ═══ PRAYER GRID ═══ */
+  .prayer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .prayer-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .prayer-field label {
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  /* ═══ BUTTONS ═══ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff;
+    width: 100%;
+    font-size: 1rem;
+    padding: 14px;
+    box-shadow: 0 4px 12px rgba(139,94,26,0.3);
+  }
+
+  .btn-primary:hover { filter: brightness(1.1); }
+
+  .btn-add {
+    background: linear-gradient(135deg, #1b5e20, #388e3c);
+    color: #fff;
+    width: 100%;
+    padding: 13px;
+  }
+
+  .btn-delete {
+    background: none;
+    border: none;
+    color: var(--danger);
+    padding: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-delete:hover { background: var(--danger-light); }
+
+  /* ═══ ANNOUNCEMENTS LIST ═══ */
+  .announcements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .announcement-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #fafaf8;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ann-text {
+    flex: 1;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .ann-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  /* ═══ TOAST ═══ */
+  .toast-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: #1a0e05;
+    color: #fff8e7;
+    padding: 10px 22px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: toastIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .toast.success { background: #1b5e20; }
+  .toast.error { background: #b71c1c; }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══ STATUS DOT ═══ */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    flex-shrink: 0;
+  }
+
+  .status-dot.connected { background: #4caf50; box-shadow: 0 0 0 3px rgba(76,175,80,0.2); }
+  .status-dot.error { background: #f44336; }
+
+  /* ═══ LOADING SPINNER ═══ */
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .btn.loading .btn-text { opacity: 0.7; }
+
+  /* ═══ SECTION DIVIDER ═══ */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 14px 0;
+  }
+
+  /* Mobile refinements */
+  @media (max-width: 400px) {
+    .prayer-grid { grid-template-columns: 1fr; }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-ornament">
+    <div>
+      <h1>ניהול לוח בית הכנסת</h1>
+      <p>עדכון זמני תפילות והודעות בזמן אמת</p>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">מתחבר ל-Firebase...</span>
+  </div>
+
+  <!-- ══════════ PRAYER TIMES ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon">🕍</div>
+      <div>
+        <h2>זמני תפילות</h2>
+        <p>עדכן את שעות התפילה לימות החול ושבת</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); margin-bottom:10px; letter-spacing:1px;">ימות החול</div>
+
+      <div class="prayer-grid">
+        <div class="prayer-field">
+          <label>שחרית</label>
+          <input type="time" id="p-shacharit" placeholder="--:--">
+        </div>
+        <div class="prayer-field">
+          <label>מנחה</label>
+          <input type="time" id="p-mincha" placeholder="--:--">
+        </div>
+        <div class="prayer-field">
+          <label>ערבית</label>
+          <input type="time" id="p-arvit" placeholder="--:--">
+        </div>
+        <div class="prayer-field">
+          <label>מנחה ועוד</label>
+          <input type="time" id="p-mincha2" placeholder="--:--">
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); margin-bottom:10px; letter-spacing:1px;">שבת</div>
+
+      <div class="prayer-grid">
+        <div class="prayer-field">
+          <label>שחרית שבת</label>
+          <input type="time" id="p-shacharit_shabbat" placeholder="--:--">
+        </div>
+        <div class="prayer-field">
+          <label>מוסף</label>
+          <input type="time" id="p-musaf" placeholder="--:--">
+        </div>
+        <div class="prayer-field">
+          <label>מנחה שבת</label>
+          <input type="time" id="p-mincha_shabbat" placeholder="--:--">
+        </div>
+        <div class="prayer-field">
+          <label>ערבית שבת</label>
+          <input type="time" id="p-arvit_shabbat" placeholder="--:--">
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <button class="btn btn-primary" id="savePrayersBtn" onclick="savePrayers()">
+        <span class="btn-text">💾 שמור זמני תפילות</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════ ANNOUNCEMENTS ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon">📢</div>
+      <div>
+        <h2>הודעות</h2>
+        <p>נהל את הודעות הקהל הנצגות על המסך</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div id="announcementsList" class="announcements-list">
+        <div class="empty-state">טוען הודעות...</div>
+      </div>
+
+      <div class="field">
+        <label>הוסף הודעה חדשה</label>
+        <textarea id="newAnnouncement" placeholder="כתוב כאן את ההודעה לקהל..." rows="3"></textarea>
+      </div>
+
+      <button class="btn btn-add" onclick="addAnnouncement()">
+        ➕ הוסף הודעה
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════ QUICK LINKS ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon">🔗</div>
+      <div>
+        <h2>קישורים מהירים</h2>
+        <p>פתח את לוח התצוגה</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <button class="btn btn-primary" onclick="window.open('display.html', '_blank')" style="background: linear-gradient(135deg, #37474f, #546e7a);">
+        📺 פתח לוח תצוגה
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ══════════════════════════════════════════
+// FIREBASE CONFIGURATION
+// ══════════════════════════════════════════
+// ⚠️ אותה קונפיגורציה כמו בדף התצוגה!
+const firebaseConfig = {
+    apiKey: "AIzaSyBl99zWeW0SpVWs18P5GlJ-mDPTsiaSgEM",
+    authDomain: "gavlli-board.firebaseapp.com",
+    projectId: "gavlli-board",
+    storageBucket: "gavlli-board.firebasestorage.app",
+    messagingSenderId: "202183123739",
+    appId: "1:202183123739:web:5e2375d9eae0c0202e29be",
+    measurementId: "G-BZMPZXH2PF"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ══════════════════════════════════════════
+// STATUS
+// ══════════════════════════════════════════
+function setStatus(connected, msg) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  dot.className = 'status-dot ' + (connected ? 'connected' : 'error');
+  text.textContent = msg;
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(msg, type = 'success') {
+  const tc = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ══════════════════════════════════════════
+// PRAYER TIMES
+// ══════════════════════════════════════════
+const PRAYER_FIELDS = [
+  'shacharit', 'mincha', 'arvit', 'mincha2',
+  'shacharit_shabbat', 'musaf', 'mincha_shabbat', 'arvit_shabbat'
+];
+
+// Load existing prayer times
+db.collection('prayers').doc('times').onSnapshot(doc => {
+  if (doc.exists) {
+    const data = doc.data();
+    PRAYER_FIELDS.forEach(key => {
+      const el = document.getElementById(`p-${key}`);
+      if (el && data[key]) el.value = data[key];
+    });
+    setStatus(true, 'מחובר ל-Firebase ✓');
+  } else {
+    setStatus(true, 'מחובר — אין נתונים עדיין');
+  }
+}, err => {
+  setStatus(false, 'שגיאת חיבור: ' + err.message);
+  showToast('שגיאה בחיבור ל-Firebase', 'error');
+});
+
+async function savePrayers() {
+  const btn = document.getElementById('savePrayersBtn');
+  btn.innerHTML = '<span class="spinner"></span><span class="btn-text"> שומר...</span>';
+  btn.disabled = true;
+
+  const data = {};
+  PRAYER_FIELDS.forEach(key => {
+    const val = document.getElementById(`p-${key}`)?.value;
+    if (val) data[key] = val;
+  });
+
+  try {
+    await db.collection('prayers').doc('times').set(data, { merge: true });
+    showToast('זמני התפילות עודכנו בהצלחה!', 'success');
+  } catch (err) {
+    showToast('שגיאה בשמירה: ' + err.message, 'error');
+  } finally {
+    btn.innerHTML = '<span class="btn-text">💾 שמור זמני תפילות</span>';
+    btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════
+// ANNOUNCEMENTS
+// ══════════════════════════════════════════
+db.collection('announcements').orderBy('createdAt', 'desc').onSnapshot(snap => {
+  const listEl = document.getElementById('announcementsList');
+
+  if (snap.empty) {
+    listEl.innerHTML = '<div class="empty-state">אין הודעות כרגע. הוסף הודעה למטה.</div>';
+    return;
+  }
+
+  listEl.innerHTML = snap.docs.map(doc => {
+    const d = doc.data();
+    const date = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('he-IL', {
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+    }) : '';
+    return `
+      <div class="announcement-item">
+        <div style="flex:1">
+          <div class="ann-text">${escapeHtml(d.text)}</div>
+          ${date ? `<span class="ann-meta">${date}</span>` : ''}
+        </div>
+        <button class="btn-delete" onclick="deleteAnnouncement('${doc.id}')" title="מחק">🗑</button>
+      </div>
+    `;
+  }).join('');
+}, err => {
+  showToast('שגיאה בטעינת הודעות', 'error');
+});
+
+async function addAnnouncement() {
+  const input = document.getElementById('newAnnouncement');
+  const text = input.value.trim();
+  if (!text) {
+    showToast('אנא כתוב הודעה לפני הוספה', 'error');
+    input.focus();
+    return;
+  }
+
+  try {
+    await db.collection('announcements').add({
+      text: text,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value = '';
+    showToast('ההודעה נוספה בהצלחה!', 'success');
+  } catch (err) {
+    showToast('שגיאה בהוספת הודעה', 'error');
+  }
+}
+
+async function deleteAnnouncement(id) {
+  if (!confirm('האם למחוק הודעה זו?')) return;
+  try {
+    await db.collection('announcements').doc(id).delete();
+    showToast('ההודעה נמחקה', 'success');
+  } catch (err) {
+    showToast('שגיאה במחיקה', 'error');
+  }
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Enter key shortcut for announcement
+document.getElementById('newAnnouncement').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) addAnnouncement();
+});
+</script>
+</body>
+</html>

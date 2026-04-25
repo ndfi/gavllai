@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לוח מודעות בית כנסת</title>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK v9 Modular (compat version for easier use) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+  :root {
+    --gold: #c8a44a;
+    --gold-light: #e8c87a;
+    --gold-dark: #8b6914;
+    --brown-dark: #1a0e05;
+    --brown-mid: #2d1a0a;
+    --brown-light: #4a2e15;
+    --parchment: #f5ead0;
+    --parchment-dark: #e8d5a8;
+    --cream: #fdf6e3;
+    --text-bright: #fff8e7;
+    --text-gold: #e8c87a;
+    --shadow: rgba(0,0,0,0.7);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--brown-dark);
+    color: var(--text-bright);
+    font-family: 'Frank Ruhl Libre', serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ═══════════════ BACKGROUND TEXTURE ═══════════════ */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(200,164,74,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(200,164,74,0.06) 0%, transparent 50%),
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 30px,
+        rgba(200,164,74,0.02) 30px,
+        rgba(200,164,74,0.02) 31px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ═══════════════ HEADER ═══════════════ */
+  .header {
+    position: relative;
+    z-index: 10;
+    background: linear-gradient(180deg, #2d1a0a 0%, #1a0e05 100%);
+    border-bottom: 3px solid var(--gold);
+    box-shadow: 0 4px 20px rgba(200,164,74,0.3);
+    padding: 10px 30px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+
+  .hebrew-date {
+    text-align: right;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    color: var(--gold-light);
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .parasha-badge {
+    text-align: center;
+    background: linear-gradient(135deg, var(--brown-light), var(--brown-mid));
+    border: 2px solid var(--gold);
+    border-radius: 50px;
+    padding: 6px 24px;
+    font-size: clamp(0.9rem, 2vw, 1.2rem);
+    color: var(--gold-light);
+    white-space: nowrap;
+  }
+
+  .parasha-badge span {
+    color: var(--text-bright);
+    font-weight: 700;
+    display: block;
+    font-size: clamp(1rem, 2.2vw, 1.4rem);
+  }
+
+  .omer-info {
+    text-align: left;
+    font-size: clamp(0.9rem, 2vw, 1.2rem);
+    color: var(--gold-light);
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  /* ═══════════════ MAIN CONTENT ═══════════════ */
+  .main {
+    position: relative;
+    z-index: 10;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 0;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* ═══════════════ CLOCK CENTER ═══════════════ */
+  .clock-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-left: 2px solid rgba(200,164,74,0.3);
+    border-right: 2px solid rgba(200,164,74,0.3);
+    background: linear-gradient(180deg, rgba(45,26,10,0.5) 0%, rgba(26,14,5,0.8) 100%);
+  }
+
+  .clock-container {
+    position: relative;
+    background: linear-gradient(145deg, #1a0e05, #2d1a0a);
+    border: 4px solid var(--gold);
+    border-radius: 20px;
+    padding: 20px 40px;
+    box-shadow:
+      0 0 0 2px var(--gold-dark),
+      0 0 40px rgba(200,164,74,0.4),
+      inset 0 0 30px rgba(0,0,0,0.5);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .clock-container::before,
+  .clock-container::after {
+    content: '✦';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    font-size: 1.5rem;
+    opacity: 0.6;
+  }
+  .clock-container::before { right: -30px; }
+  .clock-container::after { left: -30px; }
+
+  #clock {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(4rem, 10vw, 8rem);
+    font-weight: 900;
+    color: var(--text-bright);
+    text-shadow: 0 0 30px rgba(232,200,122,0.5), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+
+  #clock .colon {
+    animation: blink 1s infinite;
+    color: var(--gold-light);
+  }
+
+  @keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0.2; }
+  }
+
+  .day-name {
+    font-size: clamp(1rem, 2.5vw, 1.6rem);
+    color: var(--gold-light);
+    font-weight: 700;
+    margin-top: 8px;
+    letter-spacing: 2px;
+  }
+
+  /* Zmanim quick strip */
+  .quick-zmanim {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    padding: 0 10px;
+  }
+
+  .quick-item {
+    background: rgba(200,164,74,0.1);
+    border: 1px solid rgba(200,164,74,0.3);
+    border-radius: 10px;
+    padding: 8px 12px;
+    text-align: center;
+  }
+
+  .quick-item .q-label {
+    font-size: clamp(0.65rem, 1.3vw, 0.85rem);
+    color: var(--gold);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .quick-item .q-time {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  /* ═══════════════ SIDE PANELS ═══════════════ */
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .panel-section {
+    flex: 1;
+    border-bottom: 1px solid rgba(200,164,74,0.2);
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .panel-section:last-child { border-bottom: none; }
+
+  .section-title {
+    font-size: clamp(0.75rem, 1.4vw, 0.95rem);
+    color: var(--gold);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(200,164,74,0.5), transparent);
+  }
+
+  .prayer-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(200,164,74,0.1);
+  }
+
+  .prayer-item:last-child { border-bottom: none; }
+
+  .prayer-name {
+    font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+    color: var(--parchment);
+  }
+
+  .prayer-time {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    font-weight: 700;
+    color: var(--text-bright);
+    font-family: 'Heebo', sans-serif;
+    direction: ltr;
+  }
+
+  .prayer-time.upcoming {
+    color: var(--gold-light);
+    text-shadow: 0 0 10px rgba(232,200,122,0.6);
+  }
+
+  /* ═══════════════ SLIDESHOW FOOTER ═══════════════ */
+  .footer {
+    position: relative;
+    z-index: 10;
+    background: linear-gradient(180deg, #1a0e05 0%, #0d0703 100%);
+    border-top: 3px solid var(--gold);
+    flex-shrink: 0;
+    min-height: 130px;
+    overflow: hidden;
+  }
+
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+
+  .slides-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px 40px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .slide-title {
+    font-size: clamp(0.75rem, 1.3vw, 0.9rem);
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .slide-title::before,
+  .slide-title::after {
+    content: '◆';
+    font-size: 0.6rem;
+    opacity: 0.7;
+  }
+
+  /* Slide: Prayers */
+  .prayers-grid {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .prayer-card {
+    background: rgba(200,164,74,0.08);
+    border: 1px solid rgba(200,164,74,0.35);
+    border-radius: 12px;
+    padding: 10px 22px;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .prayer-card .pc-name {
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    color: var(--gold-light);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .prayer-card .pc-time {
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 900;
+    color: var(--text-bright);
+    direction: ltr;
+    display: block;
+  }
+
+  /* Slide: Zmanim */
+  .zmanim-grid {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .zman-card {
+    background: rgba(200,164,74,0.08);
+    border: 1px solid rgba(200,164,74,0.3);
+    border-radius: 10px;
+    padding: 8px 16px;
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .zman-card .z-name {
+    font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+    color: var(--gold);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .zman-card .z-time {
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    font-weight: 700;
+    color: var(--text-bright);
+    direction: ltr;
+    display: block;
+  }
+
+  /* Slide: Announcements */
+  .announcements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 90px;
+    overflow: hidden;
+  }
+
+  .announcement-item {
+    font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+    color: var(--parchment);
+    padding: 4px 0;
+    padding-right: 20px;
+    position: relative;
+    line-height: 1.3;
+  }
+
+  .announcement-item::before {
+    content: '◈';
+    position: absolute;
+    right: 0;
+    color: var(--gold);
+    font-size: 0.8rem;
+    top: 6px;
+  }
+
+  /* Slide indicators */
+  .slide-dots {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(200,164,74,0.3);
+    transition: background 0.3s, transform 0.3s;
+  }
+
+  .dot.active {
+    background: var(--gold);
+    transform: scale(1.4);
+  }
+
+  /* Decorative corners */
+  .corner {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-color: var(--gold-dark);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .corner.tl { top: 8px; right: 8px; border-width: 2px 0 0 2px; }
+  .corner.tr { top: 8px; left: 8px; border-width: 2px 2px 0 0; }
+  .corner.bl { bottom: 8px; right: 8px; border-width: 0 0 2px 2px; }
+  .corner.br { bottom: 8px; left: 8px; border-width: 0 2px 2px 0; }
+
+  /* Loading state */
+  .loading {
+    color: rgba(200,164,74,0.4);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  /* Shabbat banner */
+  .shabbat-banner {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: linear-gradient(135deg, #8b6914, #c8a44a, #8b6914);
+    color: #1a0e05;
+    text-align: center;
+    padding: 8px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    z-index: 100;
+    letter-spacing: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="shabbat-banner" id="shabbatBanner">✡ שבת שלום ✡</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hebrew-date">
+    <div id="hebrewDate" class="loading">טוען תאריך...</div>
+    <div id="gregDate" style="font-size:0.8em; opacity:0.7; font-family:'Heebo',sans-serif;"></div>
+  </div>
+
+  <div class="parasha-badge">
+    פרשת השבוע
+    <span id="parasha" class="loading">טוען...</span>
+  </div>
+
+  <div class="omer-info">
+    <div id="omerCount" style="display:none; color:var(--gold-light); font-weight:700;"></div>
+    <div id="nextHoliday" style="font-size:0.85em; opacity:0.8;"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT SIDE: Prayer times from Firebase -->
+  <div class="side-panel">
+    <div class="panel-section">
+      <div class="section-title">תפילות</div>
+      <div id="prayerTimes">
+        <div class="prayer-item">
+          <span class="prayer-name">שחרית</span>
+          <span class="prayer-time" id="sp-shacharit">--:--</span>
+        </div>
+        <div class="prayer-item">
+          <span class="prayer-name">מנחה</span>
+          <span class="prayer-time" id="sp-mincha">--:--</span>
+        </div>
+        <div class="prayer-item">
+          <span class="prayer-name">ערבית</span>
+          <span class="prayer-time" id="sp-arvit">--:--</span>
+        </div>
+        <div class="prayer-item">
+          <span class="prayer-name">שחרית שבת</span>
+          <span class="prayer-time" id="sp-shacharit_shabbat">--:--</span>
+        </div>
+        <div class="prayer-item">
+          <span class="prayer-name">מוסף שבת</span>
+          <span class="prayer-time" id="sp-musaf">--:--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: Clock -->
+  <div class="clock-panel">
+    <div class="clock-container">
+      <div id="clock"><span id="ch">12</span><span class="colon">:</span><span id="cm">00</span></div>
+      <div class="day-name" id="dayName">יום ראשון</div>
+    </div>
+
+    <div class="quick-zmanim">
+      <div class="quick-item">
+        <span class="q-label">עלות השחר</span>
+        <span class="q-time" id="qz-alot">--:--</span>
+      </div>
+      <div class="quick-item">
+        <span class="q-label">הנץ החמה</span>
+        <span class="q-time" id="qz-sunrise">--:--</span>
+      </div>
+      <div class="quick-item">
+        <span class="q-label">שקיעה</span>
+        <span class="q-time" id="qz-sunset">--:--</span>
+      </div>
+      <div class="quick-item">
+        <span class="q-label">צאת הכוכבים</span>
+        <span class="q-time" id="qz-tzeit">--:--</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE: More zmanim -->
+  <div class="side-panel">
+    <div class="panel-section">
+      <div class="section-title">זמני היום</div>
+      <div class="prayer-item">
+        <span class="prayer-name">סוף ק"ש (גר"א)</span>
+        <span class="prayer-time" id="sz-sofZmanShma">--:--</span>
+      </div>
+      <div class="prayer-item">
+        <span class="prayer-name">סוף תפילה (גר"א)</span>
+        <span class="prayer-time" id="sz-sofZmanTfilla">--:--</span>
+      </div>
+      <div class="prayer-item">
+        <span class="prayer-name">חצות היום</span>
+        <span class="prayer-time" id="sz-chatzot">--:--</span>
+      </div>
+      <div class="prayer-item">
+        <span class="prayer-name">מנחה גדולה</span>
+        <span class="prayer-time" id="sz-minchaGedola">--:--</span>
+      </div>
+      <div class="prayer-item">
+        <span class="prayer-name">פלג המנחה</span>
+        <span class="prayer-time" id="sz-plagHaMincha">--:--</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER SLIDESHOW -->
+<div class="footer">
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="slides-container">
+
+    <!-- Slide 0: Prayers big -->
+    <div class="slide active" id="slide-0">
+      <div class="slide-title">זמני תפילות</div>
+      <div class="prayers-grid" id="slide-prayers"></div>
+    </div>
+
+    <!-- Slide 1: Zmanim -->
+    <div class="slide" id="slide-1">
+      <div class="slide-title">זמני היום מהחשבון</div>
+      <div class="zmanim-grid" id="slide-zmanim"></div>
+    </div>
+
+    <!-- Slide 2: Announcements -->
+    <div class="slide" id="slide-2">
+      <div class="slide-title">הודעות</div>
+      <div class="announcements-list" id="slide-announcements">
+        <div class="loading">טוען הודעות...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slide-dots">
+    <div class="dot active" data-i="0"></div>
+    <div class="dot" data-i="1"></div>
+    <div class="dot" data-i="2"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// FIREBASE CONFIGURATION
+// ══════════════════════════════════════════
+// ⚠️ החלף את הערכים האלה בפרטי ה-Firebase שלך!
+const firebaseConfig = {
+    apiKey: "AIzaSyBl99zWeW0SpVWs18P5GlJ-mDPTsiaSgEM",
+    authDomain: "gavlli-board.firebaseapp.com",
+    projectId: "gavlli-board",
+    storageBucket: "gavlli-board.firebasestorage.app",
+    messagingSenderId: "202183123739",
+    appId: "1:202183123739:web:5e2375d9eae0c0202e29be",
+    measurementId: "G-BZMPZXH2PF"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ══════════════════════════════════════════
+// CONFIGURATION
+// ══════════════════════════════════════════
+const LOCATION = { lat: 31.7683, lng: 35.2137 }; // Jerusalem default
+const HEBCAL_BASE = 'https://www.hebcal.com';
+const SLIDE_INTERVAL = 15000; // 15 seconds
+const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
+
+// ══════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('ch').textContent = h;
+  document.getElementById('cm').textContent = m;
+  document.getElementById('dayName').textContent = DAYS_HE[now.getDay()];
+
+  // Shabbat banner
+  const day = now.getDay();
+  const isShabbat = day === 6;
+  document.getElementById('shabbatBanner').style.display = isShabbat ? 'block' : 'none';
+
+  // Highlight upcoming prayer
+  highlightUpcoming();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function highlightUpcoming() {
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  document.querySelectorAll('.prayer-time').forEach(el => {
+    el.classList.remove('upcoming');
+    const t = el.textContent.trim();
+    if (t && t !== '--:--') {
+      const [h, m] = t.split(':').map(Number);
+      const pMins = h * 60 + m;
+      if (pMins > nowMins && pMins - nowMins < 30) {
+        el.classList.add('upcoming');
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// HEBCAL API
+// ══════════════════════════════════════════
+async function fetchHebcalData() {
+  try {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+
+    // Hebrew date + parasha
+    const hdateUrl = `${HEBCAL_BASE}/converter?cfg=json&gy=${yyyy}&gm=${mm}&gd=${dd}&g2h=1`;
+    const hdateRes = await fetch(hdateUrl);
+    const hdateData = await hdateRes.json();
+
+    if (hdateData.hebrew) {
+      document.getElementById('hebrewDate').textContent = hdateData.hebrew;
+    }
+    const greg = today.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('gregDate').textContent = greg;
+
+    // Shabbat info (parasha + times)
+    const shabbatUrl = `${HEBCAL_BASE}/shabbat?cfg=json&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=Asia/Jerusalem&m=50&b=18`;
+    const shabbatRes = await fetch(shabbatUrl);
+    const shabbatData = await shabbatRes.json();
+
+    if (shabbatData.items) {
+      const parasha = shabbatData.items.find(i => i.category === 'parashat');
+      if (parasha) {
+        document.getElementById('parasha').textContent = parasha.hebrew || parasha.title;
+      }
+    }
+
+    // Zmanim for today
+    await fetchZmanim(yyyy, mm, dd);
+
+    // Holidays / Omer
+    const eventsUrl = `${HEBCAL_BASE}/hebcal?v=1&cfg=json&year=${yyyy}&month=${mm}&maj=on&min=on&mod=on&mf=on&ss=on&c=on&geo=pos&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=Asia/Jerusalem&omer=on&lg=he`;
+    const eventsRes = await fetch(eventsUrl);
+    const eventsData = await eventsRes.json();
+
+    if (eventsData.items) {
+      const omer = eventsData.items.find(i =>
+        i.category === 'omer' &&
+        i.date && i.date.startsWith(`${yyyy}-${mm}-${dd}`)
+      );
+      if (omer) {
+        document.getElementById('omerCount').textContent = omer.hebrew || omer.title;
+        document.getElementById('omerCount').style.display = 'block';
+      }
+
+      const upcoming = eventsData.items.find(i =>
+        i.category === 'holiday' &&
+        i.date && i.date > `${yyyy}-${mm}-${dd}`
+      );
+      if (upcoming) {
+        document.getElementById('nextHoliday').textContent = `לקראת: ${upcoming.hebrew || upcoming.title}`;
+      }
+    }
+
+  } catch (err) {
+    console.error('Hebcal error:', err);
+    document.getElementById('hebrewDate').textContent = 'שגיאה בטעינת תאריך';
+  }
+}
+
+async function fetchZmanim(yyyy, mm, dd) {
+  try {
+    const url = `${HEBCAL_BASE}/zmanim?cfg=json&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=Asia/Jerusalem&date=${yyyy}-${mm}-${dd}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const z = data.times;
+    if (!z) return;
+
+    const fmt = iso => {
+      if (!iso) return '--:--';
+      const d = new Date(iso);
+      return d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+
+    // Quick zmanim (center panel)
+    document.getElementById('qz-alot').textContent = fmt(z.alotHaShachar);
+    document.getElementById('qz-sunrise').textContent = fmt(z.sunrise);
+    document.getElementById('qz-sunset').textContent = fmt(z.sunset);
+    document.getElementById('qz-tzeit').textContent = fmt(z.tzeit7083deg || z.tzeitHakochavim);
+
+    // Side panel
+    document.getElementById('sz-sofZmanShma').textContent = fmt(z.sofZmanShmaMGA || z.sofZmanShmaGRA);
+    document.getElementById('sz-sofZmanTfilla').textContent = fmt(z.sofZmanTfilaMGA || z.sofZmanTfilaGRA);
+    document.getElementById('sz-chatzot').textContent = fmt(z.chatzot);
+    document.getElementById('sz-minchaGedola').textContent = fmt(z.minchaGedola);
+    document.getElementById('sz-plagHaMincha').textContent = fmt(z.plagHaMincha);
+
+    // Slide 1
+    const zmanimSlide = document.getElementById('slide-zmanim');
+    const zmanimItems = [
+      { name: 'עלות השחר', time: fmt(z.alotHaShachar) },
+      { name: 'הנץ החמה', time: fmt(z.sunrise) },
+      { name: 'סוף ק"ש', time: fmt(z.sofZmanShmaGRA) },
+      { name: 'חצות', time: fmt(z.chatzot) },
+      { name: 'מנחה גדולה', time: fmt(z.minchaGedola) },
+      { name: 'פלג המנחה', time: fmt(z.plagHaMincha) },
+      { name: 'שקיעה', time: fmt(z.sunset) },
+      { name: 'צאת הכוכבים', time: fmt(z.tzeit7083deg || z.tzeitHakochavim) },
+    ];
+    zmanimSlide.innerHTML = zmanimItems.map(item => `
+      <div class="zman-card">
+        <span class="z-name">${item.name}</span>
+        <span class="z-time">${item.time}</span>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error('Zmanim error:', err);
+  }
+}
+
+// ══════════════════════════════════════════
+// FIREBASE: Prayer Times
+// ══════════════════════════════════════════
+const PRAYER_LABELS = {
+  shacharit: 'שחרית',
+  mincha: 'מנחה',
+  arvit: 'ערבית',
+  shacharit_shabbat: 'שחרית שבת',
+  musaf: 'מוסף',
+};
+
+db.collection('prayers').doc('times').onSnapshot(doc => {
+  if (!doc.exists) return;
+  const data = doc.data();
+
+  // Update side panel
+  Object.keys(PRAYER_LABELS).forEach(key => {
+    const el = document.getElementById(`sp-${key}`);
+    if (el && data[key]) el.textContent = data[key];
+  });
+
+  // Update slide 0
+  const slideEl = document.getElementById('slide-prayers');
+  const slideItems = Object.entries(PRAYER_LABELS)
+    .filter(([key]) => data[key])
+    .map(([key, label]) => `
+      <div class="prayer-card">
+        <span class="pc-name">${label}</span>
+        <span class="pc-time">${data[key]}</span>
+      </div>
+    `);
+  slideEl.innerHTML = slideItems.join('');
+}, err => console.error('Firebase prayers error:', err));
+
+// ══════════════════════════════════════════
+// FIREBASE: Announcements
+// ══════════════════════════════════════════
+db.collection('announcements').orderBy('createdAt', 'desc').onSnapshot(snap => {
+  const announcementsEl = document.getElementById('slide-announcements');
+  if (snap.empty) {
+    announcementsEl.innerHTML = '<div style="color:var(--gold-light); opacity:0.5;">אין הודעות כרגע</div>';
+    return;
+  }
+  announcementsEl.innerHTML = snap.docs
+    .map(doc => `<div class="announcement-item">${doc.data().text}</div>`)
+    .join('');
+}, err => console.error('Firebase announcements error:', err));
+
+// ══════════════════════════════════════════
+// SLIDESHOW
+// ══════════════════════════════════════════
+let currentSlide = 0;
+const totalSlides = 3;
+
+function goToSlide(n) {
+  document.querySelectorAll('.slide').forEach((el, i) => {
+    el.classList.toggle('active', i === n);
+  });
+  document.querySelectorAll('.dot').forEach((el, i) => {
+    el.classList.toggle('active', i === n);
+  });
+  currentSlide = n;
+}
+
+setInterval(() => {
+  goToSlide((currentSlide + 1) % totalSlides);
+}, SLIDE_INTERVAL);
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+fetchHebcalData();
+// Refresh Hebcal data every hour
+setInterval(fetchHebcalData, 3600 * 1000);
+</script>
+</body>
+</html>
