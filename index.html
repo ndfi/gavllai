@@ -34,6 +34,36 @@
   .parasha-badge strong{color:var(--text-bright);font-weight:900;display:block;font-size:clamp(1rem,2.2vw,1.4rem);}
   .omer-info{text-align:left;font-size:clamp(.85rem,1.8vw,1.1rem);color:var(--gold-light);line-height:1.5;}
 
+  /* Today info panel — top-left of header */
+  .today-info {
+    text-align:left;
+    display:flex; flex-direction:column; gap:4px; justify-content:center;
+  }
+  .today-holiday {
+    font-size:clamp(.85rem,1.8vw,1.15rem); font-weight:700;
+    color:var(--gold-light); line-height:1.25;
+    display:flex; align-items:center; gap:6px;
+  }
+  .today-holiday-icon { font-size:1.1em; }
+  .today-tachanun {
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(200,164,74,.18); border:1px solid rgba(200,164,74,.45);
+    border-radius:8px; padding:3px 10px;
+    font-size:clamp(.72rem,1.3vw,.88rem); font-weight:700;
+    color:#e8c87a; letter-spacing:.5px;
+    width:fit-content;
+  }
+  .today-tachanun.no-tachanun {
+    background:rgba(255,180,0,.12); border-color:rgba(255,200,0,.4);
+    color:#ffe070;
+  }
+  .today-next-holiday {
+    font-size:clamp(.65rem,1.2vw,.8rem); color:rgba(232,200,122,.55);
+    font-family:'Heebo',sans-serif; font-weight:300;
+  }
+  /* omer small badge in header (kept for footer reference) */
+  #omerCount { display:none; }
+
   /* Shabbat times strip — shown Fri/Sat in header area */
   .shabbat-times-strip{display:none;background:linear-gradient(135deg,rgba(139,105,20,.45),rgba(200,164,74,.22),rgba(139,105,20,.35));border-top:1px solid rgba(200,164,74,.5);border-bottom:2px solid rgba(200,164,74,.3);padding:8px 30px;flex-shrink:0;justify-content:center;align-items:center;gap:clamp(20px,5vw,60px);flex-wrap:wrap;box-shadow:inset 0 1px 0 rgba(232,200,122,.2);}
   .shabbat-times-strip.visible{display:flex;}
@@ -239,9 +269,8 @@
       <div class="greg-date-small" id="gregDate"></div>
     </div>
     <div class="parasha-badge">פרשת השבוע<strong id="parasha">טוען...</strong></div>
-    <div class="omer-info">
-      <div id="omerCount" style="display:none;font-weight:700;"></div>
-      <div id="nextHoliday" style="font-size:.85em;opacity:.75;"></div>
+    <div class="today-info" id="todayInfo">
+      <!-- Filled by JS: holiday name + tachanun notice -->
     </div>
   </div>
 
@@ -325,7 +354,7 @@
 </div>
 
 <!-- SCREEN D — ספירת העומר -->
-<div id="screenD" class="screen">
+<div id="screenD" class="screen" data-omer-active="false">
   <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
   <div class="corner-deco bl"></div><div class="corner-deco br"></div>
   <div class="omer-screen-wrap">
@@ -456,24 +485,48 @@ async function fetchHebcal() {
       if(havdalah) document.getElementById('sht-havdalah').textContent=fmtISO(havdalah.date);
     }
 
-    // Events / Omer
+    // Events / Omer — fetch full month for today's holiday + omer
     const ev=await(await fetch(
-      `${HEBCAL}/hebcal?v=1&cfg=json&year=${yyyy}&month=${mm}&maj=on&min=on&c=on&geo=pos&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&omer=on&lg=he`
+      `${HEBCAL}/hebcal?v=1&cfg=json&year=${yyyy}&month=${mm}&maj=on&min=on&mf=on&ss=on&c=on&geo=pos&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&omer=on&lg=he`
     )).json();
     if(ev.items){
-      const omerItem=ev.items.find(i=>i.category==='omer'&&i.date?.startsWith(`${yyyy}-${mm}-${dd}`));
+      // Today's holidays / special days
+      const todayItems = ev.items.filter(i=>i.date?.startsWith(`${yyyy}-${mm}-${dd}`));
+
+      // Omer
+      const omerItem = todayItems.find(i=>i.category==='omer');
       if(omerItem){
-        document.getElementById('omerCount').textContent=omerItem.hebrew||omerItem.title;
-        document.getElementById('omerCount').style.display='block';
-        // Build full Screen D content
         const num = omerItem.omer || extractOmerNum(omerItem.hebrew||omerItem.title);
-        if(num) renderOmerScreen(num, omerItem.hebrew||omerItem.title);
+        if(num) renderOmerScreen(num);
       } else {
-        // Hide Screen D if not omer period
-        document.getElementById('screenD').dataset.omerActive='false';
+        document.getElementById('screenD').setAttribute('data-omer-active','false');
       }
-      const hol=ev.items.find(i=>i.category==='holiday'&&i.date>`${yyyy}-${mm}-${dd}`);
-      if(hol) document.getElementById('nextHoliday').textContent=`לקראת: ${hol.hebrew||hol.title}`;
+
+      // Holiday name for header
+      const HOLIDAY_CATS = ['holiday','roshchodesh','minor'];
+      const todayHoliday = todayItems.find(i=>HOLIDAY_CATS.includes(i.category));
+
+      // Tachanun logic — days we don't say tachanun
+      const NO_TACHANUN_TITLES = ['ראש חודש','חנוכה','פורים','פסח','שבועות','סוכות','שמיני עצרת',
+        'ראש השנה','יום כיפור','ל\"ג בעומר','ט\"ו בשבט','ט\"ו באב'];
+      const noTachanun = (() => {
+        if(todayItems.some(i=>i.category==='roshchodesh')) return true;
+        if(new Date().getMonth()===2) return true; // ניסן = חודש 3 (0-indexed)
+        const hebrewMonth = hd.hm || '';
+        if(hebrewMonth==='Nisan'||hebrewMonth==='Sivan'||hebrewMonth==='Tishrei') {
+          // בחודש ניסן / שבועות / ראש השנה–יוה"כ — בדוק בפירוט
+        }
+        return todayItems.some(i=>
+          i.category==='holiday' &&
+          NO_TACHANUN_TITLES.some(t=>(i.hebrew||i.title||'').includes(t))
+        );
+      })();
+
+      renderTodayInfo(todayHoliday, noTachanun, hd);
+
+      // Next holiday
+      const futureHol = ev.items.find(i=>i.category==='holiday'&&i.date>`${yyyy}-${mm}-${dd}`);
+      if(futureHol) window._nextHolidayText = `לקראת: ${futureHol.hebrew||futureHol.title}`;
     }
 
     await fetchZmanim(yyyy,mm,dd);
@@ -483,9 +536,33 @@ async function fetchHebcal() {
 // Format ISO datetime string (may include offset) to HH:MM
 function fmtISO(s) {
   if(!s) return '--:--';
-  // Hebcal returns e.g. "2025-10-03T18:12:00+03:00"
   const d=new Date(s);
   return d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
+}
+
+// Render the today-info panel in the header (top-left)
+function renderTodayInfo(holidayItem, noTachanun, hd) {
+  const el = document.getElementById('todayInfo');
+  let html = '';
+
+  // Holiday / Rosh Chodesh name
+  if (holidayItem) {
+    const name = holidayItem.hebrew || holidayItem.title || '';
+    const icon = holidayItem.category==='roshchodesh' ? '🌙' : '✡';
+    html += `<div class="today-holiday"><span class="today-holiday-icon">${icon}</span>${name}</div>`;
+  }
+
+  // Tachanun notice
+  if (noTachanun) {
+    html += `<div class="today-tachanun no-tachanun">🚫 היום אין אומרים תחנון</div>`;
+  }
+
+  // Next holiday (small)
+  if (window._nextHolidayText) {
+    html += `<div class="today-next-holiday">${window._nextHolidayText}</div>`;
+  }
+
+  el.innerHTML = html || `<div class="today-next-holiday" style="opacity:.5;">טוען מידע...</div>`;
 }
 
 async function fetchZmanim(yyyy,mm,dd) {
@@ -510,7 +587,11 @@ async function fetchZmanim(yyyy,mm,dd) {
     {name:'שקיעה',time:fmt(z.sunset)},{name:'צאת הכוכבים',time:fmt(z.tzeit7083deg||z.tzeitHakochavim)},
   ].map(i=>`<div class="fz-card"><span class="fz-name">${i.name}</span><span class="fz-time">${i.time}</span></div>`).join('');
 }
-fetchHebcal(); setInterval(fetchHebcal,3600*1000);
+// Run Hebcal first, then start rotation so omer flag is already set
+fetchHebcal().then(()=>{
+  setTimeout(showNextScreen, CYCLE_A_MS);
+});
+setInterval(fetchHebcal, 3600*1000);
 
 // ── Firebase: Prayer times ──
 onSnapshot(doc(db,'prayers','times'),snap=>{
@@ -686,13 +767,13 @@ function extractOmerNum(str) {
 }
 
 // Render Screen D with omer data
-function renderOmerScreen(day, hebrewFromApi) {
+function renderOmerScreen(day) {
   const mainText  = omerFullText(day);
   const weeksStr  = weeksLine(day);
   document.getElementById('omerDayNum').textContent   = day;
   document.getElementById('omerCountText').textContent = mainText;
   document.getElementById('omerWeeksText').textContent = weeksStr;
-  document.getElementById('screenD').dataset.omerActive = 'true';
+  document.getElementById('screenD').setAttribute('data-omer-active','true');
 }
 
 // ── Offline detection + auto-refresh ──
@@ -739,7 +820,8 @@ let rotation=[],rotIdx=0,rotTimer=null;
 function buildRotation(){
   rotation=['screenA','screenB'];
   if(screenCQueue.length) rotation.push('screenC');
-  if(document.getElementById('screenD').dataset.omerActive==='true') rotation.push('screenD');
+  const omerEl = document.getElementById('screenD');
+  if(omerEl && omerEl.getAttribute('data-omer-active')==='true') rotation.push('screenD');
 }
 
 function showNextScreen(){
@@ -757,7 +839,7 @@ function showNextScreen(){
     rotTimer=setTimeout(showNextScreen,dur);
   }
 }
-setTimeout(showNextScreen,CYCLE_A_MS);
+// (rotation started after fetchHebcal resolves — see above)
 </script>
 </body>
 </html>
