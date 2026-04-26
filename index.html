@@ -124,7 +124,80 @@
   .corner-deco.bl{bottom:16px;right:16px;border-width:0 0 2px 2px;}
   .corner-deco.br{bottom:16px;left:16px;border-width:0 2px 2px 0;}
 
-  /* ══ SCREEN C — Custom ══ */
+  /* ══ SCREEN D — ספירת העומר ══ */
+  #screenD {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(160deg,#05100a 0%,#0d2016 45%,#05100a 100%);
+    overflow:hidden;
+  }
+  #screenD::before {
+    content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 55% 60% at 50% 50%,rgba(100,180,120,.09) 0%,transparent 65%),
+      repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(100,180,120,.018) 40px,rgba(100,180,120,.018) 41px);
+    pointer-events:none;
+  }
+  /* Green-gold palette for Omer */
+  .omer-screen-wrap {
+    position:relative; z-index:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:clamp(12px,2.5vh,28px); text-align:center; padding:40px;
+  }
+  .omer-top-ornament {
+    font-size:clamp(2rem,5vw,4rem); opacity:.55; line-height:1;
+    color:#7dc98a;
+  }
+  .omer-label-small {
+    font-size:clamp(.9rem,1.8vw,1.3rem); font-family:'Heebo',sans-serif; font-weight:500;
+    color:#7dc98a; letter-spacing:4px; text-transform:uppercase;
+  }
+  .omer-count-text {
+    font-size:clamp(2rem,5.5vw,5rem); font-weight:900; color:#e8c87a;
+    line-height:1.1; letter-spacing:1px;
+    text-shadow:0 0 40px rgba(100,180,120,.4), 0 2px 8px rgba(0,0,0,.8);
+    max-width:min(900px,90vw);
+  }
+  .omer-weeks-text {
+    font-size:clamp(1rem,2.2vw,1.7rem); font-weight:700;
+    color:#a8e0b0; font-family:'Heebo',sans-serif;
+    opacity:.85;
+  }
+  .omer-mitzvah-line {
+    font-size:clamp(.85rem,1.6vw,1.15rem); font-family:'Heebo',sans-serif;
+    color:rgba(168,224,176,.6); font-style:italic;
+    margin-top:4px;
+  }
+  .omer-day-num {
+    font-size:clamp(5rem,14vw,12rem); font-weight:900;
+    color:#5cad6a; line-height:1;
+    text-shadow:0 0 60px rgba(92,173,106,.35), 0 4px 12px rgba(0,0,0,.7);
+    font-family:'Frank Ruhl Libre',serif;
+  }
+  .omer-box {
+    background:rgba(92,173,106,.08); border:2px solid rgba(92,173,106,.3);
+    border-radius:24px; padding:clamp(16px,3vw,36px) clamp(24px,5vw,64px);
+    position:relative; overflow:hidden;
+  }
+  .omer-box::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,rgba(92,173,106,.6),transparent);
+  }
+  .omer-corner { position:absolute; width:40px; height:40px; border-color:rgba(92,173,106,.3); border-style:solid; }
+  .omer-corner.tl { top:10px; right:10px; border-width:2px 0 0 2px; }
+  .omer-corner.tr { top:10px; left:10px;  border-width:2px 2px 0 0; }
+  .omer-corner.bl { bottom:10px; right:10px; border-width:0 0 2px 2px; }
+  .omer-corner.br { bottom:10px; left:10px;  border-width:0 2px 2px 0; }
+
+  /* Offline banner */
+  #offlineBanner {
+    display:none; position:fixed; top:0; left:0; right:0; z-index:999;
+    background:linear-gradient(135deg,#b71c1c,#d32f2f);
+    color:#fff; text-align:center; padding:8px 20px;
+    font-family:'Heebo',sans-serif; font-size:.95rem; font-weight:700;
+    letter-spacing:1px;
+    box-shadow:0 2px 12px rgba(0,0,0,.5);
+  }
+  #offlineBanner.show { display:block; }
   #screenC{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0d0703;overflow:hidden;}
 
   /* Custom slide — background image support */
@@ -251,6 +324,30 @@
   <div id="screenCInner" class="cs-fullscreen layout-text-image"></div>
 </div>
 
+<!-- SCREEN D — ספירת העומר -->
+<div id="screenD" class="screen">
+  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+  <div class="omer-screen-wrap">
+    <div class="omer-top-ornament">✡</div>
+    <div class="omer-label-small">ספירת העומר</div>
+    <div class="omer-box">
+      <div class="omer-corner tl"></div><div class="omer-corner tr"></div>
+      <div class="omer-corner bl"></div><div class="omer-corner br"></div>
+      <div class="omer-day-num" id="omerDayNum">—</div>
+    </div>
+    <div class="omer-count-text" id="omerCountText">טוען...</div>
+    <div class="omer-weeks-text" id="omerWeeksText"></div>
+    <div class="omer-mitzvah-line">מצות עשה מן התורה לספור את ימי העומר</div>
+  </div>
+</div>
+
+<!-- Offline banner -->
+<div id="offlineBanner">
+  ⚠️ אין חיבור לאינטרנט — מנסה להתחבר מחדש...
+  <span id="offlineCountdown"></span>
+</div>
+
 <script type="module">
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getFirestore, doc, collection, onSnapshot, orderBy, query }
@@ -272,10 +369,11 @@ const db = getFirestore(app);
 const LOCATION   = { lat:31.2516, lng:34.7915, tzid:'Asia/Jerusalem', city:'Be\'er Sheva' };
 const HEBCAL     = 'https://www.hebcal.com';
 const CANDLE_MIN = 30; // דקות לפני שקיעה להדלקת נרות — באר שבע
-const FOOTER_INT = 12000;
-const CYCLE_A_MS = 30000;
-const CYCLE_B_MS = 30000;
-const CYCLE_C_MS = 30000;
+const FOOTER_INT = 10000;  // 10 שניות בין שקופיות footer
+const CYCLE_A_MS = 20000;  // 20 שניות — מסך A
+const CYCLE_B_MS = 20000;  // 20 שניות — מסך B
+const CYCLE_C_MS = 20000;  // 20 שניות — מסך C
+const CYCLE_D_MS = 20000;  // 20 שניות — מסך D (ספירת העומר)
 
 const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
 const WEEKDAY_PRAYERS = [{key:'shacharit',label:'שחרית'},{key:'mincha',label:'מנחה'},{key:'arvit',label:'ערבית'}];
@@ -363,8 +461,17 @@ async function fetchHebcal() {
       `${HEBCAL}/hebcal?v=1&cfg=json&year=${yyyy}&month=${mm}&maj=on&min=on&c=on&geo=pos&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&omer=on&lg=he`
     )).json();
     if(ev.items){
-      const omer=ev.items.find(i=>i.category==='omer'&&i.date?.startsWith(`${yyyy}-${mm}-${dd}`));
-      if(omer){document.getElementById('omerCount').textContent=omer.hebrew||omer.title;document.getElementById('omerCount').style.display='block';}
+      const omerItem=ev.items.find(i=>i.category==='omer'&&i.date?.startsWith(`${yyyy}-${mm}-${dd}`));
+      if(omerItem){
+        document.getElementById('omerCount').textContent=omerItem.hebrew||omerItem.title;
+        document.getElementById('omerCount').style.display='block';
+        // Build full Screen D content
+        const num = omerItem.omer || extractOmerNum(omerItem.hebrew||omerItem.title);
+        if(num) renderOmerScreen(num, omerItem.hebrew||omerItem.title);
+      } else {
+        // Hide Screen D if not omer period
+        document.getElementById('screenD').dataset.omerActive='false';
+      }
       const hol=ev.items.find(i=>i.category==='holiday'&&i.date>`${yyyy}-${mm}-${dd}`);
       if(hol) document.getElementById('nextHoliday').textContent=`לקראת: ${hol.hebrew||hol.title}`;
     }
@@ -536,11 +643,104 @@ function renderScreenC(slide) {
   inner.innerHTML=html;
 }
 
+// ── Hebrew number → text ──
+const ONES = ['','אחד','שניים','שלושה','ארבעה','חמישה','שישה','שבעה','שמונה','תשעה',
+              'עשרה','אחד עשר','שנים עשר','שלושה עשר','ארבעה עשר','חמישה עשר',
+              'שישה עשר','שבעה עשר','שמונה עשר','תשעה עשר'];
+const TENS = ['','','עשרים','שלושים','ארבעים'];
+const WEEKS_HE = ['','שבוע אחד','שבועיים','שלושה שבועות','ארבעה שבועות',
+                  'חמישה שבועות','שישה שבועות','שבעה שבועות'];
+
+function numToHebrew(n) {
+  if (n < 20) return ONES[n];
+  const t = Math.floor(n/10), o = n%10;
+  return o===0 ? TENS[t] : TENS[t]+' ו'+ONES[o];
+}
+
+function omerFullText(day) {
+  const weeks  = Math.floor(day/7);
+  const remain = day % 7;
+  let text = 'היום ' + numToHebrew(day) + (day===2?'':' ') + 'יום';
+  if (day === 1)  text = 'היום יום אחד';
+  if (day === 2)  text = 'היום שני ימים';
+  if (day > 6) {
+    text += ' — ';
+    if (weeks > 0 && remain === 0) text += WEEKS_HE[weeks];
+    else if (weeks > 0) text += WEEKS_HE[weeks] + ' ו' + numToHebrew(remain) + ' ימים';
+  }
+  text += ' לעומר';
+  return text;
+}
+
+function weeksLine(day) {
+  const w = Math.floor(day/7), r = day%7;
+  if (w === 0) return '';
+  if (r === 0) return WEEKS_HE[w] + ' שלמים';
+  return WEEKS_HE[w] + ' ו' + numToHebrew(r) + ' ימים';
+}
+
+// Extract number from Hebrew string like "ב׳ בעומר" or use API omer field
+function extractOmerNum(str) {
+  const m = str && str.match(/(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+
+// Render Screen D with omer data
+function renderOmerScreen(day, hebrewFromApi) {
+  const mainText  = omerFullText(day);
+  const weeksStr  = weeksLine(day);
+  document.getElementById('omerDayNum').textContent   = day;
+  document.getElementById('omerCountText').textContent = mainText;
+  document.getElementById('omerWeeksText').textContent = weeksStr;
+  document.getElementById('screenD').dataset.omerActive = 'true';
+}
+
+// ── Offline detection + auto-refresh ──
+let offlineTimer = null;
+let offlineSeconds = 0;
+const OFFLINE_RETRY_SECS = 180; // נסה שוב כל 3 דקות
+
+function checkOnline() {
+  const banner = document.getElementById('offlineBanner');
+  if (navigator.onLine) {
+    banner.classList.remove('show');
+    if (offlineTimer) { clearInterval(offlineTimer); offlineTimer=null; }
+  } else {
+    banner.classList.add('show');
+    if (!offlineTimer) {
+      offlineSeconds = OFFLINE_RETRY_SECS;
+      offlineTimer = setInterval(() => {
+        offlineSeconds--;
+        const cd = document.getElementById('offlineCountdown');
+        if (offlineSeconds > 0) {
+          cd.textContent = ` (רענון בעוד ${offlineSeconds} שניות)`;
+        } else {
+          cd.textContent = ' — מרענן...';
+          clearInterval(offlineTimer); offlineTimer=null;
+          // Try a lightweight ping; if it succeeds reload, else restart counter
+          fetch('https://www.hebcal.com/ping', {mode:'no-cors',cache:'no-store'})
+            .then(()=>location.reload())
+            .catch(()=>{ offlineSeconds=OFFLINE_RETRY_SECS; offlineTimer=setInterval(arguments.callee,1000); });
+        }
+      }, 1000);
+    }
+  }
+}
+
+window.addEventListener('online',  ()=>{ checkOnline(); fetchHebcal(); });
+window.addEventListener('offline', checkOnline);
+setInterval(checkOnline, 30000); // background check every 30s
+checkOnline();
+
 // ── Master rotation ──
-const allScreenIds=['screenA','screenB','screenC'];
+const allScreenIds=['screenA','screenB','screenC','screenD'];
 let rotation=[],rotIdx=0,rotTimer=null;
 
-function buildRotation(){rotation=['screenA','screenB'];if(screenCQueue.length)rotation.push('screenC');}
+function buildRotation(){
+  rotation=['screenA','screenB'];
+  if(screenCQueue.length) rotation.push('screenC');
+  if(document.getElementById('screenD').dataset.omerActive==='true') rotation.push('screenD');
+}
 
 function showNextScreen(){
   if(rotTimer) clearTimeout(rotTimer);
@@ -549,12 +749,12 @@ function showNextScreen(){
   allScreenIds.forEach(id=>document.getElementById(id).classList.remove('active'));
   if(current==='screenC'){if(!loadNextScreenC()){rotIdx++;showNextScreen();return;}}
   document.getElementById(current).classList.add('active');
-  let duration=current==='screenB'?CYCLE_B_MS:current==='screenC'?CYCLE_C_MS:CYCLE_A_MS;
+  const dur = current==='screenB'?CYCLE_B_MS : current==='screenC'?CYCLE_C_MS : current==='screenD'?CYCLE_D_MS : CYCLE_A_MS;
   rotIdx++;
   if(current==='screenC'&&screenCIdx<screenCQueue.length){
-    rotTimer=setTimeout(()=>{loadNextScreenC();rotTimer=setTimeout(showNextScreen,duration);},duration);
+    rotTimer=setTimeout(()=>{loadNextScreenC();rotTimer=setTimeout(showNextScreen,dur);},dur);
   } else {
-    rotTimer=setTimeout(showNextScreen,duration);
+    rotTimer=setTimeout(showNextScreen,dur);
   }
 }
 setTimeout(showNextScreen,CYCLE_A_MS);
