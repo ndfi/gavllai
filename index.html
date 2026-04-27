@@ -295,6 +295,11 @@
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">מנחה שבת</span><span class="prayer-time" id="sp-mincha_shabbat">--:--</span></div>
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">ערבית מוצ"ש</span><span class="prayer-time" id="sp-arvit_motzash">--:--</span></div>
       </div>
+      <!-- Holiday prayers panel — shown only when enabled in admin -->
+      <div class="panel-section" id="holiday-panel" style="display:none;">
+        <div class="section-title" id="holiday-panel-title">תפילות חגים</div>
+        <div id="holiday-prayer-list"></div>
+      </div>
     </div>
 
     <div class="clock-panel">
@@ -464,73 +469,91 @@ setInterval(updateClock,1000); updateClock();
 
 // ── Hebcal ──
 async function fetchHebcal() {
-  const d=new Date(),yyyy=d.getFullYear(),
-    mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  const d=new Date(), yyyy=d.getFullYear(),
+    mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  let hd = {};
   try {
-    const hd=await(await fetch(`${HEBCAL}/converter?cfg=json&gy=${yyyy}&gm=${mm}&gd=${dd}&g2h=1`)).json();
-    if(hd.hebrew) document.getElementById('hebrewDate').textContent=hd.hebrew;
-    document.getElementById('gregDate').textContent=d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
+    // 1. Hebrew date
+    const hdRes = await fetch(`${HEBCAL}/converter?cfg=json&gy=${yyyy}&gm=${mm}&gd=${dd}&g2h=1`);
+    hd = await hdRes.json();
+    if(hd.hebrew) document.getElementById('hebrewDate').textContent = hd.hebrew;
+    document.getElementById('gregDate').textContent = d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
+  } catch(e){ console.error('Hebcal date error',e); }
 
-    // Shabbat times (candles + havdalah) — uses Hebcal shabbat API
-    // b=50 = Havdalah 50 min after sunset; m=CANDLE_MIN = candles before sunset
-    const sh=await(await fetch(
+  try {
+    // 2. Shabbat times + parasha
+    const sh = await(await fetch(
       `${HEBCAL}/shabbat?cfg=json&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&m=${CANDLE_MIN}&b=50`
     )).json();
     if(sh.items){
-      const par=sh.items.find(i=>i.category==='parashat');
-      if(par) document.getElementById('parasha').textContent=par.hebrew||par.title;
-      const candles=sh.items.find(i=>i.category==='candles');
-      const havdalah=sh.items.find(i=>i.category==='havdalah');
-      if(candles)  document.getElementById('sht-candles').textContent=fmtISO(candles.date);
-      if(havdalah) document.getElementById('sht-havdalah').textContent=fmtISO(havdalah.date);
+      const par = sh.items.find(i=>i.category==='parashat');
+      if(par) document.getElementById('parasha').textContent = par.hebrew||par.title;
+      const candles  = sh.items.find(i=>i.category==='candles');
+      const havdalah = sh.items.find(i=>i.category==='havdalah');
+      if(candles)  document.getElementById('sht-candles').textContent  = fmtISO(candles.date);
+      if(havdalah) document.getElementById('sht-havdalah').textContent = fmtISO(havdalah.date);
     }
+  } catch(e){ console.error('Hebcal shabbat error',e); }
 
-    // Events / Omer — fetch full month for today's holiday + omer
-    const ev=await(await fetch(
-      `${HEBCAL}/hebcal?v=1&cfg=json&year=${yyyy}&month=${mm}&maj=on&min=on&mf=on&ss=on&c=on&geo=pos&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&omer=on&lg=he`
-    )).json();
+  try {
+    // 3. Events, holidays, omer
+    // Fetch full year so omer items are always included (Hebcal omits them on month-only queries sometimes)
+    const evUrl = `${HEBCAL}/hebcal?v=1&cfg=json&year=${yyyy}`
+      + `&maj=on&min=on&mf=on&ss=on&c=on&omer=on&lg=he`
+      + `&geo=pos&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}`;
+    const ev = await(await fetch(evUrl)).json();
+
     if(ev.items){
-      // Today's holidays / special days
-      const todayItems = ev.items.filter(i=>i.date?.startsWith(`${yyyy}-${mm}-${dd}`));
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+      const todayItems = ev.items.filter(i => {
+        const dt = (i.date || '').slice(0,10);
+        return dt === todayStr;
+      });
 
-      // Omer
-      const omerItem = todayItems.find(i=>i.category==='omer');
+      // ── OMER ──
+      const omerItem = todayItems.find(i => i.category==='omer');
       if(omerItem){
-        const num = omerItem.omer || extractOmerNum(omerItem.hebrew||omerItem.title);
-        if(num) renderOmerScreen(num);
+        // Try .omer field first, then parse from title "3rd day of the Omer" or Hebrew
+        let num = null;
+        if (typeof omerItem.omer === 'number') {
+          num = omerItem.omer;
+        } else {
+          // Try English title: "33rd day of the Omer"
+          const mEn = (omerItem.title||'').match(/^(\d+)/);
+          if (mEn) num = parseInt(mEn[1]);
+          // Try Hebrew title: digits
+          if (!num) num = extractOmerNum(omerItem.hebrew || omerItem.title || '');
+        }
+        if(num && num >= 1 && num <= 49) renderOmerScreen(num);
+        else document.getElementById('screenD').setAttribute('data-omer-active','false');
       } else {
         document.getElementById('screenD').setAttribute('data-omer-active','false');
       }
 
-      // Holiday name for header
+      // ── HOLIDAY / ROSH CHODESH for header ──
       const HOLIDAY_CATS = ['holiday','roshchodesh','minor'];
       const todayHoliday = todayItems.find(i=>HOLIDAY_CATS.includes(i.category));
 
-      // Tachanun logic — days we don't say tachanun
-      const NO_TACHANUN_TITLES = ['ראש חודש','חנוכה','פורים','פסח','שבועות','סוכות','שמיני עצרת',
-        'ראש השנה','יום כיפור','ל\"ג בעומר','ט\"ו בשבט','ט\"ו באב'];
-      const noTachanun = (() => {
-        if(todayItems.some(i=>i.category==='roshchodesh')) return true;
-        if(new Date().getMonth()===2) return true; // ניסן = חודש 3 (0-indexed)
-        const hebrewMonth = hd.hm || '';
-        if(hebrewMonth==='Nisan'||hebrewMonth==='Sivan'||hebrewMonth==='Tishrei') {
-          // בחודש ניסן / שבועות / ראש השנה–יוה"כ — בדוק בפירוט
-        }
-        return todayItems.some(i=>
-          i.category==='holiday' &&
-          NO_TACHANUN_TITLES.some(t=>(i.hebrew||i.title||'').includes(t))
-        );
-      })();
+      // ── TACHANUN logic ──
+      const noTachanun = calcNoTachanun(todayItems, hd);
+      renderTodayInfo(todayHoliday, noTachanun);
 
-      renderTodayInfo(todayHoliday, noTachanun, hd);
-
-      // Next holiday
-      const futureHol = ev.items.find(i=>i.category==='holiday'&&i.date>`${yyyy}-${mm}-${dd}`);
-      if(futureHol) window._nextHolidayText = `לקראת: ${futureHol.hebrew||futureHol.title}`;
+      // ── Next upcoming holiday ──
+      const futureHol = ev.items.find(i=>
+        i.category==='holiday' && (i.date||'') > todayStr
+      );
+      if(futureHol){
+        window._nextHolidayText = `לקראת: ${futureHol.hebrew||futureHol.title}`;
+        // Re-render to show it
+        renderTodayInfo(todayHoliday, noTachanun);
+      }
     }
+  } catch(e){ console.error('Hebcal events error',e); }
 
-    await fetchZmanim(yyyy,mm,dd);
-  } catch(e){ console.error('Hebcal',e); document.getElementById('hebrewDate').textContent='שגיאה'; }
+  try {
+    // 4. Zmanim
+    await fetchZmanim(yyyy, mm, dd);
+  } catch(e){ console.error('Zmanim error',e); }
 }
 
 // Format ISO datetime string (may include offset) to HH:MM
@@ -633,6 +656,85 @@ onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),sna
   el.innerHTML=snap.empty
     ?'<span style="color:rgba(200,164,74,.4)">אין הודעות</span>'
     :snap.docs.map(d=>`<div class="ann-line">${d.data().text}</div>`).join('');
+});
+
+// ── Firebase: Holiday Prayers ──
+// Shown on the left side-panel when enabled=true
+const HOLIDAY_PRAYER_LABELS = {
+  rh_shacharit:'שחרית', rh_musaf:'מוסף', rh_mincha:'מנחה', yk_neilah:'נעילה',
+  suk_shacharit:'שחרית', suk_musaf:'מוסף', suk_mincha:'מנחה', suk_arvit:'ערבית',
+  pss_shacharit:'שחרית', pss_musaf:'מוסף', pss_mincha:'מנחה', pss_arvit:'ערבית',
+};
+
+onSnapshot(doc(db,'prayers','holiday'), snap => {
+  const panel = document.getElementById('holiday-panel');
+  if (!snap.exists() || !snap.data().enabled) {
+    if(panel) panel.style.display='none';
+    return;
+  }
+  const hol = snap.data();
+  if(panel) panel.style.display='block';
+
+  // Update holiday panel title
+  const titleEl = document.getElementById('holiday-panel-title');
+  if(titleEl) titleEl.textContent = hol.holidayName || 'תפילות חגים';
+
+  // Build rows — show only sections that have at least one time set
+  const sections = [
+    { label:'ר"ה / יוה"כ', keys:['rh_shacharit','rh_musaf','rh_mincha','yk_neilah'] },
+    { label:'סוכות / שמ"ע', keys:['suk_shacharit','suk_musaf','suk_mincha','suk_arvit'] },
+    { label:'פסח / שבועות',  keys:['pss_shacharit','pss_musaf','pss_mincha','pss_arvit'] },
+  ];
+
+  let html = '';
+  sections.forEach(sec => {
+    const rows = sec.keys.filter(k=>hol[k]).map(k=>
+      `<div class="prayer-item"><span class="prayer-name">${HOLIDAY_PRAYER_LABELS[k]}</span><span class="prayer-time">${hol[k]}</span></div>`
+    ).join('');
+    if(rows) html += `<div class="section-title" style="margin-top:6px;">${sec.label}</div>${rows}`;
+  });
+
+  const listEl = document.getElementById('holiday-prayer-list');
+  if(listEl) listEl.innerHTML = html;
+});
+
+// ── Firebase: Shiurim (shown in footer slideshow as extra slide) ──
+const DAY_SHORT = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','שבת'];
+
+onSnapshot(query(collection(db,'shiurim'),orderBy('createdAt','desc')), snap => {
+  // Remove old shiurim footer slides
+  document.querySelectorAll('.footer-slide[data-shiur]').forEach(el=>el.remove());
+  document.querySelectorAll('.dot[data-shiur]').forEach(el=>el.remove());
+
+  if(snap.empty) return;
+
+  const footer = document.querySelector('.footer');
+  const dotsEl = document.getElementById('footerDots');
+
+  // Group into pages of 3 items per slide
+  const items = snap.docs.map(d=>d.data());
+  const pages = [];
+  for(let i=0;i<items.length;i+=3) pages.push(items.slice(i,i+3));
+
+  pages.forEach((page, idx) => {
+    const el = document.createElement('div');
+    el.className = 'footer-slide';
+    el.dataset.shiur = '1';
+    const rows = page.map(s=>{
+      const dayStr = (s.day>=0 && s.day<=6) ? DAY_SHORT[s.day] : (s.date||'');
+      return `<div class="ann-line" style="display:flex;justify-content:space-between;gap:12px;">
+        <span>${s.title||''}${s.details?` — ${s.details}`:''}${dayStr?` | ${dayStr}`:''}${s.time?` ${s.time}`:''}</span>
+      </div>`;
+    }).join('');
+    el.innerHTML = `<div class="slide-label">שיעורים ואירועים</div><div class="footer-announcements">${rows}</div>`;
+    footer.insertBefore(el, dotsEl);
+    const dot = document.createElement('div');
+    dot.className='dot'; dot.dataset.shiur='1';
+    dotsEl.appendChild(dot);
+  });
+
+  // Recalculate total footer count
+  footerCount = document.querySelectorAll('.footer-slide').length;
 });
 
 // ── Firebase: Custom Screens ──
