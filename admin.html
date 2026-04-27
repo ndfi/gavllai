@@ -145,6 +145,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     <button class="tab-btn" data-tab="announcements">📢 הודעות</button>
     <button class="tab-btn" data-tab="custom">✨ מסכים</button>
     <button class="tab-btn" data-tab="settings">⚙️ הגדרות</button>
+    <button class="tab-btn" data-tab="export">📋 ייצוא הודעה</button>
   </div>
 </div>
 <div class="container">
@@ -441,8 +442,73 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     </div>
   </div>
 
-  <!-- SETTINGS -->
-  <div id="tab-settings" class="tab-panel">
+  <!-- EXPORT -->
+  <div id="tab-export" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📋</div><div><h2>ייצוא הודעת שבת</h2><p>צור הודעה מלאה לשיתוף בוואטסאפ / טלגרם</p></div></div>
+      <div class="card-body">
+
+        <div class="field"><label>פרשת השבוע</label><input type="text" id="ex-parasha" placeholder='לדוגמה: אחרי מות - קדושים תשפ"ו'></div>
+        <div class="field"><label>שם בית הכנסת</label><input type="text" id="ex-shulname" placeholder='לדוגמה: "פתח אליהו"'></div>
+
+        <div class="sub-label">🕯 מנחה ערב שבת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>מנחה גדולה</label><input type="time" id="ex-mincha-big"></div>
+          <div class="field"><label>כניסת שבת 🕯</label><input type="time" id="ex-candles"></div>
+          <div class="field"><label>מנחה קטנה (אשרי)</label><input type="time" id="ex-mincha-small"></div>
+        </div>
+
+        <div class="sub-label">✡ קבלת שבת וערבית</div>
+        <div class="prayer-grid">
+          <div class="field"><label>קבלת שבת</label><input type="time" id="ex-kabbalat"></div>
+          <div class="field"><label>הערה (שיר השירים וכו')</label><input type="text" id="ex-kabbalat-note" placeholder="שיר השירים וערבית"></div>
+        </div>
+
+        <div class="sub-label">☀️ שחרית שבת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>פתיחה</label><input type="time" id="ex-shacharit"></div>
+          <div class="field"><label>ק"ש לפי מ"א</label><input type="time" id="ex-kriat-shma"></div>
+        </div>
+
+        <div class="sub-label">👨‍👧 תפילת ילדים (אופציונלי)</div>
+        <div class="prayer-grid">
+          <div class="field"><label>שעת תפילת הילדים</label><input type="time" id="ex-children"></div>
+        </div>
+
+        <div class="sub-label">🌅 מנחה ומוצאי שבת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>מנחה שבת — פתיחה</label><input type="time" id="ex-mincha-shab"></div>
+          <div class="field"><label>צאת השבת</label><input type="time" id="ex-havdalah"></div>
+          <div class="field"><label>לפי רבינו תם</label><input type="time" id="ex-rt"></div>
+          <div class="field"><label>מזמורים</label><input type="time" id="ex-mizmor"></div>
+        </div>
+
+        <div class="sub-label">📅 זמני תפילות ימי חול</div>
+        <div class="prayer-grid">
+          <div class="field"><label>שחרית חול</label><input type="time" id="ex-shacharit-hol"></div>
+          <div class="field"><label>הערת שחרית (הודו וכו')</label><input type="text" id="ex-shacharit-hol-note" placeholder="הודו"></div>
+          <div class="field"><label>מנחה חול</label><input type="time" id="ex-mincha-hol"></div>
+          <div class="field"><label>ערבית חול</label><input type="time" id="ex-arvit-hol"></div>
+        </div>
+
+        <div class="sub-label">📢 הודעות (אופציונלי)</div>
+        <div class="field"><label>שורת הודעה / ברכה</label><textarea id="ex-announcements" rows="3" placeholder="בשורות טובות בעזרת השם&#10;שבת שלום לכולם!"></textarea></div>
+
+        <button class="btn btn-primary" onclick="generateExport()" style="margin-top:8px;">✨ צור הודעה</button>
+
+        <div id="exportResult" style="display:none;margin-top:18px;">
+          <div style="font-weight:700;font-size:.85rem;color:var(--muted);margin-bottom:8px;">📋 הודעה מוכנה לשיתוף:</div>
+          <textarea id="exportText" rows="30" style="font-family:monospace;font-size:.88rem;background:#fafaf8;border:2px solid var(--border);border-radius:10px;padding:12px;width:100%;resize:vertical;direction:rtl;line-height:1.9;" readonly></textarea>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
+            <button class="btn btn-add" onclick="copyExport()" style="flex:1;">📋 העתק להודעה</button>
+            <span id="copyFeedback" style="display:none;color:#1b5e20;font-weight:700;font-size:.9rem;">✓ הועתק!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
     <div class="card">
       <div class="card-header"><div class="ch-icon">📺</div><div><h2>לוח תצוגה</h2></div></div>
       <div class="card-body"><button class="btn btn-open" onclick="window.open('display.html','_blank')">📺 פתח לוח תצוגה</button></div>
@@ -738,9 +804,141 @@ window.addShiur=async()=>{
   }catch{toast('שגיאה','err');}
 };
 
-async function delShiur(id){
-  if(!confirm('למחוק שיעור זה?'))return;
-  try{await deleteDoc(doc(db,'shiurim',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}
-}</script>
+// ── Export / Share Shabbat message ──
+onSnapshot(doc(db,'prayers','times'),snap=>{
+  if(!snap.exists()) return;
+  const d=snap.data();
+  const fill=(id,val)=>{ const el=document.getElementById(id); if(el&&!el.value&&val) el.value=val; };
+  fill('ex-kabbalat',    d.kabbalat);
+  fill('ex-shacharit',   d.shacharit_shabbat);
+  fill('ex-mincha-shab', d.mincha_shabbat);
+  fill('ex-mincha-big',  d.mincha);
+  fill('ex-shacharit-hol', d.shacharit);
+  fill('ex-mincha-hol',  d.mincha);
+  fill('ex-arvit-hol',   d.arvit);
+});
+
+document.querySelector('[data-tab=export]').addEventListener('click', async()=>{
+  if(document.getElementById('ex-candles').value) return;
+  try{
+    const r=await fetch('https://www.hebcal.com/shabbat?cfg=json&latitude=31.2516&longitude=34.7915&tzid=Asia%2FJerusalem&m=30&b=50');
+    const sh=await r.json();
+    if(sh.items){
+      const par=sh.items.find(i=>i.category==='parashat');
+      if(par&&!document.getElementById('ex-parasha').value) document.getElementById('ex-parasha').value=par.hebrew||par.title;
+      const candles=sh.items.find(i=>i.category==='candles');
+      if(candles){
+        const hhmm=new Date(candles.date).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
+        if(!document.getElementById('ex-candles').value) document.getElementById('ex-candles').value=hhmm;
+      }
+      const havdalah=sh.items.find(i=>i.category==='havdalah');
+      if(havdalah){
+        const hhmm=new Date(havdalah.date).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
+        if(!document.getElementById('ex-havdalah').value) document.getElementById('ex-havdalah').value=hhmm;
+      }
+    }
+  }catch(e){}
+});
+
+const SEP = '********************';
+
+window.generateExport=()=>{
+  const v=id=>(document.getElementById(id)?.value||'').trim();
+  const parasha      = v('ex-parasha');
+  const shulname     = v('ex-shulname');
+  const minchabig    = v('ex-mincha-big');
+  const candles      = v('ex-candles');
+  const minchasmall  = v('ex-mincha-small');
+  const kabbalat     = v('ex-kabbalat');
+  const kabNote      = v('ex-kabbalat-note');
+  const shacharit    = v('ex-shacharit');
+  const kriahShma    = v('ex-kriat-shma');
+  const children     = v('ex-children');
+  const minchaShab   = v('ex-mincha-shab');
+  const havdalah     = v('ex-havdalah');
+  const rt           = v('ex-rt');
+  const mizmor       = v('ex-mizmor');
+  const shacharitHol = v('ex-shacharit-hol');
+  const shacharitHolNote = v('ex-shacharit-hol-note');
+  const minchaHol    = v('ex-mincha-hol');
+  const arvitHol     = v('ex-arvit-hol');
+  const announcements= v('ex-announcements');
+
+  let L=[];
+
+  // ── Header
+  if(parasha) L.push(`פרשת ${parasha}`);
+  L.push('זמני תפילות');
+  if(shulname) L.push(`מנחה ע"ש- ${shulname}`);
+
+  // ── Mincha erev shabbat
+  if(minchabig)   L.push(`גדולה : ${minchabig}`);
+  if(candles)     L.push(`כניסת שבת ${candles}`);
+  if(minchasmall) L.push(`קטנה (אשרי) :  ${minchasmall}`);
+  L.push(SEP);
+
+  // ── Kabbalat shabbat
+  if(kabbalat){
+    L.push(` *קבלת שבת: ${kabbalat}* `);
+    if(kabNote) L.push(kabNote);
+  }
+  L.push(SEP);
+
+  // ── Shacharit
+  L.push('שחרית');
+  if(shacharit)  L.push(` *פתיחה: ${shacharit}* `);
+  if(kriahShma)  L.push(`ק"ש לפי מ"א ${kriahShma}`);
+  L.push(SEP);
+
+  // ── Children's prayer
+  if(children){
+    L.push('  *תפילת הילדים*');
+    L.push(`תפילת הילדים ${children}`);
+    L.push(SEP);
+  }
+
+  // ── Mincha shabbat + motzash
+  L.push('מנחה של שבת');
+  if(minchaShab) L.push(`"פתיחה":  ${minchaShab}`);
+  if(havdalah)   L.push(` *צאת השבת  : ${havdalah}* `);
+  if(rt)         L.push(`לפי רבינו תם: ${rt}`);
+  if(mizmor)     L.push(` *מזמורים: ${mizmor}* `);
+  L.push(SEP);
+
+  // ── Weekday prayers
+  L.push(' *זמני תפילות ימי חול* ');
+  if(shacharitHol){
+    const note = shacharitHolNote ? ` ${shacharitHolNote}` : '';
+    L.push(`שחרית : ${shacharitHol}${note}`);
+  }
+  if(minchaHol)  L.push(`מנחה : ${minchaHol}`);
+  if(arvitHol)   L.push(` ערבית : ${arvitHol}`);
+  L.push(' *ברוכים הבאים*');
+  L.push(SEP);
+
+  // ── Announcements
+  if(announcements){
+    L.push(' *הודעות חשובות*');
+    L.push(announcements);
+  }
+
+  document.getElementById('exportText').value=L.join('\n');
+  document.getElementById('exportResult').style.display='block';
+  document.getElementById('exportText').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+
+window.copyExport=async()=>{
+  const text=document.getElementById('exportText').value;
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch{
+    document.getElementById('exportText').select();
+    document.execCommand('copy');
+  }
+  const fb=document.getElementById('copyFeedback');
+  fb.style.display='inline';
+  setTimeout(()=>fb.style.display='none',2500);
+};
+</script>
 </body>
 </html>

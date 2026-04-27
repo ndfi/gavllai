@@ -990,11 +990,19 @@ checkOnline();
 const allScreenIds=['screenA','screenB','screenC','screenD'];
 let rotation=[],rotIdx=0,rotTimer=null;
 
+function isOmerDisplayTime(){
+  const now=new Date();
+  const h=now.getHours(),m=now.getMinutes();
+  const mins=h*60+m;
+  // מציג רק בין 18:30 ל-00:00
+  return mins >= 18*60+30 || mins < 0*60+0;
+}
+
 function buildRotation(){
   rotation=['screenA','screenB'];
   if(screenCQueue.length) rotation.push('screenC');
   const omerEl = document.getElementById('screenD');
-  if(omerEl && omerEl.getAttribute('data-omer-active')==='true') rotation.push('screenD');
+  if(omerEl && omerEl.getAttribute('data-omer-active')==='true' && isOmerDisplayTime()) rotation.push('screenD');
 }
 
 function showNextScreen(){
