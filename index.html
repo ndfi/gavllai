@@ -40,7 +40,7 @@
     display:flex; flex-direction:column; gap:4px; justify-content:center;
   }
   .today-holiday {
-    font-size:clamp(1.4rem,3vw,2.1rem); font-weight:900;
+    font-size:clamp(1.4rem,3vw,1.81rem); font-weight:900;
     color:var(--gold-light); line-height:1.2; letter-spacing:1px;
     display:flex; align-items:center; gap:8px;
   }
@@ -524,7 +524,7 @@ async function fetchHebcal() {
       }
       // Fallback: calculate locally if API didn't return omer item
       if (!omerNum) omerNum = calcOmerDayLocal();
-      if(omerNum && omerNum >= 1 && omerNum <= 49) renderOmerScreen(omerNum);
+      if(omerNum && omerNum >= 1 && omerNum <= 49) renderOmerScreen(Math.min(omerNum + 1, 49));
       else document.getElementById('screenD').setAttribute('data-omer-active','false');
 
       // ── HOLIDAY / ROSH CHODESH for header ──
