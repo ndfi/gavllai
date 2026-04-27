@@ -193,7 +193,11 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           </div>
           <div class="field"><label>סדר הצגה</label><input type="number" id="cp-order" placeholder="10" min="1" max="99"></div>
         </div>
-        <button class="btn btn-add" onclick="addCustomPrayer()">➕ הוסף תפילה</button>
+        <input type="hidden" id="cp-editId" value="">
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn btn-add" id="cpSubmitBtn" onclick="addCustomPrayer()" style="flex:1;">➕ הוסף תפילה</button>
+          <button class="btn btn-ghost" onclick="resetCustomPrayerForm()" style="width:90px;">ביטול</button>
+        </div>
       </div>
     </div>
 
@@ -496,28 +500,55 @@ onSnapshot(query(collection(db,'prayers_custom'),orderBy('order','asc')),snap=>{
         <div class="item-text" style="font-weight:700">${esc(s.name||'')} — ${s.time||'--:--'}</div>
         <span class="item-meta">${DISP[s.display]||''}${s.order?' · סדר: '+s.order:''}</span>
       </div>
-      <button class="btn-del" data-id="${d.id}">🗑</button>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="btn-del" style="color:#5c6bc0;" data-id="${d.id}" data-name="${esc(s.name||'')}" data-time="${s.time||''}" data-display="${s.display||'weekday'}" data-order="${s.order||10}" onclick="editCustomPrayer(this)">✏️</button>
+        <button class="btn-del" data-id="${d.id}" onclick="delCustomPrayer(this.dataset.id)">🗑</button>
+      </div>
     </div>`;
   }).join('');
-  el.querySelectorAll('.btn-del').forEach(b=>b.addEventListener('click',()=>delCustomPrayer(b.dataset.id)));
 });
+
+window.editCustomPrayer=(btn)=>{
+  document.getElementById('cp-name').value=btn.dataset.name||'';
+  document.getElementById('cp-time').value=btn.dataset.time||'';
+  document.getElementById('cp-display').value=btn.dataset.display||'weekday';
+  document.getElementById('cp-order').value=btn.dataset.order||10;
+  document.getElementById('cp-editId').value=btn.dataset.id;
+  document.getElementById('cpSubmitBtn').textContent='💾 שמור שינויים';
+  document.getElementById('cp-name').focus();
+  document.getElementById('cp-name').scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+window.resetCustomPrayerForm=()=>{
+  document.getElementById('cp-name').value='';
+  document.getElementById('cp-time').value='';
+  document.getElementById('cp-display').value='weekday';
+  document.getElementById('cp-order').value='';
+  document.getElementById('cp-editId').value='';
+  document.getElementById('cpSubmitBtn').textContent='➕ הוסף תפילה';
+};
 
 window.addCustomPrayer=async()=>{
   const name=document.getElementById('cp-name').value.trim();
   const time=document.getElementById('cp-time').value;
   if(!name){toast('נא למלא שם תפילה','err');document.getElementById('cp-name').focus();return;}
   if(!time){toast('נא לבחור שעה','err');document.getElementById('cp-time').focus();return;}
+  const editId=document.getElementById('cp-editId').value;
   const data={
     name,time,
     display:document.getElementById('cp-display').value,
     order:parseInt(document.getElementById('cp-order').value)||10,
-    createdAt:serverTimestamp(),
   };
   try{
-    await addDoc(collection(db,'prayers_custom'),data);
-    document.getElementById('cp-name').value='';
-    document.getElementById('cp-time').value='';
-    toast('תפילה נוספה!','ok');
+    if(editId){
+      await updateDoc(doc(db,'prayers_custom',editId),data);
+      toast('תפילה עודכנה!','ok');
+    } else {
+      data.createdAt=serverTimestamp();
+      await addDoc(collection(db,'prayers_custom'),data);
+      toast('תפילה נוספה!','ok');
+    }
+    resetCustomPrayerForm();
   }catch{toast('שגיאה','err');}
 };
 

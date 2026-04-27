@@ -40,16 +40,16 @@
     display:flex; flex-direction:column; gap:4px; justify-content:center;
   }
   .today-holiday {
-    font-size:clamp(.85rem,1.8vw,1.15rem); font-weight:700;
-    color:var(--gold-light); line-height:1.25;
-    display:flex; align-items:center; gap:6px;
+    font-size:clamp(1.4rem,3vw,2.1rem); font-weight:900;
+    color:var(--gold-light); line-height:1.2; letter-spacing:1px;
+    display:flex; align-items:center; gap:8px;
   }
-  .today-holiday-icon { font-size:1.1em; }
+  .today-holiday-icon { font-size:1em; }
   .today-tachanun {
     display:inline-flex; align-items:center; gap:6px;
     background:rgba(200,164,74,.18); border:1px solid rgba(200,164,74,.45);
-    border-radius:8px; padding:3px 10px;
-    font-size:clamp(.72rem,1.3vw,.88rem); font-weight:700;
+    border-radius:8px; padding:4px 12px;
+    font-size:clamp(.85rem,1.6vw,1.05rem); font-weight:700;
     color:#e8c87a; letter-spacing:.5px;
     width:fit-content;
   }
@@ -58,8 +58,8 @@
     color:#ffe070;
   }
   .today-next-holiday {
-    font-size:clamp(.65rem,1.2vw,.8rem); color:rgba(232,200,122,.55);
-    font-family:'Heebo',sans-serif; font-weight:300;
+    font-size:clamp(.75rem,1.4vw,.95rem); color:rgba(232,200,122,.65);
+    font-family:'Heebo',sans-serif; font-weight:400;
   }
   /* omer small badge in header (kept for footer reference) */
   #omerCount { display:none; }
@@ -512,23 +512,20 @@ async function fetchHebcal() {
 
       // ── OMER ──
       const omerItem = todayItems.find(i => i.category==='omer');
+      let omerNum = null;
       if(omerItem){
-        // Try .omer field first, then parse from title "3rd day of the Omer" or Hebrew
-        let num = null;
         if (typeof omerItem.omer === 'number') {
-          num = omerItem.omer;
+          omerNum = omerItem.omer;
         } else {
-          // Try English title: "33rd day of the Omer"
           const mEn = (omerItem.title||'').match(/^(\d+)/);
-          if (mEn) num = parseInt(mEn[1]);
-          // Try Hebrew title: digits
-          if (!num) num = extractOmerNum(omerItem.hebrew || omerItem.title || '');
+          if (mEn) omerNum = parseInt(mEn[1]);
+          if (!omerNum) omerNum = extractOmerNum(omerItem.hebrew || omerItem.title || '');
         }
-        if(num && num >= 1 && num <= 49) renderOmerScreen(num);
-        else document.getElementById('screenD').setAttribute('data-omer-active','false');
-      } else {
-        document.getElementById('screenD').setAttribute('data-omer-active','false');
       }
+      // Fallback: calculate locally if API didn't return omer item
+      if (!omerNum) omerNum = calcOmerDayLocal();
+      if(omerNum && omerNum >= 1 && omerNum <= 49) renderOmerScreen(omerNum);
+      else document.getElementById('screenD').setAttribute('data-omer-active','false');
 
       // ── HOLIDAY / ROSH CHODESH for header ──
       const HOLIDAY_CATS = ['holiday','roshchodesh','minor'];
@@ -917,6 +914,29 @@ function weeksLine(day) {
 function extractOmerNum(str) {
   const m = str && str.match(/(\d+)/);
   return m ? parseInt(m[1]) : null;
+}
+
+// ── Local Omer day calculation (fallback when API doesn't return omer item) ──
+function calcOmerDayLocal() {
+  // Omer starts on 16 Nisan (night of seder 2 / day after first seder)
+  // We store Pesach start dates (16 Nisan = day after first seder) for years 2024-2030
+  const PESACH_16 = {
+    2024: new Date('2024-04-23'),
+    2025: new Date('2025-04-14'),
+    2026: new Date('2026-04-03'),
+    2027: new Date('2027-04-23'),
+    2028: new Date('2028-04-11'),
+    2029: new Date('2029-04-01'),
+    2030: new Date('2030-04-20'),
+  };
+  const now = new Date();
+  const yr = now.getFullYear();
+  const pesach = PESACH_16[yr];
+  if (!pesach) return null;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((today - pesach) / 86400000) + 1; // +1 because 16 Nisan = day 1
+  if (diff >= 1 && diff <= 49) return diff;
+  return null;
 }
 
 // Render Screen D with omer data
