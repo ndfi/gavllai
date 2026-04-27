@@ -4,143 +4,645 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>ניהול — לוח בית הכנסת</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 :root{--primary:#8b5e1a;--primary-light:#c8a44a;--primary-dark:#5a3a0a;--bg:#f7f3ec;--card:#fff;--text:#1a0e05;--muted:#6b5a3a;--border:#ddd0b0;--danger:#c62828;--radius:14px;--shadow:0 2px 12px rgba(139,94,26,.12);}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Heebo',sans-serif;padding-bottom:60px;}
-.app-header{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff8e7;padding:16px 20px;position:sticky;top:0;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.1);text-align:center;}
-.container{max-width:600px;margin:20px auto;padding:0 16px;}
-.section{background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:20px;box-shadow:var(--shadow);border:1px solid var(--border);}
-h2{font-size:1.2rem;color:var(--primary-dark);margin-bottom:15px;display:flex;align-items:center;gap:8px;}
-.prayer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.p-card{background:var(--bg);padding:10px;border-radius:10px;display:flex;flex-direction:column;gap:5px;}
-.p-card span{font-size:0.9rem;font-weight:700;color:var(--muted);}
-input, select, textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;}
-.btn{width:100%;padding:14px;border:none;border-radius:8px;font-weight:700;cursor:pointer;transition:all 0.2s;}
-.btn-primary{background:var(--primary);color:#fff;}
-.btn-primary:active{transform:scale(0.98);background:var(--primary-dark);}
-.list-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);}
-.btn-del{background:none;border:none;color:var(--danger);font-size:1.2rem;cursor:pointer;}
+body{background:var(--bg);color:var(--text);font-family:'Heebo',sans-serif;min-height:100vh;padding-bottom:60px;}
+.app-header{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff8e7;padding:16px 20px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(90,58,10,.4);}
+.app-header h1{font-size:1.35rem;font-weight:900;letter-spacing:1px;}
+.app-header p{font-size:.78rem;opacity:.75;font-weight:300;margin-top:2px;}
+.header-inner{display:flex;align-items:center;gap:12px;}
+.header-inner::before{content:'✡';font-size:1.5rem;opacity:.8;}
+.nav-tabs{display:flex;background:rgba(0,0,0,.2);overflow-x:auto;gap:2px;padding:0 20px;}
+.tab-btn{flex-shrink:0;padding:10px 18px;border:none;background:none;color:rgba(255,248,231,.6);font-family:'Heebo',sans-serif;font-size:.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab-btn.active{color:#fff8e7;border-bottom-color:var(--primary-light);}
+.container{max-width:640px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px;}
+.tab-panel{display:none;flex-direction:column;gap:16px;}
+.tab-panel.active{display:flex;}
+.status-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,.85);border-radius:8px;border:1px solid var(--border);font-size:.78rem;color:var(--muted);}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0;}
+.status-dot.ok{background:#4caf50;box-shadow:0 0 0 3px rgba(76,175,80,.2);}
+.status-dot.err{background:#f44336;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border:1px solid rgba(200,164,74,.15);}
+.card-header{background:linear-gradient(135deg,#fdf6e3,#f5ead0);border-bottom:2px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:10px;}
+.ch-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;box-shadow:0 2px 8px rgba(139,94,26,.3);}
+.card-header h2{font-size:1.05rem;font-weight:700;color:var(--primary-dark);}
+.card-header p{font-size:.75rem;color:var(--muted);margin-top:1px;}
+.card-body{padding:18px;}
+.field{margin-bottom:14px;}
+.field:last-of-type{margin-bottom:0;}
+label{display:block;font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:5px;letter-spacing:.4px;}
+input[type=time],input[type=text],input[type=url],input[type=date],input[type=number],textarea,select{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;font-family:'Heebo',sans-serif;font-size:1rem;color:var(--text);background:#fafaf8;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;direction:rtl;}
+input[type=time]{direction:ltr;text-align:center;font-size:1.3rem;font-weight:700;letter-spacing:2px;color:var(--primary-dark);}
+input[type=date]{direction:ltr;}
+input[type=range]{width:100%;accent-color:var(--primary-light);margin-top:4px;}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(200,164,74,.2);background:#fff;}
+textarea{resize:vertical;min-height:70px;}
+.prayer-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.sub-label{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin:14px 0 10px;padding-top:12px;border-top:1px solid var(--border);}
+.sub-label:first-child{margin-top:0;border-top:none;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border:none;border-radius:10px;font-family:'Heebo',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;width:100%;font-size:1rem;padding:14px;box-shadow:0 4px 12px rgba(139,94,26,.3);}
+.btn-add{background:linear-gradient(135deg,#1b5e20,#388e3c);color:#fff;width:100%;padding:13px;}
+.btn-open{background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;width:100%;padding:13px;}
+.btn-del{background:none;border:none;color:var(--danger);padding:6px;border-radius:8px;cursor:pointer;font-size:1rem;line-height:1;transition:background .2s;flex-shrink:0;}
+.btn-del:hover{background:#ffebee;}
+.btn-ghost{background:rgba(139,94,26,.1);border:1px solid var(--border);color:var(--primary-dark);}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ann-list,.custom-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:320px;overflow-y:auto;}
+.list-item{display:flex;align-items:flex-start;gap:10px;background:#fafaf8;border:1px solid var(--border);border-radius:10px;padding:10px 12px;animation:sIn .3s ease;}
+@keyframes sIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.item-text{flex:1;font-size:.9rem;line-height:1.5;color:var(--text);word-break:break-word;}
+.item-meta{font-size:.72rem;color:var(--muted);display:block;margin-top:2px;}
+.empty-state{text-align:center;padding:20px;color:var(--muted);font-size:.9rem;}
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{background:#1a0e05;color:#fff8e7;padding:10px 22px;border-radius:50px;font-size:.9rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.3);animation:tIn .3s ease;white-space:nowrap;}
+.toast.ok{background:#1b5e20;}.toast.err{background:#b71c1c;}
+@keyframes tIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* editor */
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:16px 0;}
+.esec{font-size:.8rem;font-weight:700;color:var(--primary-dark);letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.esec::before{content:'▸';color:var(--primary-light);}
+.theme-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.tdot{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform .2s,border-color .2s;flex-shrink:0;}
+.tdot:hover{transform:scale(1.15);}
+.tdot.sel{border-color:#333;transform:scale(1.15);}
+.tdot[data-t=gold]{background:linear-gradient(135deg,#8b6914,#e8c87a);}
+.tdot[data-t=blue]{background:linear-gradient(135deg,#1a3a5c,#5b9bd5);}
+.tdot[data-t=green]{background:linear-gradient(135deg,#1a3a1c,#5cad6a);}
+.tdot[data-t=purple]{background:linear-gradient(135deg,#2d1a4a,#9b72cf);}
+.tdot[data-t=red]{background:linear-gradient(135deg,#3a1a1a,#d4625b);}
+.tdot[data-t=dark]{background:#111;border-color:#555;}
+.mode-toggle{display:flex;gap:8px;}
+.mode-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Heebo',sans-serif;font-size:.88rem;font-weight:600;color:var(--muted);transition:all .2s;text-align:center;}
+.mode-btn.active{border-color:var(--primary-light);background:rgba(200,164,74,.08);color:var(--primary-dark);}
+.img-tabs{display:flex;gap:4px;}
+.itab{flex:1;padding:8px;border:1px solid var(--border);border-radius:8px 8px 0 0;background:#f0ead5;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--muted);text-align:center;transition:all .2s;border-bottom:none;}
+.itab.active{background:#fff;color:var(--primary-dark);border-color:var(--primary-light);}
+.ipanel{display:none;border:1px solid var(--primary-light);border-radius:0 0 10px 10px;padding:12px;background:#fff;margin-bottom:10px;}
+.ipanel.active{display:block;}
+.img-prev{width:100%;max-height:130px;object-fit:contain;border-radius:8px;background:#f0ead5;margin-top:8px;display:none;}
+.img-prev.show{display:block;}
+.bg-prev{width:100%;height:90px;border-radius:8px;background-size:cover;background-position:center;border:2px solid var(--border);margin-top:8px;display:none;}
+.bg-prev.show{display:block;}
+/* schedule */
+.sched-wrap{background:#fafaf8;border:1px solid var(--border);border-radius:10px;padding:14px;}
+.sched-row{display:flex;gap:8px;margin-bottom:14px;}
+.sbtn{flex:1;padding:9px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-family:'Heebo',sans-serif;font-size:.82rem;font-weight:600;color:var(--muted);text-align:center;transition:all .2s;}
+.sbtn.active{border-color:var(--primary-light);color:var(--primary-dark);background:rgba(200,164,74,.08);}
+.spanel{display:none;}
+.spanel.active{display:block;}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.dcheck{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.dcheck input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary-light);cursor:pointer;}
+.dcheck label{font-size:.68rem;color:var(--muted);font-weight:600;cursor:pointer;}
+.dr-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* custom card */
+.ccard{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;}
+.ccard-img{width:56px;height:56px;flex-shrink:0;border-radius:8px;overflow:hidden;background:#f0ead5;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+.ccard-img img{width:100%;height:100%;object-fit:cover;}
+.ccard-info{flex:1;min-width:0;}
+.ccard-title{font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ccard-sub{font-size:.73rem;color:var(--muted);display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:3px;}
+.badge{padding:2px 7px;border-radius:20px;font-size:.67rem;font-weight:700;}
+.bf{background:#e3f2fd;color:#1565c0;}
+.bfooter{background:#f3e5f5;color:#6a1b9a;}
+.bon{background:#e8f5e9;color:#1b5e20;}
+.boff{background:#fafafa;color:#777;border:1px solid #ddd;}
+.bsched{background:#fff8e1;color:#e65100;}
+.ccard-actions{display:flex;gap:4px;flex-shrink:0;}
+@media(max-width:400px){.prayer-grid{grid-template-columns:1fr;}.container{padding:12px;}.days-grid{grid-template-columns:repeat(4,1fr);}}
+/* Toggle switch */
+.toggle-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+.toggle-track{width:44px;height:24px;background:#ddd;border-radius:12px;position:relative;transition:background .25s;flex-shrink:0;}
+.toggle-thumb{width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;transition:right .25s;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+input[type=checkbox]:checked+.toggle-track{background:var(--primary-light);}
+input[type=checkbox]:checked+.toggle-track .toggle-thumb{right:22px;}
+input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
+.toggle-label{font-size:.82rem;font-weight:700;color:var(--muted);}
+/* Holiday disabled notice */
+.holiday-disabled-notice{background:#f5f0e8;border:1px dashed var(--border);border-radius:10px;padding:12px 16px;text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:12px;}
+#holidayPrayersFields{opacity:.4;pointer-events:none;transition:opacity .3s;}
+#holidayPrayersFields.enabled{opacity:1;pointer-events:auto;}
+/* Shiur list item */
+.shiur-item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;animation:sIn .3s ease;}
+.shiur-badge{padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;flex-shrink:0;}
+.cat-shiur{background:#e8f5e9;color:#1b5e20;}
+.cat-tefila{background:#e3f2fd;color:#1565c0;}
+.cat-event{background:#fff3e0;color:#e65100;}
+.cat-class{background:#f3e5f5;color:#6a1b9a;}
+.cat-other{background:#f5f5f5;color:#555;}
 </style>
 </head>
 <body>
-
-<header class="app-header"><h1>ניהול לוח בית הכנסת</h1></header>
-
-<div class="container">
-  <div class="section">
-    <h2>🕒 זמני תפילה קבועים</h2>
-    <div class="prayer-grid" id="main-prayers">
-      <div class="p-card"><span>שחרית</span><input type="time" id="shacharit"></div>
-      <div class="p-card"><span>מנחה</span><input type="time" id="mincha"></div>
-      <div class="p-card"><span>ערבית</span><input type="time" id="arvit"></div>
-      <div class="p-card"><span>הודעה/אחר</span><input type="time" id="hodaya"></div>
-    </div>
-    <button class="btn btn-primary" style="margin-top:15px;" onclick="savePrayers()">עדכן זמנים</button>
-  </div>
-
-  <div class="section">
-    <h2>🕯️ תפילות שבת ומיוחדות</h2>
-    <div style="display:grid; grid-template-columns: 1fr 80px; gap:8px; margin-bottom:15px;">
-      <input type="text" id="special-name" placeholder="שם התפילה (לדוג' מנחה גדולה)">
-      <input type="time" id="special-time">
-    </div>
-    <button class="btn btn-primary" onclick="addSpecial()">הוסף תפילה לרשימה</button>
-    <div id="special-list" style="margin-top:15px;"></div>
-  </div>
-
-  <div class="section">
-    <h2>📚 שיעורי תורה</h2>
-    <input type="text" id="sh-title" placeholder="נושא השיעור" style="margin-bottom:8px;">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-      <select id="sh-day"><option value="0">כל יום</option><option value="1">ראשון</option><option value="2">שני</option><option value="3">שלישי</option><option value="4">רביעי</option><option value="5">חמישי</option><option value="6">שישי</option><option value="7">שבת</option></select>
-      <input type="time" id="sh-time">
-    </div>
-    <button class="btn btn-primary" onclick="addShiur()">הוסף שיעור</button>
-    <div id="shiurim-list" style="margin-top:15px;"></div>
+<div class="app-header">
+  <div class="header-inner"><div><h1>ניהול לוח בית הכנסת</h1><p>תפילות · הודעות · מסכים מיוחדים</p></div></div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" data-tab="prayers">🕍 תפילות</button>
+    <button class="tab-btn" data-tab="shiurim">📖 שיעורים</button>
+    <button class="tab-btn" data-tab="announcements">📢 הודעות</button>
+    <button class="tab-btn" data-tab="custom">✨ מסכים</button>
+    <button class="tab-btn" data-tab="settings">⚙️ הגדרות</button>
   </div>
 </div>
+<div class="container">
+  <div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">מתחבר...</span></div>
 
-<script>
-// חובה להדביק כאן את ה-firebaseConfig שלך!
-const firebaseConfig = {
-    apiKey: "AIzaSyBl99zWeW0SpVWs18P5GlJ-mDPTsiaSgEM",
-    authDomain: "gavlli-board.firebaseapp.com",
-    projectId: "gavlli-board",
-    storageBucket: "gavlli-board.firebasestorage.app",
-    messagingSenderId: "202183123739",
-    appId: "1:202183123739:web:5e2375d9eae0c0202e29be"
+  <!-- PRAYERS -->
+  <div id="tab-prayers" class="tab-panel active">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">🕍</div><div><h2>זמני תפילות</h2><p>ימות החול + שבת (שבת מוצג ביום שישי/שבת בלבד)</p></div></div>
+      <div class="card-body">
+        <div class="sub-label">ימות החול</div>
+        <div class="prayer-grid">
+          <div class="field"><label>שחרית</label><input type="time" id="p-shacharit"></div>
+          <div class="field"><label>מנחה</label><input type="time" id="p-mincha"></div>
+          <div class="field"><label>ערבית</label><input type="time" id="p-arvit"></div>
+        </div>
+        <div class="sub-label">שבת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>קבלת שבת</label><input type="time" id="p-kabbalat"></div>
+          <div class="field"><label>שחרית שבת</label><input type="time" id="p-shacharit_shabbat"></div>
+          <div class="field"><label>מנחה שבת</label><input type="time" id="p-mincha_shabbat"></div>
+          <div class="field"><label>ערבית מוצ"ש</label><input type="time" id="p-arvit_motzash"></div>
+        </div>
+        <div style="margin-top:16px;"><button class="btn btn-primary" id="savePrayersBtn" onclick="savePrayers()"><span id="savePrayersTxt">💾 שמור זמני תפילות</span></button></div>
+      </div>
+    </div>
+
+    <!-- Holiday prayers with toggle -->
+    <div class="card">
+      <div class="card-header">
+        <div class="ch-icon">🎉</div>
+        <div>
+          <h2>תפילות חגים</h2>
+          <p>מוצגות רק כאשר מופעלות — כבה/הדלק לפי הצורך</p>
+        </div>
+        <div style="margin-right:auto;">
+          <label class="toggle-wrap">
+            <input type="checkbox" id="holidayPrayersEnabled" onchange="toggleHolidayPrayers(this.checked)">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label" id="holidayToggleLabel">כבוי</span>
+          </label>
+        </div>
+      </div>
+      <div class="card-body" id="holidayPrayersBody">
+        <div class="holiday-disabled-notice" id="holidayDisabledNotice">
+          <span>⬆️ הפעל את תפילות החגים כדי שיוצגו על הלוח</span>
+        </div>
+        <div id="holidayPrayersFields">
+          <div class="sub-label">ראש השנה / יום כיפור</div>
+          <div class="prayer-grid">
+            <div class="field"><label>שחרית</label><input type="time" id="ph-rh_shacharit"></div>
+            <div class="field"><label>מוסף</label><input type="time" id="ph-rh_musaf"></div>
+            <div class="field"><label>מנחה</label><input type="time" id="ph-rh_mincha"></div>
+            <div class="field"><label>נעילה (יוה"כ)</label><input type="time" id="ph-yk_neilah"></div>
+          </div>
+          <div class="sub-label">סוכות / שמיני עצרת</div>
+          <div class="prayer-grid">
+            <div class="field"><label>שחרית</label><input type="time" id="ph-suk_shacharit"></div>
+            <div class="field"><label>מוסף</label><input type="time" id="ph-suk_musaf"></div>
+            <div class="field"><label>מנחה</label><input type="time" id="ph-suk_mincha"></div>
+            <div class="field"><label>ערבית</label><input type="time" id="ph-suk_arvit"></div>
+          </div>
+          <div class="sub-label">פסח / שבועות</div>
+          <div class="prayer-grid">
+            <div class="field"><label>שחרית</label><input type="time" id="ph-pss_shacharit"></div>
+            <div class="field"><label>מוסף</label><input type="time" id="ph-pss_musaf"></div>
+            <div class="field"><label>מנחה</label><input type="time" id="ph-pss_mincha"></div>
+            <div class="field"><label>ערבית</label><input type="time" id="ph-pss_arvit"></div>
+          </div>
+          <div class="sub-label">שם החג (יוצג על המסך)</div>
+          <div class="field"><input type="text" id="ph-holidayName" placeholder="לדוגמה: ראש השנה תשפ״ו"></div>
+        </div>
+        <div style="margin-top:14px;">
+          <button class="btn btn-primary" onclick="saveHolidayPrayers()"><span id="saveHolidayTxt">💾 שמור תפילות חגים</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHIURIM -->
+  <div id="tab-shiurim" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📖</div><div><h2>שיעורים ואירועים</h2><p>שיעורי תורה, הרצאות, אירועים קהילתיים</p></div></div>
+      <div class="card-body">
+        <div id="shiurimList" class="ann-list" style="max-height:400px;"><div class="empty-state">טוען...</div></div>
+
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec">הוסף שיעור / אירוע</div>
+
+        <div class="field"><label>כותרת</label><input type="text" id="sh-title" placeholder="לדוגמה: שיעור פרשת השבוע"></div>
+        <div class="prayer-grid">
+          <div class="field"><label>יום</label>
+            <select id="sh-day">
+              <option value="0">א׳ — ראשון</option>
+              <option value="1">ב׳ — שני</option>
+              <option value="2">ג׳ — שלישי</option>
+              <option value="3">ד׳ — רביעי</option>
+              <option value="4">ה׳ — חמישי</option>
+              <option value="5">ו׳ — שישי</option>
+              <option value="6">שבת</option>
+              <option value="-1">תאריך קבוע</option>
+            </select>
+          </div>
+          <div class="field"><label>שעה</label><input type="time" id="sh-time"></div>
+        </div>
+        <div class="prayer-grid">
+          <div class="field"><label>קטגוריה</label>
+            <select id="sh-category">
+              <option value="shiur">שיעור תורה</option>
+              <option value="tefila">תפילה מיוחדת</option>
+              <option value="event">אירוע קהילתי</option>
+              <option value="class">הרצאה</option>
+              <option value="other">אחר</option>
+            </select>
+          </div>
+          <div class="field"><label>מרצה / פרטים</label><input type="text" id="sh-details" placeholder="הרב ישראל ישראלי"></div>
+        </div>
+        <div class="field"><label>תיאור נוסף (אופציונלי)</label><textarea id="sh-desc" rows="2" placeholder="פרטים נוספים..."></textarea></div>
+        <div class="field"><label>תאריך (לאירוע חד-פעמי)</label><input type="date" id="sh-date"></div>
+
+        <button class="btn btn-add" onclick="addShiur()">➕ הוסף שיעור / אירוע</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANNOUNCEMENTS -->
+  <div id="tab-announcements" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📢</div><div><h2>הודעות</h2><p>מוצגות בפס התחתון של הלוח</p></div></div>
+      <div class="card-body">
+        <div id="annList" class="ann-list"><div class="empty-state">טוען...</div></div>
+        <div class="field"><label>הודעה חדשה (Ctrl+Enter)</label><textarea id="newAnn" placeholder="כתוב את ההודעה לקהל..." rows="3"></textarea></div>
+        <button class="btn btn-add" onclick="addAnn()">➕ הוסף הודעה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM SCREENS -->
+  <div id="tab-custom" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">✨</div><div><h2 id="editorTitle">הוסף מסך מיוחד</h2><p>טקסט, תמונה, רקע — בהתאמה מלאה</p></div></div>
+      <div class="card-body">
+
+        <div class="field">
+          <label>סוג הצגה</label>
+          <div class="mode-toggle">
+            <div class="mode-btn active" data-mode="fullscreen">📺 מסך שלם</div>
+            <div class="mode-btn" data-mode="footer">📌 פס תחתון</div>
+          </div>
+          <input type="hidden" id="cs-displayMode" value="fullscreen">
+        </div>
+
+        <div class="divider"></div>
+        <div class="esec">תוכן</div>
+
+        <div class="field" id="themeField">
+          <label>ערכת צבעים</label>
+          <div class="theme-picker">
+            <div class="tdot sel" data-t="gold" title="זהב"></div>
+            <div class="tdot" data-t="blue" title="כחול"></div>
+            <div class="tdot" data-t="green" title="ירוק"></div>
+            <div class="tdot" data-t="purple" title="סגול"></div>
+            <div class="tdot" data-t="red" title="אדום"></div>
+            <div class="tdot" data-t="dark" title="שחור"></div>
+          </div>
+          <input type="hidden" id="cs-theme" value="gold">
+        </div>
+
+        <div class="field" id="badgeField"><label>תגית קטנה (אופציונלי)</label><input type="text" id="cs-badge" placeholder="חג שמח / שבת שלום ..."></div>
+        <div class="field"><label>כותרת</label><input type="text" id="cs-title" placeholder="לדוגמה: שיעור תורה מיוחד"></div>
+        <div class="field"><label>טקסט גוף</label><textarea id="cs-body" rows="3" placeholder="פרטים, שעה, מקום..."></textarea></div>
+
+        <!-- Content image -->
+        <div class="field">
+          <label>תמונת תוכן (אופציונלי)</label>
+          <div class="img-tabs">
+            <div class="itab active" data-itab="url-ci">🔗 URL</div>
+            <div class="itab" data-itab="up-ci">⬆️ העלאה</div>
+          </div>
+          <div class="ipanel active" id="ipanel-url-ci">
+            <input type="url" id="cs-imageUrl" placeholder="https://...">
+            <img id="urlPreview" class="img-prev" alt="">
+          </div>
+          <div class="ipanel" id="ipanel-up-ci">
+            <input type="file" id="cs-imageFile" accept="image/*" style="display:none;">
+            <button class="btn btn-ghost" style="width:100%;padding:10px;" onclick="document.getElementById('cs-imageFile').click()">📁 בחר תמונה</button>
+            <img id="uploadPreview" class="img-prev" alt="">
+            <div id="uploadStatus" style="font-size:.75rem;color:var(--muted);margin-top:5px;"></div>
+          </div>
+        </div>
+
+        <!-- Background image -->
+        <div class="field" id="bgImageField">
+          <div class="divider" style="margin:4px 0 14px;"></div>
+          <div class="esec">תמונת רקע (למסך שלם)</div>
+          <div class="img-tabs">
+            <div class="itab active" data-itab="url-bg">🔗 URL רקע</div>
+            <div class="itab" data-itab="up-bg">⬆️ העלאת רקע</div>
+          </div>
+          <div class="ipanel active" id="ipanel-url-bg">
+            <input type="url" id="cs-bgImageUrl" placeholder="https://... תמונה לרקע">
+            <div id="bgUrlPreview" class="bg-prev"></div>
+          </div>
+          <div class="ipanel" id="ipanel-up-bg">
+            <input type="file" id="cs-bgImageFile" accept="image/*" style="display:none;">
+            <button class="btn btn-ghost" style="width:100%;padding:10px;" onclick="document.getElementById('cs-bgImageFile').click()">📁 בחר תמונת רקע</button>
+            <div id="bgUploadPreview" class="bg-prev"></div>
+            <div id="bgUploadStatus" style="font-size:.75rem;color:var(--muted);margin-top:5px;"></div>
+          </div>
+          <div style="margin-top:12px;">
+            <label>כהות רקע: <span id="dimVal">45</span>%</label>
+            <input type="range" id="cs-bgDim" min="0" max="90" value="45" oninput="document.getElementById('dimVal').textContent=this.value">
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="field" id="schedField">
+          <div class="divider" style="margin:4px 0 14px;"></div>
+          <div class="esec">תזמון הצגה</div>
+          <div class="sched-wrap">
+            <div class="sched-row">
+              <div class="sbtn active" data-st="always">🔄 תמיד</div>
+              <div class="sbtn" data-st="days">📅 ימים</div>
+              <div class="sbtn" data-st="daterange">📆 תאריכים</div>
+            </div>
+            <input type="hidden" id="cs-schedType" value="always">
+            <div class="spanel" id="sp-days">
+              <label style="margin-bottom:10px;display:block;">ימים שבהם יוצג המסך:</label>
+              <div class="days-grid">
+                <div class="dcheck"><input type="checkbox" id="day-0" value="0" checked><label for="day-0">א׳</label></div>
+                <div class="dcheck"><input type="checkbox" id="day-1" value="1" checked><label for="day-1">ב׳</label></div>
+                <div class="dcheck"><input type="checkbox" id="day-2" value="2" checked><label for="day-2">ג׳</label></div>
+                <div class="dcheck"><input type="checkbox" id="day-3" value="3" checked><label for="day-3">ד׳</label></div>
+                <div class="dcheck"><input type="checkbox" id="day-4" value="4" checked><label for="day-4">ה׳</label></div>
+                <div class="dcheck"><input type="checkbox" id="day-5" value="5" checked><label for="day-5">ו׳</label></div>
+                <div class="dcheck"><input type="checkbox" id="day-6" value="6" checked><label for="day-6">שבת</label></div>
+              </div>
+              <p style="font-size:.72rem;color:var(--muted);margin-top:8px;">לדוגמה: סמן ו׳ ושבת בלבד כדי להציג מסך שבתי</p>
+            </div>
+            <div class="spanel" id="sp-daterange">
+              <div class="dr-row">
+                <div class="field" style="margin:0;"><label>מתאריך</label><input type="date" id="cs-dateFrom"></div>
+                <div class="field" style="margin:0;"><label>עד תאריך</label><input type="date" id="cs-dateTo"></div>
+              </div>
+              <p style="font-size:.72rem;color:var(--muted);margin-top:8px;">מתאים לחגים ואירועים מיוחדים</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" id="orderField"><label>סדר הצגה</label><input type="text" id="cs-order" placeholder="1" style="width:80px;"></div>
+        <input type="hidden" id="cs-editId" value="">
+
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <button class="btn btn-add" onclick="saveCustomScreen()" style="flex:1;"><span id="csSubmitTxt">➕ הוסף מסך</span></button>
+          <button class="btn btn-ghost" onclick="resetCSForm()" style="width:90px;">ביטול</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">🗂</div><div><h2>מסכים קיימים</h2><p>✏️ לעריכה · ⏸ להשהיה · 🗑 למחיקה</p></div></div>
+      <div class="card-body" style="padding:12px;">
+        <div id="customList" class="custom-list" style="max-height:none;"><div class="empty-state">טוען...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📺</div><div><h2>לוח תצוגה</h2></div></div>
+      <div class="card-body"><button class="btn btn-open" onclick="window.open('display.html','_blank')">📺 פתח לוח תצוגה</button></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">ℹ️</div><div><h2>מבנה Firestore — custom_screens</h2></div></div>
+      <div class="card-body">
+        <pre style="font-family:monospace;font-size:.75rem;background:#f5f0e8;padding:12px;border-radius:8px;overflow-x:auto;line-height:1.85;color:#2d1a0a;">title          string
+body           string
+badge          string
+imageUrl       string   תמונת תוכן
+bgImageUrl     string   תמונת רקע
+bgDimOpacity   number   0–0.9
+theme          gold|blue|green|purple|red|dark
+displayMode    fullscreen|footer
+order          number
+active         boolean
+scheduleType   always|days|daterange
+activeDays     number[] [0=א׳ … 6=שבת]
+dateFrom       string   YYYY-MM-DD
+dateTo         string   YYYY-MM-DD</pre>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import{getFirestore,doc,collection,onSnapshot,setDoc,addDoc,updateDoc,deleteDoc,orderBy,query,serverTimestamp,getDoc}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+import{getStorage,ref,uploadBytesResumable,getDownloadURL}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+
+const app=initializeApp({apiKey:"AIzaSyBl99zWeW0SpVWs18P5GlJ-mDPTsiaSgEM",authDomain:"gavlli-board.firebaseapp.com",projectId:"gavlli-board",storageBucket:"gavlli-board.firebasestorage.app",messagingSenderId:"202183123739",appId:"1:202183123739:web:5e2375d9eae0c0202e29be",measurementId:"G-BZMPZXH2PF"});
+const db=getFirestore(app),storage=getStorage(app);
+
+const toast=(m,t='ok')=>{const w=document.getElementById('toastWrap'),el=document.createElement('div');el.className=`toast ${t}`;el.textContent=(t==='ok'?'✓ ':'✗ ')+m;w.appendChild(el);setTimeout(()=>el.remove(),3000);};
+const setStatus=(ok,m)=>{document.getElementById('statusDot').className='status-dot '+(ok?'ok':'err');document.getElementById('statusText').textContent=m;};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');});});
+
+// Prayers
+const PKEYS=['shacharit','mincha','arvit','kabbalat','shacharit_shabbat','mincha_shabbat','arvit_motzash'];
+onSnapshot(doc(db,'prayers','times'),s=>{if(!s.exists()){setStatus(true,'מחובר — אין נתונים');return;}const d=s.data();PKEYS.forEach(k=>{const e=document.getElementById('p-'+k);if(e&&d[k])e.value=d[k];});setStatus(true,'מחובר ✓');},e=>{setStatus(false,'שגיאה: '+e.message);toast('שגיאת חיבור','err');});
+window.savePrayers=async()=>{const btn=document.getElementById('savePrayersBtn');document.getElementById('savePrayersTxt').innerHTML='<span class="spinner"></span>';btn.disabled=true;const data={};PKEYS.forEach(k=>{const v=document.getElementById('p-'+k)?.value;if(v)data[k]=v;});try{await setDoc(doc(db,'prayers','times'),data,{merge:true});toast('נשמר!','ok');}catch(e){toast('שגיאה','err');}document.getElementById('savePrayersTxt').textContent='💾 שמור זמני תפילות';btn.disabled=false;};
+
+// Announcements
+onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),snap=>{const el=document.getElementById('annList');if(snap.empty){el.innerHTML='<div class="empty-state">אין הודעות.</div>';return;}el.innerHTML=snap.docs.map(d=>{const dt=d.data().createdAt?.toDate?.()?.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})||'';return`<div class="list-item"><div style="flex:1"><div class="item-text">${esc(d.data().text)}</div>${dt?`<span class="item-meta">${dt}</span>`:''}</div><button class="btn-del" data-id="${d.id}">🗑</button></div>`;}).join('');el.querySelectorAll('.btn-del').forEach(b=>b.addEventListener('click',()=>delAnn(b.dataset.id)));});
+window.addAnn=async()=>{const inp=document.getElementById('newAnn'),txt=inp.value.trim();if(!txt){toast('כתוב הודעה','err');inp.focus();return;}try{await addDoc(collection(db,'announcements'),{text:txt,createdAt:serverTimestamp()});inp.value='';toast('נוסף!','ok');}catch(e){toast('שגיאה','err');}};
+async function delAnn(id){if(!confirm('למחוק?'))return;try{await deleteDoc(doc(db,'announcements',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}}
+document.getElementById('newAnn').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)window.addAnn();});
+
+// Display mode
+document.querySelectorAll('.mode-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('cs-displayMode').value=b.dataset.mode;const full=b.dataset.mode==='fullscreen';['themeField','badgeField','bgImageField','schedField','orderField'].forEach(id=>document.getElementById(id).style.display=full?'block':'none');});});
+
+// Theme
+document.querySelectorAll('.tdot').forEach(d=>{d.addEventListener('click',()=>{document.querySelectorAll('.tdot').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');document.getElementById('cs-theme').value=d.dataset.t;});});
+
+// Image tabs
+function setupTabs(groupSel){document.querySelectorAll(groupSel+' .itab').forEach(t=>{t.addEventListener('click',()=>{const g=t.closest('.field');g.querySelectorAll('.itab').forEach(x=>x.classList.remove('active'));g.querySelectorAll('.ipanel').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('ipanel-'+t.dataset.itab).classList.add('active');});});}
+// Set up img tab groups via data attributes
+document.querySelectorAll('.itab').forEach(t=>{t.addEventListener('click',()=>{const g=t.closest('.field');g.querySelectorAll('.itab').forEach(x=>x.classList.remove('active'));g.querySelectorAll('.ipanel').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('ipanel-'+t.dataset.itab).classList.add('active');});});
+
+document.getElementById('cs-imageUrl').addEventListener('input',e=>{const u=e.target.value.trim(),p=document.getElementById('urlPreview');if(u){p.src=u;p.className='img-prev show';}else p.className='img-prev';});
+document.getElementById('cs-bgImageUrl').addEventListener('input',e=>{const u=e.target.value.trim(),p=document.getElementById('bgUrlPreview');if(u){p.style.backgroundImage=`url('${u}')`;p.className='bg-prev show';}else p.className='bg-prev';});
+
+let uploadedCI='',uploadedBG='';
+async function doUpload(file,prefix,statusId,previewId,isBg){
+  const st=document.getElementById(statusId);st.textContent='מעלה...';
+  const r=ref(storage,'screens/'+prefix+'_'+Date.now()+'_'+file.name);
+  const task=uploadBytesResumable(r,file);
+  return new Promise((res,rej)=>{task.on('state_changed',s=>st.textContent='מעלה... '+Math.round(s.bytesTransferred/s.totalBytes*100)+'%',e=>{st.textContent='שגיאה';toast('שגיאה','err');rej(e);},async()=>{const u=await getDownloadURL(task.snapshot.ref);st.textContent='✓ הועלה';const p=document.getElementById(previewId);if(isBg){p.style.backgroundImage=`url('${u}')`;p.className='bg-prev show';}else{p.src=u;p.className='img-prev show';}res(u);});});
+}
+document.getElementById('cs-imageFile').addEventListener('change',async e=>{if(e.target.files[0])uploadedCI=await doUpload(e.target.files[0],'ci','uploadStatus','uploadPreview',false);});
+document.getElementById('cs-bgImageFile').addEventListener('change',async e=>{if(e.target.files[0])uploadedBG=await doUpload(e.target.files[0],'bg','bgUploadStatus','bgUploadPreview',true);});
+
+// Schedule
+document.querySelectorAll('.sbtn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('cs-schedType').value=b.dataset.st;document.querySelectorAll('.spanel').forEach(x=>x.classList.remove('active'));const p=document.getElementById('sp-'+b.dataset.st);if(p)p.classList.add('active');});});
+
+// Save
+window.saveCustomScreen=async()=>{
+  const title=document.getElementById('cs-title').value.trim();
+  const body=document.getElementById('cs-body').value.trim();
+  const imageUrl=document.getElementById('cs-imageUrl').value.trim()||uploadedCI;
+  const bgImageUrl=document.getElementById('cs-bgImageUrl').value.trim()||uploadedBG;
+  if(!title&&!body&&!imageUrl&&!bgImageUrl){toast('מלא לפחות שדה אחד','err');return;}
+  const st=document.getElementById('cs-schedType').value;
+  const activeDays=st==='days'?[0,1,2,3,4,5,6].filter(i=>document.getElementById('day-'+i)?.checked):[];
+  const editId=document.getElementById('cs-editId').value;
+  const data={title,body,badge:document.getElementById('cs-badge').value.trim(),imageUrl,bgImageUrl,bgDimOpacity:parseFloat(document.getElementById('cs-bgDim').value)/100,theme:document.getElementById('cs-theme').value||'gold',displayMode:document.getElementById('cs-displayMode').value||'fullscreen',order:parseInt(document.getElementById('cs-order').value)||99,active:true,scheduleType:st,activeDays,dateFrom:document.getElementById('cs-dateFrom').value||'',dateTo:document.getElementById('cs-dateTo').value||'',updatedAt:serverTimestamp()};
+  const btn=document.querySelector('[onclick="saveCustomScreen()"]');
+  document.getElementById('csSubmitTxt').innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  try{if(editId){await updateDoc(doc(db,'custom_screens',editId),data);toast('עודכן!','ok');}else{data.createdAt=serverTimestamp();await addDoc(collection(db,'custom_screens'),data);toast('נוסף!','ok');}resetCSForm();}catch(e){toast('שגיאה: '+e.message,'err');}
+  document.getElementById('csSubmitTxt').textContent=editId?'💾 שמור שינויים':'➕ הוסף מסך';btn.disabled=false;
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+window.resetCSForm=()=>{
+  ['cs-title','cs-body','cs-badge','cs-imageUrl','cs-bgImageUrl','cs-order','cs-dateFrom','cs-dateTo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('cs-editId').value='';document.getElementById('cs-displayMode').value='fullscreen';
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='fullscreen'));
+  document.querySelectorAll('.tdot').forEach(d=>d.classList.toggle('sel',d.dataset.t==='gold'));document.getElementById('cs-theme').value='gold';
+  document.getElementById('cs-bgDim').value=45;document.getElementById('dimVal').textContent='45';
+  document.getElementById('urlPreview').className='img-prev';document.getElementById('uploadPreview').className='img-prev';
+  document.getElementById('bgUrlPreview').className='bg-prev';document.getElementById('bgUploadPreview').className='bg-prev';
+  ['uploadStatus','bgUploadStatus'].forEach(id=>document.getElementById(id).textContent='');
+  uploadedCI='';uploadedBG='';document.getElementById('csSubmitTxt').textContent='➕ הוסף מסך';document.getElementById('editorTitle').textContent='הוסף מסך מיוחד';
+  document.querySelectorAll('.sbtn').forEach(b=>b.classList.toggle('active',b.dataset.st==='always'));document.getElementById('cs-schedType').value='always';
+  document.querySelectorAll('.spanel').forEach(p=>p.classList.remove('active'));
+  [0,1,2,3,4,5,6].forEach(i=>{const c=document.getElementById('day-'+i);if(c)c.checked=true;});
+  ['themeField','badgeField','bgImageField','schedField','orderField'].forEach(id=>document.getElementById(id).style.display='block');
+};
 
-// טעינת תפילות קבועות
-db.collection('prayer_times').doc('current').onSnapshot(doc => {
-  if(doc.exists){
-    const d = doc.data();
-    ['shacharit','mincha','arvit','hodaya'].forEach(id => {
-      if(d[id]) document.getElementById(id).value = d[id];
-    });
-  }
+const SLBL={always:'תמיד',days:'ימים',daterange:'תאריכים'};
+onSnapshot(query(collection(db,'custom_screens'),orderBy('order','asc')),snap=>{
+  const el=document.getElementById('customList');
+  if(snap.empty){el.innerHTML='<div class="empty-state">אין מסכים. צור אחד למעלה.</div>';return;}
+  el.innerHTML=snap.docs.map(d=>{
+    const s=d.data();
+    const mc=s.displayMode==='footer'?'bfooter':'bf',ml=s.displayMode==='footer'?'פס תחתון':'מסך שלם';
+    const imgSrc=s.bgImageUrl||s.imageUrl;
+    const ih=imgSrc?`<img src="${imgSrc}" alt="" style="width:100%;height:100%;object-fit:cover;">`:'<span>🖼</span>';
+    return`<div class="ccard"><div class="ccard-img">${ih}</div><div class="ccard-info"><div class="ccard-title">${esc(s.title||'(ללא כותרת)')}</div>${s.body?`<div style="font-size:.73rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.body)}</div>`:''}<div class="ccard-sub"><span class="badge ${mc}">${ml}</span><span class="badge ${s.active?'bon':'boff'}">${s.active?'פעיל':'מושהה'}</span><span class="badge bsched">⏱ ${SLBL[s.scheduleType||'always']}</span></div></div><div class="ccard-actions"><button class="btn-del" style="color:#888;" onclick="toggleActive('${d.id}',${!s.active})">${s.active?'⏸':'▶️'}</button><button class="btn-del" style="color:#5c6bc0;" onclick="editCustom('${d.id}')">✏️</button><button class="btn-del" onclick="delCustom('${d.id}')">🗑</button></div></div>`;
+  }).join('');
 });
 
-async function savePrayers(){
-  const data = {};
-  ['shacharit','mincha','arvit','hodaya'].forEach(id => {
-    data[id] = document.getElementById(id).value;
-  });
-  await db.collection('prayer_times').doc('current').set(data, {merge:true});
-  alert('עודכן!');
-}
+window.toggleActive=async(id,active)=>{try{await updateDoc(doc(db,'custom_screens',id),{active});toast(active?'הופעל':'הושהה','ok');}catch{toast('שגיאה','err');}};
+window.editCustom=async(id)=>{
+  const snap=await getDoc(doc(db,'custom_screens',id));if(!snap.exists())return;const s=snap.data();
+  document.getElementById('cs-editId').value=id;
+  ['title','body','badge','imageUrl','bgImageUrl','order'].forEach(k=>{const e=document.getElementById('cs-'+k);if(e)e.value=s[k]||'';});
+  document.getElementById('cs-bgDim').value=Math.round((s.bgDimOpacity??0.45)*100);document.getElementById('dimVal').textContent=Math.round((s.bgDimOpacity??0.45)*100);
+  document.getElementById('cs-theme').value=s.theme||'gold';document.querySelectorAll('.tdot').forEach(d=>d.classList.toggle('sel',d.dataset.t===(s.theme||'gold')));
+  document.getElementById('cs-displayMode').value=s.displayMode||'fullscreen';document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===(s.displayMode||'fullscreen')));
+  const full=s.displayMode!=='footer';['themeField','badgeField','bgImageField','schedField','orderField'].forEach(id=>document.getElementById(id).style.display=full?'block':'none');
+  const st=s.scheduleType||'always';document.getElementById('cs-schedType').value=st;document.querySelectorAll('.sbtn').forEach(b=>b.classList.toggle('active',b.dataset.st===st));document.querySelectorAll('.spanel').forEach(p=>p.classList.remove('active'));const sp=document.getElementById('sp-'+st);if(sp)sp.classList.add('active');
+  [0,1,2,3,4,5,6].forEach(i=>{const c=document.getElementById('day-'+i);if(c)c.checked=(s.activeDays||[0,1,2,3,4,5,6]).includes(i);});
+  document.getElementById('cs-dateFrom').value=s.dateFrom||'';document.getElementById('cs-dateTo').value=s.dateTo||'';
+  if(s.imageUrl){const p=document.getElementById('urlPreview');p.src=s.imageUrl;p.className='img-prev show';}
+  if(s.bgImageUrl){const p=document.getElementById('bgUrlPreview');p.style.backgroundImage=`url('${s.bgImageUrl}')`;p.className='bg-prev show';}
+  document.getElementById('csSubmitTxt').textContent='💾 שמור שינויים';document.getElementById('editorTitle').textContent='עריכת מסך';
+  document.querySelector('[data-tab=custom]').click();window.scrollTo({top:0,behavior:'smooth'});
+};
+// ── Holiday Prayers ──
+const HP_KEYS=['rh_shacharit','rh_musaf','rh_mincha','yk_neilah','suk_shacharit','suk_musaf','suk_mincha','suk_arvit','pss_shacharit','pss_musaf','pss_mincha','pss_arvit','holidayName'];
 
-// תפילות שבת/מיוחדות
-async function addSpecial(){
-  const name = document.getElementById('special-name').value;
-  const time = document.getElementById('special-time').value;
-  if(!name || !time) return;
-  await db.collection('special_prayers').add({ name, time, createdAt: Date.now() });
-  document.getElementById('special-name').value = '';
-}
-
-db.collection('special_prayers').orderBy('createdAt').onSnapshot(snap => {
-  const el = document.getElementById('special-list');
-  el.innerHTML = snap.docs.map(doc => `
-    <div class="list-item">
-      <span><b>${doc.data().name}</b> - ${doc.data().time}</span>
-      <button class="btn-del" onclick="deleteDoc('special_prayers','${doc.id}')">🗑</button>
-    </div>
-  `).join('');
+onSnapshot(doc(db,'prayers','holiday'),snap=>{
+  if(!snap.exists()) return;
+  const d=snap.data();
+  HP_KEYS.forEach(k=>{const e=document.getElementById('ph-'+k);if(e&&d[k])e.value=d[k];});
+  const enabled=!!d.enabled;
+  document.getElementById('holidayPrayersEnabled').checked=enabled;
+  document.getElementById('holidayToggleLabel').textContent=enabled?'פעיל':'כבוי';
+  document.getElementById('holidayPrayersFields').classList.toggle('enabled',enabled);
+  document.getElementById('holidayDisabledNotice').style.display=enabled?'none':'block';
 });
 
-// שיעורים
-async function addShiur(){
-  const title = document.getElementById('sh-title').value;
-  if(!title) return;
-  await db.collection('shiurim').add({
+window.toggleHolidayPrayers=async(checked)=>{
+  document.getElementById('holidayToggleLabel').textContent=checked?'פעיל':'כבוי';
+  document.getElementById('holidayPrayersFields').classList.toggle('enabled',checked);
+  document.getElementById('holidayDisabledNotice').style.display=checked?'none':'block';
+  try{await setDoc(doc(db,'prayers','holiday'),{enabled:checked},{merge:true});toast(checked?'תפילות חגים הופעלו ✓':'תפילות חגים כובו','ok');}
+  catch{toast('שגיאה','err');}
+};
+
+window.saveHolidayPrayers=async()=>{
+  const btn=document.querySelector('[onclick="saveHolidayPrayers()"]');
+  document.getElementById('saveHolidayTxt').innerHTML='<span class="spinner"></span>';
+  btn.disabled=true;
+  const data={enabled:document.getElementById('holidayPrayersEnabled').checked};
+  HP_KEYS.forEach(k=>{const v=document.getElementById('ph-'+k)?.value;if(v)data[k]=v;});
+  try{await setDoc(doc(db,'prayers','holiday'),data,{merge:true});toast('תפילות חגים נשמרו!','ok');}
+  catch{toast('שגיאה','err');}
+  document.getElementById('saveHolidayTxt').textContent='💾 שמור תפילות חגים';
+  btn.disabled=false;
+};
+
+// ── Shiurim ──
+const CAT_LABELS={shiur:'שיעור תורה',tefila:'תפילה מיוחדת',event:'אירוע',class:'הרצאה',other:'אחר'};
+const DAY_LABELS=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','שבת','תאריך קבוע'];
+
+onSnapshot(query(collection(db,'shiurim'),orderBy('createdAt','desc')),snap=>{
+  const el=document.getElementById('shiurimList');
+  if(snap.empty){el.innerHTML='<div class="empty-state">אין שיעורים. הוסף למטה.</div>';return;}
+  el.innerHTML=snap.docs.map(d=>{
+    const s=d.data();
+    const dayStr=s.day>=0?DAY_LABELS[s.day]||'':(s.date||'');
+    const catCls='cat-'+(s.category||'other');
+    const catLbl=CAT_LABELS[s.category]||'אחר';
+    return`<div class="shiur-item">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.92rem;margin-bottom:3px;">${esc(s.title||'')}</div>
+        <div style="font-size:.78rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span class="shiur-badge ${catCls}">${catLbl}</span>
+          ${dayStr?`<span>📅 ${dayStr}</span>`:''}
+          ${s.time?`<span>🕐 ${s.time}</span>`:''}
+          ${s.details?`<span>👤 ${esc(s.details)}</span>`:''}
+        </div>
+        ${s.desc?`<div style="font-size:.78rem;color:var(--muted);margin-top:3px;">${esc(s.desc)}</div>`:''}
+      </div>
+      <button class="btn-del" data-id="${d.id}">🗑</button>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.btn-del').forEach(b=>b.addEventListener('click',()=>delShiur(b.dataset.id)));
+});
+
+window.addShiur=async()=>{
+  const title=document.getElementById('sh-title').value.trim();
+  if(!title){toast('נא למלא כותרת','err');document.getElementById('sh-title').focus();return;}
+  const data={
     title,
-    day: parseInt(document.getElementById('sh-day').value),
-    time: document.getElementById('sh-time').value,
-    createdAt: Date.now()
-  });
-  document.getElementById('sh-title').value = '';
-}
+    day:    parseInt(document.getElementById('sh-day').value),
+    time:   document.getElementById('sh-time').value||'',
+    category:document.getElementById('sh-category').value,
+    details:document.getElementById('sh-details').value.trim(),
+    desc:   document.getElementById('sh-desc').value.trim(),
+    date:   document.getElementById('sh-date').value||'',
+    createdAt:serverTimestamp(),
+  };
+  try{
+    await addDoc(collection(db,'shiurim'),data);
+    ['sh-title','sh-time','sh-details','sh-desc','sh-date'].forEach(id=>document.getElementById(id).value='');
+    toast('שיעור נוסף!','ok');
+  }catch{toast('שגיאה','err');}
+};
 
-db.collection('shiurim').onSnapshot(snap => {
-  const el = document.getElementById('shiurim-list');
-  el.innerHTML = snap.docs.map(doc => `
-    <div class="list-item">
-      <span>${doc.data().title} (${doc.data().time})</span>
-      <button class="btn-del" onclick="deleteDoc('shiurim','${doc.id}')">🗑</button>
-    </div>
-  `).join('');
-});
-
-async function deleteDoc(col, id){
-  if(confirm('למחוק?')) await db.collection(col).doc(id).delete();
-}
-</script>
+async function delShiur(id){
+  if(!confirm('למחוק שיעור זה?'))return;
+  try{await deleteDoc(doc(db,'shiurim',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}
+}</script>
 </body>
 </html>
