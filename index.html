@@ -419,12 +419,13 @@ const LOCATION   = { lat:31.2516, lng:34.7915, tzid:'Asia/Jerusalem', city:'Be\'
 const HEBCAL     = 'https://www.hebcal.com';
 const CANDLE_MIN = 30; // דקות לפני שקיעה להדלקת נרות — באר שבע
 const FOOTER_INT = 10000;  // 10 שניות בין שקופיות footer
-const CYCLE_A_MS = 20000;  // 20 שניות — מסך A
-const CYCLE_B_MS = 20000;  // 20 שניות — מסך B
-const CYCLE_C_MS = 20000;  // 20 שניות — מסך C
-const CYCLE_D_MS = 20000;  // 20 שניות — מסך D (ספירת העומר)
-let   CYCLE_MS   = 20000;  // זמן כללי (נטען מ-Firebase)
-const CYCLE_E_MS = 25000;  // 25 שניות — מסך E (ספרי תורה)
+const CYCLE_A_MS = 20000;  // default — מסך A
+const CYCLE_B_MS = 20000;  // default — מסך B
+const CYCLE_C_MS = 20000;  // default — מסך C
+const CYCLE_D_MS = 20000;  // default — מסך D (ספירת העומר)
+const CYCLE_E_MS = 25000;  // default — מסך E (ספרי תורה)
+// Dynamic values loaded from Firebase:
+let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000};
 
 const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
 const WEEKDAY_PRAYERS = [{key:'shacharit',label:'שחרית'},{key:'mincha',label:'מנחה'},{key:'arvit',label:'ערבית'}];
@@ -644,9 +645,13 @@ setInterval(fetchHebcal, 3600*1000);
 onSnapshot(doc(db,'settings','display'),snap=>{
   if(!snap.exists()) return;
   const d=snap.data();
-  if(d.cycleSeconds && d.cycleSeconds>0){
-    CYCLE_MS = d.cycleSeconds * 1000;
-  }
+  if(d.cycle_A) CYCLES.A=d.cycle_A*1000;
+  if(d.cycle_B) CYCLES.B=d.cycle_B*1000;
+  if(d.cycle_C) CYCLES.C=d.cycle_C*1000;
+  if(d.cycle_D) CYCLES.D=d.cycle_D*1000;
+  if(d.cycle_E) CYCLES.E=d.cycle_E*1000;
+  // backward compat: old single cycleSeconds
+  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
 });
 
 
@@ -1079,7 +1084,8 @@ function showNextScreen(){
   allScreenIds.forEach(id=>document.getElementById(id).classList.remove('active'));
   if(current==='screenC'){if(!loadNextScreenC()){rotIdx++;showNextScreen();return;}}
   document.getElementById(current).classList.add('active');
-  const dur = current==='screenE' ? CYCLE_E_MS : CYCLE_MS;
+  const screenKey=current.replace('screen',''); // 'A','B','C','D','E'
+  const dur=CYCLES[screenKey]||CYCLES.A||20000;
   rotIdx++;
   if(current==='screenC'&&screenCIdx<screenCQueue.length){
     rotTimer=setTimeout(()=>{loadNextScreenC();rotTimer=setTimeout(showNextScreen,dur);},dur);

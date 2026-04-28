@@ -39,6 +39,10 @@ input[type=range]{width:100%;accent-color:var(--primary-light);margin-top:4px;}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(200,164,74,.2);background:#fff;}
 textarea{resize:vertical;min-height:70px;}
 .prayer-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cycle-row{display:flex;align-items:center;gap:12px;background:rgba(139,94,26,.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;}
+.cycle-row-label{font-size:.82rem;font-weight:700;color:var(--primary-dark);min-width:200px;flex-shrink:0;}
+.cycle-row input[type=range]{flex:1;accent-color:var(--primary);}
+.cycle-row-val{min-width:64px;font-weight:900;font-size:.95rem;color:var(--primary-dark);text-align:center;background:rgba(139,94,26,.12);border-radius:8px;padding:4px 8px;}
 .sub-label{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin:14px 0 10px;padding-top:12px;border-top:1px solid var(--border);}
 .sub-label:first-child{margin-top:0;border-top:none;}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border:none;border-radius:10px;font-family:'Heebo',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
@@ -482,16 +486,16 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
       <div class="card-body"><button class="btn btn-open" onclick="window.open('index.html','_blank')">📺 פתח לוח תצוגה</button></div>
     </div>
     <div class="card">
-      <div class="card-header"><div class="ch-icon">⏱</div><div><h2>זמן הצגת מסך</h2><p>כמה שניות כל מסך מוצג לפני מעבר לבא</p></div></div>
+      <div class="card-header"><div class="ch-icon">⏱</div><div><h2>זמן הצגת מסכים</h2><p>קבע כמה שניות כל מסך מוצג בנפרד</p></div></div>
       <div class="card-body">
-        <div class="field">
-          <label>זמן כל מסך (שניות)</label>
-          <div style="display:flex;align-items:center;gap:14px;">
-            <input type="range" id="set-cycle" min="5" max="120" step="5" value="20" style="flex:1;" oninput="document.getElementById('set-cycle-val').textContent=this.value+' שניות'">
-            <span id="set-cycle-val" style="min-width:70px;font-weight:700;font-size:.95rem;color:var(--primary-dark);text-align:center;">20 שניות</span>
-          </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="cycle-row" data-screen="A" data-label="מסך A — זמני תפילות שבת"></div>
+          <div class="cycle-row" data-screen="B" data-label="מסך B — זמני תפילות שבועי"></div>
+          <div class="cycle-row" data-screen="C" data-label="מסך C — מסכים מותאמים אישית"></div>
+          <div class="cycle-row" data-screen="D" data-label="מסך D — ספירת העומר"></div>
+          <div class="cycle-row" data-screen="E" data-label="מסך E — ספרי תורה"></div>
         </div>
-        <button class="btn btn-primary" onclick="saveCycleSetting()">💾 שמור</button>
+        <button class="btn btn-primary" onclick="saveCycleSettings()" style="margin-top:16px;">💾 שמור הכל</button>
       </div>
     </div>
     <div class="card">
@@ -978,21 +982,38 @@ window.deleteSefer=async(id)=>{
   }
 })();
 
-// ── הגדרת זמן מסך ──
+// ── הגדרת זמן מסך לכל מסך בנפרד ──
+const SCREEN_LABELS={A:'מסך A — זמני תפילות שבת',B:'מסך B — זמני תפילות שבועי',C:'מסך C — מסכים מותאמים',D:'מסך D — ספירת העומר',E:'מסך E — ספרי תורה'};
+const CYCLE_DEFAULTS={A:20,B:20,C:20,D:20,E:25};
+
+function buildCycleRows(data={}){
+  document.querySelectorAll('.cycle-row').forEach(row=>{
+    const s=row.dataset.screen;
+    const val=data['cycle_'+s]||CYCLE_DEFAULTS[s]||20;
+    row.innerHTML=`
+      <span class="cycle-row-label">${SCREEN_LABELS[s]||('מסך '+s)}</span>
+      <input type="range" min="5" max="180" step="5" value="${val}"
+        oninput="this.nextElementSibling.textContent=this.value+' שנ'"
+        id="set-cycle-${s}">
+      <span class="cycle-row-val">${val} שנ</span>`;
+  });
+}
+buildCycleRows();
+
 onSnapshot(doc(db,'settings','display'),snap=>{
   if(!snap.exists()) return;
-  const d=snap.data();
-  if(d.cycleSeconds){
-    const el=document.getElementById('set-cycle');
-    if(el){ el.value=d.cycleSeconds; document.getElementById('set-cycle-val').textContent=d.cycleSeconds+' שניות'; }
-  }
+  buildCycleRows(snap.data());
 });
 
-window.saveCycleSetting=async()=>{
-  const val=parseInt(document.getElementById('set-cycle').value)||20;
+window.saveCycleSettings=async()=>{
+  const updates={};
+  ['A','B','C','D','E'].forEach(s=>{
+    const el=document.getElementById('set-cycle-'+s);
+    if(el) updates['cycle_'+s]=parseInt(el.value)||20;
+  });
   try{
-    await setDoc(doc(db,'settings','display'),{cycleSeconds:val},{merge:true});
-    toast('זמן מסך עודכן ל-'+val+' שניות','ok');
+    await setDoc(doc(db,'settings','display'),updates,{merge:true});
+    toast('זמני מסכים נשמרו','ok');
   }catch(e){toast('שגיאה','err');}
 };
 
