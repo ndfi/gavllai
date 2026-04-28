@@ -30,8 +30,8 @@
   .date-block{text-align:right;}
   .hebrew-date-big{font-size:clamp(1.4rem,3vw,2.1rem);color:var(--gold-light);font-weight:900;line-height:1.2;letter-spacing:1px;}
   .greg-date-small{font-size:clamp(.65rem,1.3vw,.85rem);color:rgba(232,200,122,.55);font-family:'Heebo',sans-serif;font-weight:300;margin-top:2px;direction:ltr;text-align:right;}
-  .parasha-badge{text-align:center;background:linear-gradient(135deg,var(--brown-light),var(--brown-mid));border:2px solid var(--gold);border-radius:50px;padding:6px 24px;font-size:clamp(.85rem,1.8vw,1.1rem);color:var(--gold-light);white-space:nowrap;}
-  .parasha-badge strong{color:var(--text-bright);font-weight:900;display:block;font-size:clamp(1rem,2.2vw,1.4rem);}
+  .parasha-badge{text-align:center;background:linear-gradient(135deg,var(--brown-light),var(--brown-mid));border:2px solid var(--gold);border-radius:50px;padding:6px 24px;font-size:clamp(.93rem,1.98vw,1.21rem);color:var(--gold-light);white-space:nowrap;}
+  .parasha-badge strong{color:var(--text-bright);font-weight:900;display:block;font-size:clamp(1.1rem,2.42vw,1.54rem);}
   .omer-info{text-align:left;font-size:clamp(.85rem,1.8vw,1.1rem);color:var(--gold-light);line-height:1.5;}
 
   /* Today info panel — top-left of header */
@@ -116,8 +116,9 @@
   .fz-card{background:rgba(200,164,74,.08);border:1px solid rgba(200,164,74,.28);border-radius:10px;padding:7px 14px;text-align:center;min-width:90px;}
   .fz-name{font-size:clamp(.77rem,1.29vw,.94rem);color:var(--gold);display:block;margin-bottom:2px;}
   .fz-time{font-size:clamp(1.05rem,2.11vw,1.47rem);font-weight:700;color:var(--text-bright);direction:ltr;display:block;}
-  .footer-announcements{display:flex;flex-direction:column;gap:5px;overflow:hidden;max-height:90px;}
-  .ann-line{font-size:clamp(1.05rem,1.99vw,1.29rem);color:var(--parchment);padding-right:18px;position:relative;line-height:1.3;}
+  .footer-announcements{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;overflow:hidden;max-height:86px;width:100%;}
+  .footer-announcements.single-col{grid-template-columns:1fr;}
+  .ann-line{font-size:clamp(.98rem,1.85vw,1.22rem);color:var(--parchment);padding-right:18px;position:relative;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ann-line::before{content:'◈';position:absolute;right:0;color:var(--gold);font-size:.75rem;top:4px;}
   .slide-dots{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:7px;}
   .dot{width:6px;height:6px;border-radius:50%;background:rgba(200,164,74,.25);transition:all .3s;}
@@ -247,15 +248,18 @@
   .cs-body{font-size:clamp(1rem,2.5vw,2rem);font-weight:400;line-height:1.6;color:var(--parchment);font-family:'Heebo',sans-serif;}
   .cs-badge{display:inline-block;background:rgba(200,164,74,.15);border:1px solid var(--gold);border-radius:50px;padding:4px 18px;font-size:clamp(.75rem,1.4vw,1rem);color:var(--gold-light);letter-spacing:2px;width:fit-content;}
 
-  /* Themes */
-  .theme-gold{--cs-accent:#c8a44a;--cs-title-color:#e8c87a;}
-  .theme-blue{--cs-accent:#5b9bd5;--cs-title-color:#a8d4f5;}
-  .theme-green{--cs-accent:#5cad6a;--cs-title-color:#a8dbb0;}
-  .theme-purple{--cs-accent:#9b72cf;--cs-title-color:#cdb0f5;}
-  .theme-red{--cs-accent:#d4625b;--cs-title-color:#f5a8a4;}
-  .cs-title{color:var(--cs-title-color,var(--gold-light));}
-  .cs-image-wrap{border-color:var(--cs-accent,var(--gold));}
-  .cs-badge{border-color:var(--cs-accent,var(--gold));color:var(--cs-title-color,var(--gold-light));}
+  /* Screen E — ספרי תורה */
+  #screenE{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(160deg,#1a0e05 0%,#2d1a0a 50%,#1a0e05 100%);padding:40px 60px;}
+  .sefer-screen-title{font-size:clamp(2rem,5vw,4rem);font-weight:900;color:var(--gold-light);letter-spacing:4px;text-align:center;margin-bottom:8px;text-shadow:0 0 30px rgba(200,164,74,.4);}
+  .sefer-screen-parasha{font-size:clamp(1.1rem,2.5vw,1.8rem);color:var(--gold);text-align:center;margin-bottom:36px;letter-spacing:2px;}
+  .sefer-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(20px,3vw,48px);width:100%;}
+  .sefer-card{background:linear-gradient(160deg,rgba(45,26,10,.9),rgba(26,14,5,.95));border:2px solid var(--gold);border-radius:20px;padding:clamp(14px,2vw,28px) clamp(20px,3vw,40px);display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 0 30px rgba(200,164,74,.15),inset 0 1px 0 rgba(232,200,122,.1);min-width:180px;max-width:260px;flex:1;}
+  .sefer-card-img{width:clamp(80px,10vw,140px);height:clamp(100px,14vw,180px);object-fit:contain;border-radius:8px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));}
+  .sefer-card-icon{font-size:clamp(3rem,7vw,6rem);line-height:1;}
+  .sefer-card-name{font-size:clamp(1.1rem,2.2vw,1.7rem);font-weight:900;color:var(--text-bright);text-align:center;letter-spacing:1px;}
+  .sefer-screen-deco{position:absolute;font-size:clamp(6rem,15vw,14rem);opacity:.04;pointer-events:none;user-select:none;}
+  .sefer-screen-deco.tl{top:20px;right:30px;}
+  .sefer-screen-deco.br{bottom:20px;left:30px;}
 </style>
 </head>
 <body>
@@ -376,7 +380,18 @@
   </div>
 </div>
 
-<!-- Offline banner -->
+<!-- SCREEN E — ספרי תורה (שישי ושבת בלבד) -->
+<div id="screenE" class="screen">
+  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+  <div class="sefer-screen-deco tl">✡</div>
+  <div class="sefer-screen-deco br">✡</div>
+  <div class="sefer-screen-title">📜 ספרי תורה לשבת</div>
+  <div class="sefer-screen-parasha" id="sefer-parasha-label"></div>
+  <div class="sefer-grid" id="sefer-grid"></div>
+</div>
+
+
 <div id="offlineBanner">
   ⚠️ אין חיבור לאינטרנט — מנסה להתחבר מחדש...
   <span id="offlineCountdown"></span>
@@ -408,6 +423,8 @@ const CYCLE_A_MS = 20000;  // 20 שניות — מסך A
 const CYCLE_B_MS = 20000;  // 20 שניות — מסך B
 const CYCLE_C_MS = 20000;  // 20 שניות — מסך C
 const CYCLE_D_MS = 20000;  // 20 שניות — מסך D (ספירת העומר)
+let   CYCLE_MS   = 20000;  // זמן כללי (נטען מ-Firebase)
+const CYCLE_E_MS = 25000;  // 25 שניות — מסך E (ספרי תורה)
 
 const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
 const WEEKDAY_PRAYERS = [{key:'shacharit',label:'שחרית'},{key:'mincha',label:'מנחה'},{key:'arvit',label:'ערבית'}];
@@ -623,7 +640,16 @@ fetchHebcal().then(()=>{
 });
 setInterval(fetchHebcal, 3600*1000);
 
-// ── Firebase: Prayer times ──
+// ── Firebase: הגדרות תצוגה ──
+onSnapshot(doc(db,'settings','display'),snap=>{
+  if(!snap.exists()) return;
+  const d=snap.data();
+  if(d.cycleSeconds && d.cycleSeconds>0){
+    CYCLE_MS = d.cycleSeconds * 1000;
+  }
+});
+
+
 onSnapshot(doc(db,'prayers','times'),snap=>{
   if(!snap.exists()) return;
   prayerData=snap.data();
@@ -672,9 +698,14 @@ function buildScreenB(prayers,custom=[]) {
 // ── Firebase: Announcements ──
 onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),snap=>{
   const el=document.getElementById('fa-container');
-  el.innerHTML=snap.empty
-    ?'<span style="color:rgba(200,164,74,.4)">אין הודעות</span>'
-    :snap.docs.map(d=>`<div class="ann-line">${d.data().text}</div>`).join('');
+  if(snap.empty){
+    el.innerHTML='<span style="color:rgba(200,164,74,.4)">אין הודעות</span>';
+    el.className='footer-announcements single-col';
+    return;
+  }
+  const count=snap.docs.length;
+  el.className='footer-announcements'+(count<=2?' single-col':'');
+  el.innerHTML=snap.docs.map(d=>`<div class="ann-line">${d.data().text}</div>`).join('');
 });
 
 // ── Firebase: Holiday Prayers ──
@@ -987,7 +1018,7 @@ setInterval(checkOnline, 30000); // background check every 30s
 checkOnline();
 
 // ── Master rotation ──
-const allScreenIds=['screenA','screenB','screenC','screenD'];
+const allScreenIds=['screenA','screenB','screenC','screenD','screenE'];
 let rotation=[],rotIdx=0,rotTimer=null;
 
 function isOmerDisplayTime(){
@@ -1003,6 +1034,42 @@ function buildRotation(){
   if(screenCQueue.length) rotation.push('screenC');
   const omerEl = document.getElementById('screenD');
   if(omerEl && omerEl.getAttribute('data-omer-active')==='true' && isOmerDisplayTime()) rotation.push('screenD');
+  // Screen E — ספרי תורה — רק בשישי ושבת
+  const day=new Date().getDay();
+  if((day===5||day===6) && document.getElementById('screenE').getAttribute('data-sefer-active')==='true') rotation.push('screenE');
+}
+
+// ── Firebase: ספרי תורה ──
+onSnapshot(query(collection(db,'sefer_torah'),orderBy('order','asc')), snap=>{
+  const seferim = snap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.active);
+  const grid = document.getElementById('sefer-grid');
+  const screen = document.getElementById('screenE');
+  if(!seferim.length){
+    screen.setAttribute('data-sefer-active','false');
+    grid.innerHTML='';
+    return;
+  }
+  screen.setAttribute('data-sefer-active','true');
+  grid.innerHTML = seferim.map(s=>{
+    const img = s.imageUrl
+      ? `<img class="sefer-card-img" src="${s.imageUrl}" alt="${s.name||''}" loading="lazy">`
+      : `<div class="sefer-card-icon">📜</div>`;
+    return `<div class="sefer-card">${img}<div class="sefer-card-name">${s.name||''}</div></div>`;
+  }).join('');
+  // Update parasha label
+  const parEl = document.getElementById('parasha');
+  const label = document.getElementById('sefer-parasha-label');
+  if(label && parEl) label.textContent = parEl.textContent || '';
+});
+
+// Also update sefer parasha label when parasha loads
+const _origParasha = document.getElementById('parasha');
+if(_origParasha){
+  const observer = new MutationObserver(()=>{
+    const lbl = document.getElementById('sefer-parasha-label');
+    if(lbl) lbl.textContent = _origParasha.textContent||'';
+  });
+  observer.observe(_origParasha,{childList:true,subtree:true,characterData:true});
 }
 
 function showNextScreen(){
@@ -1012,7 +1079,7 @@ function showNextScreen(){
   allScreenIds.forEach(id=>document.getElementById(id).classList.remove('active'));
   if(current==='screenC'){if(!loadNextScreenC()){rotIdx++;showNextScreen();return;}}
   document.getElementById(current).classList.add('active');
-  const dur = current==='screenB'?CYCLE_B_MS : current==='screenC'?CYCLE_C_MS : current==='screenD'?CYCLE_D_MS : CYCLE_A_MS;
+  const dur = current==='screenE' ? CYCLE_E_MS : CYCLE_MS;
   rotIdx++;
   if(current==='screenC'&&screenCIdx<screenCQueue.length){
     rotTimer=setTimeout(()=>{loadNextScreenC();rotTimer=setTimeout(showNextScreen,dur);},dur);

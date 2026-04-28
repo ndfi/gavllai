@@ -144,6 +144,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     <button class="tab-btn" data-tab="shiurim">📖 שיעורים</button>
     <button class="tab-btn" data-tab="announcements">📢 הודעות</button>
     <button class="tab-btn" data-tab="custom">✨ מסכים</button>
+    <button class="tab-btn" data-tab="sefer">📜 ספרי תורה</button>
     <button class="tab-btn" data-tab="settings">⚙️ הגדרות</button>
     <button class="tab-btn" data-tab="export">📋 ייצוא הודעה</button>
   </div>
@@ -442,6 +443,78 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     </div>
   </div>
 
+  <!-- SEFER TORAH -->
+  <div id="tab-sefer" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📜</div><div><h2>ספרי תורה</h2><p>מסך מוצג בשישי ושבת בלבד — כיבוי אוטומטי ביום ראשון</p></div></div>
+      <div class="card-body">
+        <div id="seferList" class="ann-list" style="max-height:400px;min-height:60px;"><div class="empty-state">טוען...</div></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec" id="seferFormTitle">הוסף ספר תורה</div>
+        <div class="field"><label>שם הספר</label><input type="text" id="sf-name" placeholder='לדוגמה: "ויקרא", "ספר הזקנים"'></div>
+        <div class="field"><label>תמונה — העלה קובץ</label>
+          <input type="file" id="sf-img-file" accept="image/*" style="display:none" onchange="handleSeferImg(this)">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-open" style="width:auto;padding:9px 16px;font-size:.85rem;" onclick="document.getElementById('sf-img-file').click()">📷 בחר תמונה</button>
+            <span id="sf-img-name" style="font-size:.78rem;color:var(--muted);">לא נבחר קובץ</span>
+          </div>
+          <div id="sf-img-preview" style="margin-top:8px;display:none;"><img id="sf-preview-img" style="max-height:100px;border-radius:8px;border:2px solid var(--border);"></div>
+        </div>
+        <div class="field"><label>— או הכנס קישור לתמונה (URL)</label>
+          <input type="url" id="sf-img-url-input" placeholder="https://..." oninput="previewSeferUrl(this.value)">
+          <div id="sf-url-preview" style="margin-top:8px;display:none;"><img id="sf-url-preview-img" style="max-height:100px;border-radius:8px;border:2px solid var(--border);" onerror="this.parentElement.style.display='none'"></div>
+        </div>
+        <div class="field"><label>סדר הצגה</label><input type="number" id="sf-order" placeholder="1" style="width:80px;"></div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn btn-add" onclick="saveSefer()" style="flex:1;"><span id="seferSubmitTxt">➕ הוסף ספר</span></button>
+          <button class="btn btn-ghost" id="seferCancelBtn" onclick="resetSeferForm()" style="width:80px;display:none;">ביטול</button>
+        </div>
+        <input type="hidden" id="sf-editId">
+        <input type="hidden" id="sf-img-url">
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📺</div><div><h2>לוח תצוגה</h2></div></div>
+      <div class="card-body"><button class="btn btn-open" onclick="window.open('index.html','_blank')">📺 פתח לוח תצוגה</button></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">⏱</div><div><h2>זמן הצגת מסך</h2><p>כמה שניות כל מסך מוצג לפני מעבר לבא</p></div></div>
+      <div class="card-body">
+        <div class="field">
+          <label>זמן כל מסך (שניות)</label>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <input type="range" id="set-cycle" min="5" max="120" step="5" value="20" style="flex:1;" oninput="document.getElementById('set-cycle-val').textContent=this.value+' שניות'">
+            <span id="set-cycle-val" style="min-width:70px;font-weight:700;font-size:.95rem;color:var(--primary-dark);text-align:center;">20 שניות</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveCycleSetting()">💾 שמור</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">ℹ️</div><div><h2>מבנה Firestore — custom_screens</h2></div></div>
+      <div class="card-body">
+        <pre style="font-family:monospace;font-size:.75rem;background:#f5f0e8;padding:12px;border-radius:8px;overflow-x:auto;line-height:1.85;color:#2d1a0a;">title          string
+body           string
+badge          string
+imageUrl       string   תמונת תוכן
+bgImageUrl     string   תמונת רקע
+bgDimOpacity   number   0–0.9
+theme          gold|blue|green|purple|red|dark
+displayMode    fullscreen|footer
+order          number
+active         boolean
+scheduleType   always|days|daterange
+activeDays     number[] [0=א׳ … 6=שבת]
+dateFrom       string   YYYY-MM-DD
+dateTo         string   YYYY-MM-DD</pre>
+      </div>
+    </div>
+  </div>
+
   <!-- EXPORT -->
   <div id="tab-export" class="tab-panel">
     <div class="card">
@@ -508,31 +581,6 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     </div>
   </div>
 
-
-    <div class="card">
-      <div class="card-header"><div class="ch-icon">📺</div><div><h2>לוח תצוגה</h2></div></div>
-      <div class="card-body"><button class="btn btn-open" onclick="window.open('display.html','_blank')">📺 פתח לוח תצוגה</button></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><div class="ch-icon">ℹ️</div><div><h2>מבנה Firestore — custom_screens</h2></div></div>
-      <div class="card-body">
-        <pre style="font-family:monospace;font-size:.75rem;background:#f5f0e8;padding:12px;border-radius:8px;overflow-x:auto;line-height:1.85;color:#2d1a0a;">title          string
-body           string
-badge          string
-imageUrl       string   תמונת תוכן
-bgImageUrl     string   תמונת רקע
-bgDimOpacity   number   0–0.9
-theme          gold|blue|green|purple|red|dark
-displayMode    fullscreen|footer
-order          number
-active         boolean
-scheduleType   always|days|daterange
-activeDays     number[] [0=א׳ … 6=שבת]
-dateFrom       string   YYYY-MM-DD
-dateTo         string   YYYY-MM-DD</pre>
-      </div>
-    </div>
-  </div>
 </div>
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -804,7 +852,151 @@ window.addShiur=async()=>{
   }catch{toast('שגיאה','err');}
 };
 
-// ── Export / Share Shabbat message ──
+// ── ספרי תורה ──
+let seferUploadUrl='';
+let activeSeferim=[]; // for export
+
+window.previewSeferUrl=(url)=>{
+  const wrap=document.getElementById('sf-url-preview');
+  const img=document.getElementById('sf-url-preview-img');
+  if(url && url.startsWith('http')){
+    img.src=url; wrap.style.display='block';
+    // clear file upload if URL given
+    seferUploadUrl=''; document.getElementById('sf-img-url').value='';
+    document.getElementById('sf-img-name').textContent='לא נבחר קובץ';
+    document.getElementById('sf-img-preview').style.display='none';
+  } else { wrap.style.display='none'; }
+};
+
+window.handleSeferImg=async(input)=>{
+  const file=input.files[0]; if(!file) return;
+  document.getElementById('sf-img-name').textContent=file.name;
+  const preview=document.getElementById('sf-preview-img');
+  const previewWrap=document.getElementById('sf-img-preview');
+  preview.src=URL.createObjectURL(file);
+  previewWrap.style.display='block';
+  // clear URL input if file chosen
+  document.getElementById('sf-img-url-input').value='';
+  document.getElementById('sf-url-preview').style.display='none';
+  const storRef=ref(storage,`sefer_torah/${Date.now()}_${file.name}`);
+  const task=uploadBytesResumable(storRef,file);
+  task.on('state_changed',null,e=>toast('שגיאת העלאה','err'),async()=>{
+    seferUploadUrl=await getDownloadURL(task.snapshot.ref);
+    document.getElementById('sf-img-url').value=seferUploadUrl;
+    toast('תמונה הועלתה','ok');
+  });
+};
+
+window.resetSeferForm=()=>{
+  document.getElementById('sf-name').value='';
+  document.getElementById('sf-order').value='';
+  document.getElementById('sf-img-url').value='';
+  document.getElementById('sf-img-url-input').value='';
+  document.getElementById('sf-editId').value='';
+  document.getElementById('sf-img-name').textContent='לא נבחר קובץ';
+  document.getElementById('sf-img-preview').style.display='none';
+  document.getElementById('sf-url-preview').style.display='none';
+  document.getElementById('seferFormTitle').textContent='הוסף ספר תורה';
+  document.getElementById('seferSubmitTxt').textContent='➕ הוסף ספר';
+  document.getElementById('seferCancelBtn').style.display='none';
+  seferUploadUrl='';
+};
+
+window.editSefer=(id)=>{
+  const s=activeSeferim.find(x=>x.id===id) || seferAllDocs.find(x=>x.id===id);
+  if(!s) return;
+  document.getElementById('sf-name').value=s.name||'';
+  document.getElementById('sf-order').value=s.order||'';
+  document.getElementById('sf-editId').value=id;
+  if(s.imageUrl){
+    document.getElementById('sf-img-url-input').value=s.imageUrl;
+    const img=document.getElementById('sf-url-preview-img');
+    img.src=s.imageUrl;
+    document.getElementById('sf-url-preview').style.display='block';
+    document.getElementById('sf-img-url').value=s.imageUrl;
+  }
+  document.getElementById('seferFormTitle').textContent='✏️ ערוך ספר תורה';
+  document.getElementById('seferSubmitTxt').textContent='💾 שמור שינויים';
+  document.getElementById('seferCancelBtn').style.display='block';
+  document.getElementById('sf-name').scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+let seferAllDocs=[];
+onSnapshot(query(collection(db,'sefer_torah'),orderBy('order','asc')),snap=>{
+  seferAllDocs=snap.docs.map(d=>({id:d.id,...d.data()}));
+  activeSeferim=seferAllDocs.filter(s=>s.active);
+  const list=document.getElementById('seferList');
+  if(snap.empty){list.innerHTML='<div class="empty-state">אין ספרים — הוסף ספר תורה ראשון</div>';return;}
+  list.innerHTML=seferAllDocs.map(s=>{
+    const imgHtml=s.imageUrl?`<img src="${s.imageUrl}" style="width:40px;height:52px;object-fit:contain;border-radius:4px;border:1px solid var(--border);">`:`<span style="font-size:1.8rem;">📜</span>`;
+    const tog=s.active?'bon':'boff';
+    const togLabel=s.active?'פעיל':'כבוי';
+    return `<div class="ann-item" style="display:flex;align-items:center;gap:10px;padding:10px 12px;">
+      <div style="flex-shrink:0;">${imgHtml}</div>
+      <div style="flex:1;font-weight:700;font-size:.9rem;">${esc(s.name||'')}</div>
+      <span class="badge ${tog}">${togLabel}</span>
+      <button class="btn-del" onclick="editSefer('${s.id}')" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del" onclick="toggleSefer('${s.id}',${!s.active})" title="${s.active?'כבה':'הדלק'}">${s.active?'🔴':'🟢'}</button>
+      <button class="btn-del" onclick="deleteSefer('${s.id}')" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
+});
+
+window.saveSefer=async()=>{
+  const name=document.getElementById('sf-name').value.trim();
+  if(!name){toast('יש להזין שם','err');return;}
+  const order=parseInt(document.getElementById('sf-order').value)||99;
+  const urlInput=document.getElementById('sf-img-url-input').value.trim();
+  const imageUrl=urlInput||document.getElementById('sf-img-url').value||seferUploadUrl||'';
+  const editId=document.getElementById('sf-editId').value;
+  try{
+    if(editId) await updateDoc(doc(db,'sefer_torah',editId),{name,order,imageUrl,updatedAt:serverTimestamp()});
+    else await addDoc(collection(db,'sefer_torah'),{name,order,imageUrl,active:true,createdAt:serverTimestamp()});
+    toast(editId?'עודכן':'נוסף','ok');
+    resetSeferForm();
+  }catch(e){toast('שגיאה: '+e.message,'err');}
+};
+
+window.toggleSefer=async(id,active)=>{
+  try{await updateDoc(doc(db,'sefer_torah',id),{active});}catch(e){toast('שגיאה','err');}
+};
+
+window.deleteSefer=async(id)=>{
+  if(!confirm('למחוק ספר זה?'))return;
+  try{await deleteDoc(doc(db,'sefer_torah',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}
+};
+
+// ── Auto-deactivate sefer on Sunday ──
+(async()=>{
+  if(new Date().getDay()===0){
+    try{
+      const snap=await new Promise(res=>{ const unsub=onSnapshot(collection(db,'sefer_torah'),s=>{unsub();res(s);}); });
+      for(const d of snap.docs){
+        if(d.data().active) await updateDoc(doc(db,'sefer_torah',d.id),{active:false});
+      }
+    }catch(e){}
+  }
+})();
+
+// ── הגדרת זמן מסך ──
+onSnapshot(doc(db,'settings','display'),snap=>{
+  if(!snap.exists()) return;
+  const d=snap.data();
+  if(d.cycleSeconds){
+    const el=document.getElementById('set-cycle');
+    if(el){ el.value=d.cycleSeconds; document.getElementById('set-cycle-val').textContent=d.cycleSeconds+' שניות'; }
+  }
+});
+
+window.saveCycleSetting=async()=>{
+  const val=parseInt(document.getElementById('set-cycle').value)||20;
+  try{
+    await setDoc(doc(db,'settings','display'),{cycleSeconds:val},{merge:true});
+    toast('זמן מסך עודכן ל-'+val+' שניות','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+
 onSnapshot(doc(db,'prayers','times'),snap=>{
   if(!snap.exists()) return;
   const d=snap.data();
@@ -888,6 +1080,11 @@ window.generateExport=()=>{
   L.push('שחרית');
   if(shacharit)  L.push(` *פתיחה: ${shacharit}* `);
   if(kriahShma)  L.push(`ק"ש לפי מ"א ${kriahShma}`);
+  // ספרי תורה פעילים
+  if(activeSeferim && activeSeferim.length){
+    const names=activeSeferim.map(s=>s.name).filter(Boolean).join(' | ');
+    L.push(`📜 ספרי תורה: ${names}`);
+  }
   L.push(SEP);
 
   // ── Children's prayer
