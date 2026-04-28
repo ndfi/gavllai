@@ -31,7 +31,7 @@
   .hebrew-date-big{font-size:clamp(1.4rem,3vw,2.1rem);color:var(--gold-light);font-weight:900;line-height:1.2;letter-spacing:1px;}
   .greg-date-small{font-size:clamp(.65rem,1.3vw,.85rem);color:rgba(232,200,122,.55);font-family:'Heebo',sans-serif;font-weight:300;margin-top:2px;direction:ltr;text-align:right;}
   .parasha-badge{text-align:center;background:linear-gradient(135deg,var(--brown-light),var(--brown-mid));border:2px solid var(--gold);border-radius:50px;padding:6px 24px;font-size:clamp(.93rem,1.98vw,1.21rem);color:var(--gold-light);white-space:nowrap;}
-  .parasha-badge strong{color:var(--text-bright);font-weight:900;display:block;font-size:clamp(1.8rem,2.42vw,3rem);}
+  .parasha-badge strong{color:var(--text-bright);font-weight:900;display:block;font-size:clamp(1.8rem, 4vw, 3rem);}
   .omer-info{text-align:left;font-size:clamp(.85rem,1.8vw,1.1rem);color:var(--gold-light);line-height:1.5;}
 
   /* Today info panel — top-left of header */
@@ -614,25 +614,55 @@ function renderTodayInfo(holidayItem, noTachanun, hd) {
 }
 
 async function fetchZmanim(yyyy,mm,dd) {
-  const z=(await(await fetch(
+  const res=await(await fetch(
     `${HEBCAL}/zmanim?cfg=json&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&date=${yyyy}-${mm}-${dd}`
-  )).json()).times;
+  )).json();
+  // Hebcal returns either { times: {...} } or { items: [...] } depending on version
+  const z = res.times || res;
   if(!z) return;
-  document.getElementById('qz-alot').textContent=fmt(z.alotHaShachar);
-  document.getElementById('qz-sunrise').textContent=fmt(z.sunrise);
-  document.getElementById('qz-sunset').textContent=fmt(z.sunset);
-  document.getElementById('qz-tzeit').textContent=fmt(z.tzeit7083deg||z.tzeitHakochavim);
-  document.getElementById('sht-sunset').textContent=fmt(z.sunset);
-  document.getElementById('sz-shma').textContent=fmt(z.sofZmanShmaGRA);
-  document.getElementById('sz-tfilla').textContent=fmt(z.sofZmanTfilaGRA);
-  document.getElementById('sz-chatzot').textContent=fmt(z.chatzot);
-  document.getElementById('sz-minchag').textContent=fmt(z.minchaGedola);
-  document.getElementById('sz-plag').textContent=fmt(z.plagHaMincha);
+
+  // Helper: field may be ISO string OR "HH:MM:SS" local time
+  const fz = val => {
+    if(!val) return '--:--';
+    // If it looks like HH:MM:SS (no T, no date)
+    if(/^\d{2}:\d{2}/.test(val)) return val.slice(0,5);
+    return fmt(val);
+  };
+
+  // Hebcal uses different key names across versions — try both
+  const pick = (...keys) => { for(const k of keys){ if(z[k]) return z[k]; } return null; };
+
+  document.getElementById('qz-alot').textContent    = fz(pick('alotHaShachar','dawn'));
+  document.getElementById('qz-sunrise').textContent = fz(pick('sunrise','sunriseISO'));
+  document.getElementById('qz-sunset').textContent  = fz(pick('sunset','sunsetISO'));
+  document.getElementById('qz-tzeit').textContent   = fz(pick('tzeit7083deg','tzeitHakochavim','nightfall'));
+  document.getElementById('sht-sunset').textContent = fz(pick('sunset','sunsetISO'));
+
+  const shma    = pick('sofZmanShmaGRA','sofZmanShma','kriyatShma');
+  const tfilla  = pick('sofZmanTfilaGRA','sofZmanTfilla','sofZmanTfila');
+  const chatzot = pick('chatzot','midday');
+  const minchaG = pick('minchaGedola','minchaGedolah');
+  const plag    = pick('plagHaMincha','plag');
+  const alot    = pick('alotHaShachar','dawn');
+  const sunrise = pick('sunrise','sunriseISO');
+  const sunset  = pick('sunset','sunsetISO');
+  const tzeit   = pick('tzeit7083deg','tzeitHakochavim','nightfall');
+
+  document.getElementById('sz-shma').textContent    = fz(shma);
+  document.getElementById('sz-tfilla').textContent  = fz(tfilla);
+  document.getElementById('sz-chatzot').textContent = fz(chatzot);
+  document.getElementById('sz-minchag').textContent = fz(minchaG);
+  document.getElementById('sz-plag').textContent    = fz(plag);
+
   document.getElementById('fz-container').innerHTML=[
-    {name:'עלות השחר',time:fmt(z.alotHaShachar)},{name:'הנץ החמה',time:fmt(z.sunrise)},
-    {name:'סוף ק"ש',time:fmt(z.sofZmanShmaGRA)},{name:'חצות',time:fmt(z.chatzot)},
-    {name:'מנחה גדולה',time:fmt(z.minchaGedola)},{name:'פלג המנחה',time:fmt(z.plagHaMincha)},
-    {name:'שקיעה',time:fmt(z.sunset)},{name:'צאת הכוכבים',time:fmt(z.tzeit7083deg||z.tzeitHakochavim)},
+    {name:'עלות השחר',  time:fz(alot)},
+    {name:'הנץ החמה',   time:fz(sunrise)},
+    {name:'סוף ק"ש',   time:fz(shma)},
+    {name:'חצות',       time:fz(chatzot)},
+    {name:'מנחה גדולה', time:fz(minchaG)},
+    {name:'פלג המנחה',  time:fz(plag)},
+    {name:'שקיעה',      time:fz(sunset)},
+    {name:'צאת הכוכבים',time:fz(tzeit)},
   ].map(i=>`<div class="fz-card"><span class="fz-name">${i.name}</span><span class="fz-time">${i.time}</span></div>`).join('');
 }
 // Run Hebcal first, then start rotation so omer flag is already set
