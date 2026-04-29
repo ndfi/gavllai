@@ -43,6 +43,10 @@ textarea{resize:vertical;min-height:70px;}
 .cycle-row-label{font-size:.82rem;font-weight:700;color:var(--primary-dark);min-width:200px;flex-shrink:0;}
 .cycle-row input[type=range]{flex:1;accent-color:var(--primary);}
 .cycle-row-val{min-width:64px;font-weight:900;font-size:.95rem;color:var(--primary-dark);text-align:center;background:rgba(139,94,26,.12);border-radius:8px;padding:4px 8px;}
+.toggle-wrap{width:52px;height:28px;background:#ccc;border-radius:14px;position:relative;cursor:pointer;transition:background .25s;}
+.toggle-wrap.on{background:#2e7d32;}
+.toggle-knob{width:22px;height:22px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.toggle-wrap.on .toggle-knob{left:27px;}
 .sub-label{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin:14px 0 10px;padding-top:12px;border-top:1px solid var(--border);}
 .sub-label:first-child{margin-top:0;border-top:none;}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border:none;border-radius:10px;font-family:'Heebo',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
@@ -486,7 +490,20 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
       <div class="card-body"><button class="btn btn-open" onclick="window.open('index.html','_blank')">📺 פתח לוח תצוגה</button></div>
     </div>
     <div class="card">
-      <div class="card-header"><div class="ch-icon">⏱</div><div><h2>זמן הצגת מסכים</h2><p>קבע כמה שניות כל מסך מוצג בנפרד</p></div></div>
+      <div class="card-header"><div class="ch-icon">🔄</div><div><h2>רענון אוטומטי</h2><p>מרענן את לוח התצוגה כל 15 דקות</p></div></div>
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:.95rem;" id="autoRefreshLabel">טוען...</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:3px;">הגדרה זו משפיעה על לוח התצוגה בזמן אמת</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="toggle-wrap" id="arToggleWrap" onclick="toggleAutoRefresh()">
+            <div class="toggle-knob" id="arToggleKnob"></div>
+          </div>
+          <span id="arToggleTxt" style="font-weight:800;font-size:1rem;">כבוי</span>
+        </label>
+      </div>
+    </div><p>קבע כמה שניות כל מסך מוצג בנפרד</p></div></div>
       <div class="card-body">
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div class="cycle-row" data-screen="A" data-label="מסך A — זמני תפילות שבת"></div>
@@ -982,7 +999,37 @@ window.deleteSefer=async(id)=>{
   }
 })();
 
-// ── הגדרת זמן מסך לכל מסך בנפרד ──
+// ── רענון אוטומטי ──
+let _arEnabled = false;
+
+function applyArUi(enabled){
+  _arEnabled = enabled;
+  const wrap = document.getElementById('arToggleWrap');
+  const knob = document.getElementById('arToggleTxt');
+  const lbl  = document.getElementById('autoRefreshLabel');
+  if(!wrap) return;
+  wrap.classList.toggle('on', enabled);
+  knob.textContent = enabled ? 'פעיל' : 'כבוי';
+  knob.style.color = enabled ? '#2e7d32' : '#888';
+  lbl.textContent  = enabled ? '✅ רענון אוטומטי כל 15 דקות — פעיל' : '⏸ רענון אוטומטי — כבוי';
+}
+
+onSnapshot(doc(db,'settings','display'), snap=>{
+  if(!snap.exists()) return;
+  const d = snap.data();
+  applyArUi(!!d.autoRefresh);
+  // also load cycle settings
+  buildCycleRows(d);
+});
+
+window.toggleAutoRefresh = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'), {autoRefresh: !_arEnabled}, {merge:true});
+    toast(!_arEnabled ? 'רענון אוטומטי הופעל' : 'רענון אוטומטי כובה', 'ok');
+  } catch(e){ toast('שגיאה','err'); }
+};
+
+
 const SCREEN_LABELS={A:'מסך A — זמני תפילות שבת',B:'מסך B — זמני תפילות שבועי',C:'מסך C — מסכים מותאמים',D:'מסך D — ספירת העומר',E:'מסך E — ספרי תורה'};
 const CYCLE_DEFAULTS={A:20,B:20,C:20,D:20,E:25};
 
