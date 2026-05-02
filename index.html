@@ -278,7 +278,12 @@
   .cs-body{font-size:clamp(1rem,2.5vw,2rem);font-weight:400;line-height:1.6;color:var(--parchment);font-family:'Heebo',sans-serif;}
   .cs-badge{display:inline-block;background:rgba(200,164,74,.15);border:1px solid var(--gold);border-radius:50px;padding:4px 18px;font-size:clamp(.75rem,1.4vw,1rem);color:var(--gold-light);letter-spacing:2px;width:fit-content;}
 
-  /* Screen E — ספרי תורה */
+  /* ── Progress bar — 1px at very bottom ── */
+  #screen-progress{position:fixed;bottom:0;left:0;height:2px;width:0%;z-index:9999;pointer-events:none;
+    background:linear-gradient(90deg,rgba(200,164,74,.3),var(--gold),rgba(200,164,74,.3));
+    transition:none;will-change:width;}
+  body.theme-light #screen-progress{background:linear-gradient(90deg,rgba(122,90,16,.3),#7a5a10,rgba(122,90,16,.3));}
+
   #screenE{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(160deg,#1a0e05 0%,#2d1a0a 50%,#1a0e05 100%);padding:40px 60px;}
   .sefer-screen-title{font-size:clamp(2rem,5vw,4rem);font-weight:900;color:var(--gold-light);letter-spacing:4px;text-align:center;margin-bottom:8px;text-shadow:0 0 30px rgba(200,164,74,.4);}
   .sefer-screen-parasha{font-size:clamp(1.1rem,2.5vw,1.8rem);color:var(--gold);text-align:center;margin-bottom:36px;letter-spacing:2px;}
@@ -1152,6 +1157,19 @@ if(_origParasha){
   observer.observe(_origParasha,{childList:true,subtree:true,characterData:true});
 }
 
+let _progressRaf=null;
+function startProgress(durationMs){
+  const bar=document.getElementById('screen-progress');
+  if(!bar) return;
+  if(_progressRaf) cancelAnimationFrame(_progressRaf);
+  bar.style.transition='none';
+  bar.style.width='0%';
+  // Force reflow then animate
+  void bar.offsetWidth;
+  bar.style.transition=`width ${durationMs}ms linear`;
+  bar.style.width='100%';
+}
+
 function showNextScreen(){
   if(rotTimer) clearTimeout(rotTimer);
   buildRotation();
@@ -1159,8 +1177,9 @@ function showNextScreen(){
   allScreenIds.forEach(id=>document.getElementById(id).classList.remove('active'));
   if(current==='screenC'){if(!loadNextScreenC()){rotIdx++;showNextScreen();return;}}
   document.getElementById(current).classList.add('active');
-  const screenKey=current.replace('screen',''); // 'A','B','C','D','E'
+  const screenKey=current.replace('screen','');
   const dur=CYCLES[screenKey]||CYCLES.A||20000;
+  startProgress(dur);
   rotIdx++;
   if(current==='screenC'&&screenCIdx<screenCQueue.length){
     rotTimer=setTimeout(()=>{loadNextScreenC();rotTimer=setTimeout(showNextScreen,dur);},dur);
@@ -1170,5 +1189,6 @@ function showNextScreen(){
 }
 // (rotation started after fetchHebcal resolves — see above)
 </script>
+<div id="screen-progress"></div>
 </body>
 </html>
