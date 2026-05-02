@@ -490,7 +490,29 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
       <div class="card-body"><button class="btn btn-open" onclick="window.open('index.html','_blank')">📺 פתח לוח תצוגה</button></div>
     </div>
     <div class="card">
-      <div class="card-header"><div class="ch-icon">🔄</div><div><h2>רענון אוטומטי</h2><p>מרענן את לוח התצוגה כל 15 דקות</p></div></div>
+      <div class="card-header"><div class="ch-icon">🎨</div><div><h2>ערכת צבעים</h2><p>עבור בין ערכה כהה (ברירת מחדל) לבהירה</p></div></div>
+      <div class="card-body">
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;">
+          <div id="theme-dark-preview" onclick="setTheme('dark')" style="flex:1;min-width:140px;cursor:pointer;border:3px solid var(--gold);border-radius:14px;overflow:hidden;transition:box-shadow .2s;">
+            <div style="background:#1a0e05;padding:14px;text-align:center;">
+              <div style="color:#e8c87a;font-weight:900;font-size:.9rem;margin-bottom:6px;">🌙 כהה</div>
+              <div style="background:#2d1a0a;border:1px solid #c8a44a;border-radius:8px;padding:6px 14px;display:inline-block;">
+                <span style="color:#fff8e7;font-size:.85rem;">זמני תפילות</span>
+              </div>
+            </div>
+          </div>
+          <div id="theme-light-preview" onclick="setTheme('light')" style="flex:1;min-width:140px;cursor:pointer;border:2px solid #ccc;border-radius:14px;overflow:hidden;transition:box-shadow .2s;">
+            <div style="background:#f5f0e4;padding:14px;text-align:center;">
+              <div style="color:#5c3f08;font-weight:900;font-size:.9rem;margin-bottom:6px;">☀️ בהיר</div>
+              <div style="background:#ede5ce;border:1px solid #7a5a10;border-radius:8px;padding:6px 14px;display:inline-block;">
+                <span style="color:#1a0e05;font-size:.85rem;">זמני תפילות</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="themeStatusLine" style="font-size:.85rem;color:var(--muted);text-align:center;">טוען...</div>
+      </div>
+    </div><p>מרענן את לוח התצוגה כל 15 דקות</p></div></div>
       <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
         <div>
           <div style="font-weight:700;font-size:.95rem;" id="autoRefreshLabel">טוען...</div>
@@ -999,7 +1021,26 @@ window.deleteSefer=async(id)=>{
   }
 })();
 
-// ── רענון אוטומטי ──
+// ── ערכת צבעים ──
+function applyThemeUi(theme){
+  const isDark = theme!=='light';
+  const darkEl=document.getElementById('theme-dark-preview');
+  const lightEl=document.getElementById('theme-light-preview');
+  const status=document.getElementById('themeStatusLine');
+  if(darkEl) darkEl.style.border=isDark?'3px solid var(--gold)':'2px solid #ccc';
+  if(lightEl) lightEl.style.border=!isDark?'3px solid var(--gold)':'2px solid #ccc';
+  if(status) status.textContent='ערכה פעילה: ' + (isDark?'🌙 כהה':'☀️ בהירה');
+}
+
+window.setTheme=async(theme)=>{
+  try{
+    await setDoc(doc(db,'settings','display'),{colorTheme:theme},{merge:true});
+    applyThemeUi(theme);
+    toast('ערכת הצבעים עודכנה','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+
 let _arEnabled = false;
 
 function applyArUi(enabled){
@@ -1018,6 +1059,7 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   if(!snap.exists()) return;
   const d = snap.data();
   applyArUi(!!d.autoRefresh);
+  applyThemeUi(d.colorTheme||'dark');
   // also load cycle settings
   buildCycleRows(d);
 });

@@ -11,6 +11,33 @@
     --brown-dark:#1a0e05; --brown-mid:#2d1a0a; --brown-light:#4a2e15;
     --parchment:#f5ead0; --text-bright:#fff8e7;
   }
+
+  /* ── ערכת צבעים בהירה ── */
+  body.theme-light {
+    --gold:#7a5a10; --gold-light:#5c3f08; --gold-dark:#a07820;
+    --brown-dark:#f5f0e4; --brown-mid:#ede5ce; --brown-light:#ddd0b0;
+    --parchment:#2d1a0a; --text-bright:#1a0e05;
+  }
+  body.theme-light::before{background:radial-gradient(ellipse at 20% 20%,rgba(122,90,16,.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(122,90,16,.04) 0%,transparent 50%);}
+  body.theme-light .header{background:linear-gradient(180deg,#ede5ce,#f5f0e4);border-bottom-color:var(--gold);}
+  body.theme-light .shabbat-times-strip{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(122,90,16,.12));}
+  body.theme-light .clock-panel{background:linear-gradient(180deg,rgba(237,229,206,.7),rgba(245,240,228,.9));border-color:rgba(122,90,16,.3);}
+  body.theme-light .clock-box{background:linear-gradient(145deg,#ede5ce,#f5f0e4);box-shadow:0 0 0 2px var(--gold-dark),0 0 30px rgba(122,90,16,.2);}
+  body.theme-light .side-panel{background:#f5f0e4;}
+  body.theme-light .panel-section{border-bottom-color:rgba(122,90,16,.2);}
+  body.theme-light .footer{background:linear-gradient(180deg,#ede5ce,#ddd0b0);border-top-color:var(--gold);}
+  body.theme-light .footer-slide{background:transparent;}
+  body.theme-light .fp-card{background:rgba(122,90,16,.08);border-color:rgba(122,90,16,.3);}
+  body.theme-light .fz-card{background:rgba(122,90,16,.07);border-color:rgba(122,90,16,.25);}
+  body.theme-light #screenB{background:linear-gradient(160deg,#f5f0e4 0%,#ede5ce 40%,#f5f0e4 100%);}
+  body.theme-light #screenB::before{background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(122,90,16,.05) 0%,transparent 70%);}
+  body.theme-light .big-prayer-card{background:linear-gradient(145deg,#ede5ce,#f5f0e4);border-color:var(--gold);}
+  body.theme-light #screenD{background:radial-gradient(ellipse at center,#2a4a2a 0%,#1a3a1a 60%,#0d200d 100%);}
+  body.theme-light #screenE{background:linear-gradient(160deg,#f5f0e4 0%,#ede5ce 50%,#f5f0e4 100%);}
+  body.theme-light .sefer-card{background:linear-gradient(160deg,#ede5ce,#f5f0e4);border-color:var(--gold);}
+  body.theme-light .parasha-badge{background:linear-gradient(135deg,rgba(122,90,16,.15),rgba(200,164,74,.2));}
+  body.theme-light .corner-deco{border-color:var(--gold);}
+
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--brown-dark);color:var(--text-bright);font-family:'Frank Ruhl Libre',serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
   body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(200,164,74,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(200,164,74,.06) 0%,transparent 50%),repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(200,164,74,.02) 30px,rgba(200,164,74,.02) 31px);pointer-events:none;z-index:0;}
@@ -75,8 +102,11 @@
   /* Main 3-col */
   .main{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;overflow:hidden;min-height:0;}
   .side-panel{display:flex;flex-direction:column;overflow:hidden;}
-  .panel-section{flex:1;border-bottom:1px solid rgba(200,164,74,.2);padding:10px 18px;display:flex;flex-direction:column;justify-content:center;}
+  .panel-section{flex:0 0 auto;border-bottom:1px solid rgba(200,164,74,.2);padding:8px 18px;display:flex;flex-direction:column;justify-content:center;}
   .panel-section:last-child{border-bottom:none;}
+  /* Left prayer panel scrolls when shabbat items overflow */
+  .left-panel-inner{display:flex;flex-direction:column;height:100%;overflow-y:auto;scrollbar-width:none;}
+  .left-panel-inner::-webkit-scrollbar{display:none;}
   .section-title{font-size:clamp(.82rem,1.52vw,1.05rem);color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
   .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(200,164,74,.5),transparent);}
 
@@ -145,7 +175,7 @@
   .big-prayer-card{background:linear-gradient(145deg,rgba(45,26,10,.9),rgba(26,14,5,.95));border:2px solid var(--gold);border-radius:20px;padding:clamp(18px,3vw,34px) clamp(22px,4vw,54px);text-align:center;box-shadow:0 0 0 1px var(--gold-dark),0 8px 40px rgba(0,0,0,.5),0 0 30px rgba(200,164,74,.15);min-width:clamp(120px,17vw,195px);position:relative;overflow:hidden;}
   .big-prayer-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-light),transparent);}
   .big-prayer-card.highlight{border-color:var(--gold-light);box-shadow:0 0 0 1px var(--gold),0 8px 40px rgba(0,0,0,.5),0 0 50px rgba(200,164,74,.3);}
-  .bpc-label{display:block;font-size:clamp(1rem,2vw,1.4rem);color:var(--gold-light);font-weight:700;margin-bottom:10px;letter-spacing:1px;}
+  .bpc-label{display:block;font-size:clamp(1.3rem,2.6vw,1.9rem);color:var(--gold-light);font-weight:700;margin-bottom:10px;letter-spacing:1px;}
   .bpc-time{display:block;font-size:clamp(2.5rem,6vw,5rem);font-weight:900;color:var(--text-bright);text-shadow:0 0 30px rgba(232,200,122,.4),0 2px 6px rgba(0,0,0,.8);direction:ltr;letter-spacing:3px;line-height:1;}
 
   /* Corner decorations */
@@ -289,6 +319,7 @@
 
   <div class="main">
     <div class="side-panel">
+      <div class="left-panel-inner">
       <div class="panel-section">
         <div class="section-title">תפילות</div>
         <div class="prayer-item"><span class="prayer-name">שחרית</span><span class="prayer-time" id="sp-shacharit">--:--</span></div>
@@ -303,6 +334,7 @@
       <div class="panel-section" id="holiday-panel" style="display:none;">
         <div class="section-title" id="holiday-panel-title">תפילות חגים</div>
         <div id="holiday-prayer-list"></div>
+      </div>
       </div>
     </div>
 
@@ -417,7 +449,7 @@ const db = getFirestore(app);
 // באר שבע
 const LOCATION   = { lat:31.2516, lng:34.7915, tzid:'Asia/Jerusalem', city:'Be\'er Sheva' };
 const HEBCAL     = 'https://www.hebcal.com';
-const CANDLE_MIN = 30; // דקות לפני שקיעה להדלקת נרות — באר שבע
+const CANDLE_MIN = 20; // דקות לפני שקיעה להדלקת נרות — ישראל (מנהג רגיל)
 const FOOTER_INT = 10000;  // 10 שניות בין שקופיות footer
 const CYCLE_A_MS = 20000;  // default — מסך A
 const CYCLE_B_MS = 20000;  // default — מסך B
@@ -671,26 +703,27 @@ fetchHebcal().then(()=>{
 });
 setInterval(fetchHebcal, 3600*1000);
 
-// ── רענון אוטומטי (נשלט מניהול) ──
+// ── רענון אוטומטי (נשלט מניהול) + ערכת צבעים ──
 let _autoRefreshTimer = null;
 onSnapshot(doc(db,'settings','display'), snap=>{
-  const enabled = snap.exists() && !!snap.data().autoRefresh;
+  const d = snap.exists() ? snap.data() : {};
+  // Auto refresh
+  const enabled = !!d.autoRefresh;
   if(enabled && !_autoRefreshTimer){
     _autoRefreshTimer = setInterval(()=>location.reload(), 15 * 60 * 1000);
   } else if(!enabled && _autoRefreshTimer){
     clearInterval(_autoRefreshTimer);
     _autoRefreshTimer = null;
   }
-  // also pick up per-screen cycle settings
-  if(snap.exists()){
-    const d=snap.data();
-    if(d.cycle_A) CYCLES.A=d.cycle_A*1000;
-    if(d.cycle_B) CYCLES.B=d.cycle_B*1000;
-    if(d.cycle_C) CYCLES.C=d.cycle_C*1000;
-    if(d.cycle_D) CYCLES.D=d.cycle_D*1000;
-    if(d.cycle_E) CYCLES.E=d.cycle_E*1000;
-    if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
-  }
+  // Color theme
+  document.body.classList.toggle('theme-light', d.colorTheme==='light');
+  // Per-screen cycle settings
+  if(d.cycle_A) CYCLES.A=d.cycle_A*1000;
+  if(d.cycle_B) CYCLES.B=d.cycle_B*1000;
+  if(d.cycle_C) CYCLES.C=d.cycle_C*1000;
+  if(d.cycle_D) CYCLES.D=d.cycle_D*1000;
+  if(d.cycle_E) CYCLES.E=d.cycle_E*1000;
+  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
 });
 
 
@@ -704,8 +737,9 @@ onSnapshot(doc(db,'prayers','times'),snap=>{
 });
 
 function refreshPrayers() {
-  const prayers=isShabbat()?[...WEEKDAY_PRAYERS,...SHABBAT_PRAYERS]:WEEKDAY_PRAYERS;
   const isShabUI=isShabbat();
+  // Screen A left panel: show all prayers always, shabbat-only toggled by CSS class
+  const prayers=isShabUI?[...WEEKDAY_PRAYERS,...SHABBAT_PRAYERS]:WEEKDAY_PRAYERS;
   const custom=(customPrayerData||[]).filter(p=>
     p.display==='always'||(p.display==='weekday'&&!isShabUI)||(p.display==='shabbat'&&isShabUI)
   );
@@ -714,7 +748,9 @@ function refreshPrayers() {
     .map(({key,label})=>`<div class="fp-card"><span class="fp-name">${label}</span><span class="fp-time">${prayerData[key]}</span></div>`);
   const cusCards=custom.map(p=>`<div class="fp-card"><span class="fp-name">${p.name||''}</span><span class="fp-time">${p.time||'--:--'}</span></div>`);
   document.getElementById('fp-container').innerHTML=[...stdCards,...cusCards].join('');
-  buildScreenB(prayers,custom);
+  // Screen B: shabbat → only shabbat prayers; weekday → only weekday prayers
+  const screenBPrayers = isShabUI ? SHABBAT_PRAYERS : WEEKDAY_PRAYERS;
+  buildScreenB(screenBPrayers,custom);
 }
 
 function buildScreenB(prayers,custom=[]) {
@@ -970,7 +1006,7 @@ function omerFullText(day) {
   if (day === 1)  text = 'היום יום אחד';
   if (day === 2)  text = 'היום שני ימים';
   if (day > 6) {
-    text += ' — ';
+    text += ' שהם ';
     if (weeks > 0 && remain === 0) text += WEEKS_HE[weeks];
     else if (weeks > 0) text += WEEKS_HE[weeks] + ' ו' + numToHebrew(remain) + ' ימים';
   }
