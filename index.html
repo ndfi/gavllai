@@ -113,7 +113,7 @@
   /* Prayer items — +30% font sizes */
   .prayer-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(200,164,74,.08);}
   .prayer-item:last-child{border-bottom:none;}
-  .prayer-name{font-size:clamp(1.23rem,2.46vw,1.52rem);color:var(--parchment);}
+  .prayer-name{font-size:clamp(1.23rem,2.46vw,1.52rem);color:var(--parchment);font-weight:900;letter-spacing:.5px;}
   .prayer-time{font-size:clamp(1.47rem,2.93vw,1.94rem);font-weight:700;color:var(--text-bright);direction:ltr;}
   .prayer-time.upcoming{color:var(--gold-light);text-shadow:0 0 10px rgba(232,200,122,.6);}
 
@@ -509,7 +509,11 @@ function updateClock() {
   const now=new Date();
   document.getElementById('ch').textContent=String(now.getHours()).padStart(2,'0');
   document.getElementById('cm').textContent=String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('dayName').textContent=DAYS_HE[now.getDay()];
+  const dayText=DAYS_HE[now.getDay()];
+  document.getElementById('dayName').textContent=dayText;
+  // ← update screen B subtitle live
+  const sbSub=document.getElementById('sb-subtitle');
+  if(sbSub) sbSub.textContent=dayText;
   document.getElementById('shabbatBanner').style.display=now.getDay()===6?'block':'none';
   document.querySelectorAll('.shabbat-only').forEach(el=>el.style.display=isShabbat()?'flex':'none');
   document.getElementById('shabbatStrip').classList.toggle('visible', isShabbat());
@@ -519,6 +523,11 @@ function updateClock() {
     const t=el.textContent.trim();
     if(t&&t!=='--:--'){const[h,m]=t.split(':').map(Number),diff=h*60+m-nowMins;if(diff>0&&diff<30)el.classList.add('upcoming');}
   });
+  // Rebuild screen B if day just changed (midnight crossover)
+  if(updateClock._lastDay !== undefined && updateClock._lastDay !== now.getDay()){
+    refreshPrayers();
+  }
+  updateClock._lastDay = now.getDay();
 }
 setInterval(updateClock,1000); updateClock();
 

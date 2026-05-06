@@ -315,8 +315,23 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
       <div class="card-header"><div class="ch-icon">📢</div><div><h2>הודעות</h2><p>מוצגות בפס התחתון של הלוח</p></div></div>
       <div class="card-body">
         <div id="annList" class="ann-list"><div class="empty-state">טוען...</div></div>
-        <div class="field"><label>הודעה חדשה (Ctrl+Enter)</label><textarea id="newAnn" placeholder="כתוב את ההודעה לקהל..." rows="3"></textarea></div>
-        <button class="btn btn-add" onclick="addAnn()">➕ הוסף הודעה</button>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec" id="annFormTitle">הוסף הודעה</div>
+        <div class="field"><label>טקסט ההודעה (Ctrl+Enter לשמירה)</label><textarea id="newAnn" placeholder="כתוב את ההודעה לקהל..." rows="3"></textarea></div>
+        <div class="field">
+          <label>גודל פונט בפס התחתון</label>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <input type="range" id="ann-font-size" min="70" max="160" step="5" value="100"
+              oninput="document.getElementById('ann-font-preview').textContent=this.value+'%'">
+            <span id="ann-font-preview" style="min-width:46px;font-weight:800;color:var(--primary-dark);">100%</span>
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">משפיע על כל ההודעות בפס התחתון</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-add" onclick="saveAnn()" style="flex:1;"><span id="annSubmitTxt">➕ הוסף הודעה</span></button>
+          <button class="btn btn-ghost" id="annCancelBtn" onclick="resetAnnForm()" style="width:80px;display:none;">ביטול</button>
+        </div>
+        <input type="hidden" id="ann-editId">
       </div>
     </div>
   </div>
@@ -717,10 +732,79 @@ async function delCustomPrayer(id){
 window.savePrayers=async()=>{const btn=document.getElementById('savePrayersBtn');document.getElementById('savePrayersTxt').innerHTML='<span class="spinner"></span>';btn.disabled=true;const data={};PKEYS.forEach(k=>{const v=document.getElementById('p-'+k)?.value;if(v)data[k]=v;});try{await setDoc(doc(db,'prayers','times'),data,{merge:true});toast('נשמר!','ok');}catch(e){toast('שגיאה','err');}document.getElementById('savePrayersTxt').textContent='💾 שמור זמני תפילות';btn.disabled=false;};
 
 // Announcements
-onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),snap=>{const el=document.getElementById('annList');if(snap.empty){el.innerHTML='<div class="empty-state">אין הודעות.</div>';return;}el.innerHTML=snap.docs.map(d=>{const dt=d.data().createdAt?.toDate?.()?.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})||'';return`<div class="list-item"><div style="flex:1"><div class="item-text">${esc(d.data().text)}</div>${dt?`<span class="item-meta">${dt}</span>`:''}</div><button class="btn-del" data-id="${d.id}">🗑</button></div>`;}).join('');el.querySelectorAll('.btn-del').forEach(b=>b.addEventListener('click',()=>delAnn(b.dataset.id)));});
-window.addAnn=async()=>{const inp=document.getElementById('newAnn'),txt=inp.value.trim();if(!txt){toast('כתוב הודעה','err');inp.focus();return;}try{await addDoc(collection(db,'announcements'),{text:txt,createdAt:serverTimestamp()});inp.value='';toast('נוסף!','ok');}catch(e){toast('שגיאה','err');}};
+// ── הודעות ──
+let _annFontSize=100;
+
+function resetAnnForm(){
+  document.getElementById('newAnn').value='';
+  document.getElementById('ann-editId').value='';
+  document.getElementById('annFormTitle').textContent='הוסף הודעה';
+  document.getElementById('annSubmitTxt').textContent='➕ הוסף הודעה';
+  document.getElementById('annCancelBtn').style.display='none';
+}
+
+window.editAnn=(id,text)=>{
+  document.getElementById('newAnn').value=text;
+  document.getElementById('ann-editId').value=id;
+  document.getElementById('annFormTitle').textContent='✏️ ערוך הודעה';
+  document.getElementById('annSubmitTxt').textContent='💾 שמור שינויים';
+  document.getElementById('annCancelBtn').style.display='block';
+  document.getElementById('newAnn').focus();
+  document.getElementById('newAnn').scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),snap=>{
+  const el=document.getElementById('annList');
+  if(snap.empty){el.innerHTML='<div class="empty-state">אין הודעות.</div>';return;}
+  el.innerHTML=snap.docs.map(d=>{
+    const txt=d.data().text||'';
+    const dt=d.data().createdAt?.toDate?.()?.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})||'';
+    return`<div class="list-item">
+      <div style="flex:1">
+        <div class="item-text">${esc(txt)}</div>
+        ${dt?`<span class="item-meta">${dt}</span>`:''}
+      </div>
+      <button class="btn-del" onclick="editAnn('${d.id}',${JSON.stringify(txt)})" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del" onclick="delAnn('${d.id}')" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
+});
+
+// Load font size setting
+onSnapshot(doc(db,'settings','display'),snap=>{
+  if(!snap.exists()) return;
+  const d=snap.data();
+  if(d.annFontSize){
+    _annFontSize=d.annFontSize;
+    const sl=document.getElementById('ann-font-size');
+    const pr=document.getElementById('ann-font-preview');
+    if(sl){sl.value=d.annFontSize; pr.textContent=d.annFontSize+'%';}
+  }
+  applyArUi(!!d.autoRefresh);
+  applyThemeUi(d.colorTheme||'dark');
+  buildCycleRows(d);
+});
+
+window.saveAnn=async()=>{
+  const txt=document.getElementById('newAnn').value.trim();
+  const editId=document.getElementById('ann-editId').value;
+  const fontSize=parseInt(document.getElementById('ann-font-size').value)||100;
+  if(!txt){toast('כתוב הודעה','err');document.getElementById('newAnn').focus();return;}
+  try{
+    if(editId){
+      await updateDoc(doc(db,'announcements',editId),{text:txt});
+    } else {
+      await addDoc(collection(db,'announcements'),{text:txt,createdAt:serverTimestamp()});
+    }
+    // Save font size globally
+    await setDoc(doc(db,'settings','display'),{annFontSize:fontSize},{merge:true});
+    resetAnnForm();
+    toast(editId?'עודכן!':'נוסף!','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
 async function delAnn(id){if(!confirm('למחוק?'))return;try{await deleteDoc(doc(db,'announcements',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}}
-document.getElementById('newAnn').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)window.addAnn();});
+document.getElementById('newAnn').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)window.saveAnn();});
 
 // Display mode
 document.querySelectorAll('.mode-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('cs-displayMode').value=b.dataset.mode;const full=b.dataset.mode==='fullscreen';['themeField','badgeField','bgImageField','schedField','orderField'].forEach(id=>document.getElementById(id).style.display=full?'block':'none');});});
