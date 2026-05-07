@@ -764,10 +764,12 @@ onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),sna
         <div class="item-text">${esc(txt)}</div>
         ${dt?`<span class="item-meta">${dt}</span>`:''}
       </div>
-      <button class="btn-del" onclick="editAnn('${d.id}',${JSON.stringify(txt)})" title="ערוך" style="color:var(--primary);">✏️</button>
-      <button class="btn-del" onclick="delAnn('${d.id}')" title="מחק">🗑</button>
+      <button class="btn-del ann-edit-btn" data-id="${d.id}" data-txt="${esc(txt)}" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del ann-del-btn" data-id="${d.id}" title="מחק">🗑</button>
     </div>`;
   }).join('');
+  el.querySelectorAll('.ann-edit-btn').forEach(b=>b.addEventListener('click',()=>editAnn(b.dataset.id,b.dataset.txt)));
+  el.querySelectorAll('.ann-del-btn').forEach(b=>b.addEventListener('click',()=>delAnn(b.dataset.id)));
 });
 
 // Load font size setting
@@ -803,7 +805,7 @@ window.saveAnn=async()=>{
   }catch(e){toast('שגיאה','err');}
 };
 
-async function delAnn(id){if(!confirm('למחוק?'))return;try{await deleteDoc(doc(db,'announcements',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}}
+window.delAnn=async function(id){if(!confirm('למחוק?'))return;try{await deleteDoc(doc(db,'announcements',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}}
 document.getElementById('newAnn').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)window.saveAnn();});
 
 // Display mode
