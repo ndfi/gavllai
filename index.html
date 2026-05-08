@@ -139,8 +139,9 @@
   .footer-slide.active{opacity:1;transform:translateY(0);pointer-events:auto;}
   .slide-label{font-size:clamp(.65rem,1.2vw,.82rem);color:var(--gold);letter-spacing:3px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
   .slide-label::before,.slide-label::after{content:'◆';font-size:.55rem;opacity:.7;}
-  .footer-prayers{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;}
-  .fp-card{background:rgba(200,164,74,.09);border:1px solid rgba(200,164,74,.35);border-radius:12px;padding:8px 22px;text-align:center;min-width:110px;}
+  .footer-prayers{display:flex;gap:12px;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;width:100%;}
+  .footer-prayers::-webkit-scrollbar{display:none;}
+  .fp-card{background:rgba(200,164,74,.09);border:1px solid rgba(200,164,74,.35);border-radius:12px;padding:6px 16px;text-align:center;min-width:90px;flex-shrink:0;}
   .fp-name{font-size:clamp(.94rem,1.64vw,1.12rem);color:var(--gold-light);display:block;margin-bottom:3px;}
   .fp-time{font-size:clamp(1.52rem,3.04vw,2.22rem);font-weight:900;color:var(--text-bright);direction:ltr;display:block;}
   .footer-zmanim{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
@@ -424,7 +425,7 @@
   <div class="corner-deco bl"></div><div class="corner-deco br"></div>
   <div class="sefer-screen-deco tl">✡</div>
   <div class="sefer-screen-deco br">✡</div>
-  <div class="sefer-screen-title">📜 ספרי תורה לשבת</div>
+  <div class="sefer-screen-title">ספרי תורה לשבת</div>
   <div class="sefer-screen-parasha" id="sefer-parasha-label"></div>
   <div class="sefer-grid" id="sefer-grid"></div>
 </div>
@@ -555,8 +556,16 @@ async function fetchHebcal() {
       if(par) document.getElementById('parasha').textContent = par.hebrew||par.title;
       const candles  = sh.items.find(i=>i.category==='candles');
       const havdalah = sh.items.find(i=>i.category==='havdalah');
-      if(candles)  document.getElementById('sht-candles').textContent  = fmtISO(candles.date);
-      if(havdalah) document.getElementById('sht-havdalah').textContent = fmtISO(havdalah.date);
+      if(candles){
+        const d=new Date(candles.date);
+        d.setMinutes(d.getMinutes()+30);
+        document.getElementById('sht-candles').textContent=fmtISO(d.toISOString());
+      }
+      if(havdalah){
+        const d=new Date(havdalah.date);
+        d.setMinutes(d.getMinutes()+10);
+        document.getElementById('sht-havdalah').textContent=fmtISO(d.toISOString());
+      }
     }
   } catch(e){ console.error('Hebcal shabbat error',e); }
 
