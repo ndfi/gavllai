@@ -1029,12 +1029,13 @@ function omerFullText(day) {
   let text = 'היום ' + numToHebrew(day) + (day===2?'':' ') + 'יום';
   if (day === 1)  text = 'היום יום אחד';
   if (day === 2)  text = 'היום שני ימים';
+  // Add "לעומר," before the weeks part
+  text += ' לעומר,';
   if (day > 6) {
     text += ' שהם ';
     if (weeks > 0 && remain === 0) text += WEEKS_HE[weeks];
     else if (weeks > 0) text += WEEKS_HE[weeks] + ' ו' + numToHebrew(remain) + ' ימים';
   }
-  text += ' לעומר';
   return text;
 }
 
