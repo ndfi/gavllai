@@ -505,6 +505,30 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
       <div class="card-body"><button class="btn btn-open" onclick="window.open('index.html','_blank')">📺 פתח לוח תצוגה</button></div>
     </div>
     <div class="card">
+      <div class="card-header"><div class="ch-icon">🌿</div><div><h2>רקע מסך ספירת העומר</h2><p>הכנס קישור לתמונה שתופיע ברקע</p></div></div>
+      <div class="card-body">
+        <div class="field">
+          <label>קישור לתמונת רקע (URL)</label>
+          <input type="url" id="omer-bg-url" placeholder="https://...">
+        </div>
+        <div id="omer-bg-preview" style="display:none;margin:8px 0;border-radius:10px;overflow:hidden;max-height:140px;">
+          <img id="omer-bg-img" style="width:100%;height:140px;object-fit:cover;" onerror="this.parentElement.style.display='none'">
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label>כהות הרקע (0 = שקוף, 100 = שחור)</label>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <input type="range" id="omer-bg-dim" min="0" max="90" step="5" value="50"
+              oninput="document.getElementById('omer-dim-val').textContent=this.value+'%'">
+            <span id="omer-dim-val" style="min-width:40px;font-weight:800;color:var(--primary-dark);">50%</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn btn-primary" onclick="saveOmerBg()" style="flex:1;">💾 שמור רקע</button>
+          <button class="btn btn-ghost" onclick="clearOmerBg()" style="width:90px;">🗑 הסר</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-header"><div class="ch-icon">🎨</div><div><h2>ערכת צבעים</h2><p>עבור בין ערכה כהה (ברירת מחדל) לבהירה</p></div></div>
       <div class="card-body">
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;">
@@ -785,6 +809,15 @@ onSnapshot(doc(db,'settings','display'),snap=>{
   applyArUi(!!d.autoRefresh);
   applyThemeUi(d.colorTheme||'dark');
   buildCycleRows(d);
+  // Load omer bg
+  if(d.omerBgUrl !== undefined){
+    const urlEl = document.getElementById('omer-bg-url');
+    const dimEl = document.getElementById('omer-bg-dim');
+    const dimValEl = document.getElementById('omer-dim-val');
+    if(urlEl) urlEl.value = d.omerBgUrl||'';
+    if(d.omerBgUrl){ document.getElementById('omer-bg-img').src=d.omerBgUrl; document.getElementById('omer-bg-preview').style.display='block'; }
+    if(dimEl){ dimEl.value=d.omerBgDim||50; dimValEl.textContent=(d.omerBgDim||50)+'%'; }
+  }
 });
 
 window.saveAnn=async()=>{
@@ -1179,6 +1212,33 @@ onSnapshot(doc(db,'settings','display'),snap=>{
   if(!snap.exists()) return;
   buildCycleRows(snap.data());
 });
+
+// ── רקע ספירת העומר ──
+document.getElementById('omer-bg-url').addEventListener('input', function(){
+  const url = this.value.trim();
+  const wrap = document.getElementById('omer-bg-preview');
+  const img  = document.getElementById('omer-bg-img');
+  if(url){ img.src=url; wrap.style.display='block'; }
+  else    { wrap.style.display='none'; }
+});
+
+window.saveOmerBg=async()=>{
+  const url = document.getElementById('omer-bg-url').value.trim();
+  const dim = parseInt(document.getElementById('omer-bg-dim').value)||50;
+  try{
+    await setDoc(doc(db,'settings','display'),{omerBgUrl:url,omerBgDim:dim},{merge:true});
+    toast('רקע נשמר','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+window.clearOmerBg=async()=>{
+  try{
+    await setDoc(doc(db,'settings','display'),{omerBgUrl:'',omerBgDim:50},{merge:true});
+    document.getElementById('omer-bg-url').value='';
+    document.getElementById('omer-bg-preview').style.display='none';
+    toast('רקע הוסר','ok');
+  }catch(e){toast('שגיאה','err');}
+};
 
 window.saveCycleSettings=async()=>{
   const updates={};

@@ -560,12 +560,12 @@ async function fetchHebcal() {
       const havdalah = sh.items.find(i=>i.category==='havdalah');
       if(candles){
         const d=new Date(candles.date);
-        d.setMinutes(d.getMinutes()+30);
+        d.setMinutes(d.getMinutes()+30+3);
         document.getElementById('sht-candles').textContent=fmtISO(d.toISOString());
       }
       if(havdalah){
         const d=new Date(havdalah.date);
-        d.setMinutes(d.getMinutes()+10);
+        d.setMinutes(d.getMinutes()+10+3);
         document.getElementById('sht-havdalah').textContent=fmtISO(d.toISOString());
       }
     }
@@ -743,6 +743,18 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   }
   // Color theme
   document.body.classList.toggle('theme-light', d.colorTheme==='light');
+  // Omer background image
+  const screenD = document.getElementById('screenD');
+  if(d.omerBgUrl){
+    const dim = (d.omerBgDim ?? 50) / 100;
+    screenD.style.backgroundImage=`linear-gradient(rgba(0,0,0,${dim}),rgba(0,0,0,${dim})),url(${d.omerBgUrl})`;
+    screenD.style.backgroundSize='cover';
+    screenD.style.backgroundPosition='center';
+  } else {
+    screenD.style.backgroundImage='';
+    screenD.style.backgroundSize='';
+    screenD.style.backgroundPosition='';
+  }
   // Per-screen cycle settings
   if(d.cycle_A) CYCLES.A=d.cycle_A*1000;
   if(d.cycle_B) CYCLES.B=d.cycle_B*1000;
@@ -1019,19 +1031,28 @@ const TENS = ['','','עשרים','שלושים','ארבעים'];
 const WEEKS_HE = ['','שבוע אחד','שבועיים','שלושה שבועות','ארבעה שבועות',
                   'חמישה שבועות','שישה שבועות','שבעה שבועות'];
 
+// Standard order (tens first) — used for weeks remainder
 function numToHebrew(n) {
   if (n < 20) return ONES[n];
   const t = Math.floor(n/10), o = n%10;
   return o===0 ? TENS[t] : TENS[t]+' ו'+ONES[o];
 }
 
+// Omer order: units BEFORE tens (e.g. "חמשה וארבעים")
+// Uses traditional omer forms (חמשה, ששה, שלשה etc.)
+const OMER_ONES = ['','אחד','שניים','שלשה','ארבעה','חמשה','ששה','שבעה','שמונה','תשעה'];
+function omerNumToHebrew(n) {
+  if (n < 20) return ONES[n];          // 1–19 same as standard
+  const t = Math.floor(n/10), o = n%10;
+  return o===0 ? TENS[t] : OMER_ONES[o]+' ו'+TENS[t];
+}
+
 function omerFullText(day) {
   const weeks  = Math.floor(day/7);
   const remain = day % 7;
-  let text = 'היום ' + numToHebrew(day) + (day===2?'':' ') + 'יום';
+  let text = 'היום ' + omerNumToHebrew(day) + ' יום';
   if (day === 1)  text = 'היום יום אחד';
   if (day === 2)  text = 'היום שני ימים';
-  // Add "לעומר," before the weeks part
   text += ' לעומר,';
   if (day > 6) {
     text += ' שהם ';
