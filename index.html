@@ -687,13 +687,27 @@ async function fetchZmanim(yyyy,mm,dd) {
     return fmt(val);
   };
 
-  // Hebcal uses different key names across versions — try both
-  const pick = (...keys) => { for(const k of keys){ if(z[k]) return z[k]; } return null; };
+  // Helper: subtract minutes from a zmanim value (ISO string or HH:MM:SS)
+  const subMins = (val, mins) => {
+    if(!val) return val;
+    let d;
+    if(/^\d{2}:\d{2}/.test(val)){
+      // HH:MM:SS local — build a fake date to do arithmetic
+      const [h,m,s]=(val+'').split(':').map(Number);
+      d=new Date(); d.setHours(h,m-(mins),s||0,0);
+      return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    }
+    d=new Date(val); d.setMinutes(d.getMinutes()-mins);
+    return d.toISOString();
+  };
 
-  document.getElementById('qz-alot').textContent    = fz(pick('alotHaShachar','dawn'));
+  const alot  = subMins(pick('alotHaShachar','dawn'), 5);
+  const tzeit = subMins(pick('tzeit7083deg','tzeitHakochavim','nightfall'), 5);
+
+  document.getElementById('qz-alot').textContent    = fz(alot);
   document.getElementById('qz-sunrise').textContent = fz(pick('sunrise','sunriseISO'));
   document.getElementById('qz-sunset').textContent  = fz(pick('sunset','sunsetISO'));
-  document.getElementById('qz-tzeit').textContent   = fz(pick('tzeit7083deg','tzeitHakochavim','nightfall'));
+  document.getElementById('qz-tzeit').textContent   = fz(tzeit);
   document.getElementById('sht-sunset').textContent = fz(pick('sunset','sunsetISO'));
 
   const shma    = pick('sofZmanShmaGRA','sofZmanShma','kriyatShma');
@@ -701,10 +715,8 @@ async function fetchZmanim(yyyy,mm,dd) {
   const chatzot = pick('chatzot','midday');
   const minchaG = pick('minchaGedola','minchaGedolah');
   const plag    = pick('plagHaMincha','plag');
-  const alot    = pick('alotHaShachar','dawn');
   const sunrise = pick('sunrise','sunriseISO');
   const sunset  = pick('sunset','sunsetISO');
-  const tzeit   = pick('tzeit7083deg','tzeitHakochavim','nightfall');
 
   document.getElementById('sz-shma').textContent    = fz(shma);
   document.getElementById('sz-tfilla').textContent  = fz(tfilla);
