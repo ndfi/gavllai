@@ -724,7 +724,7 @@ window.addCustomPrayer=async()=>{
   }catch{toast('שגיאה','err');}
 };
 
-async function delCustomPrayer(id){
+window.delCustomPrayer = async function(id){
   if(!confirm('למחוק תפילה זו?'))return;
   try{await deleteDoc(doc(db,'prayers_custom',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}
 }
@@ -735,7 +735,7 @@ window.savePrayers=async()=>{const btn=document.getElementById('savePrayersBtn')
 // ── הודעות ──
 let _annFontSize=100;
 
-function resetAnnForm(){
+window.resetAnnForm=function(){
   document.getElementById('newAnn').value='';
   document.getElementById('ann-editId').value='';
   document.getElementById('annFormTitle').textContent='הוסף הודעה';
@@ -1050,6 +1050,16 @@ window.addShiur=async()=>{
     ['sh-title','sh-time','sh-details','sh-desc','sh-date'].forEach(id=>document.getElementById(id).value='');
     toast('שיעור נוסף!','ok');
   }catch{toast('שגיאה','err');}
+};
+
+window.delShiur=async function(id){
+  if(!window.confirm('למחוק שיעור זה?'))return;
+  try{await deleteDoc(doc(db,'shiurim',id));toast('נמחק','ok');}catch(e){toast('שגיאה','err');}
+};
+
+window.delCustom=async function(id){
+  if(!window.confirm('למחוק מסך זה?'))return;
+  try{await deleteDoc(doc(db,'custom_screens',id));toast('נמחק','ok');}catch(e){toast('שגיאה','err');}
 };
 
 // ── ספרי תורה ──
