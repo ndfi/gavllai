@@ -888,7 +888,6 @@ onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => 
 
 // ── Firebase: Custom / Manual Prayers ──
 let customPrayerData = [];
-let _activeHolidays  = [];
 onSnapshot(query(collection(db,'prayers_custom'),orderBy('order','asc')), snap => {
   customPrayerData = snap.docs.map(d=>d.data());
   renderCustomPrayers();
