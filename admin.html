@@ -951,9 +951,17 @@ onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => 
       <button class="btn-del hol-del" data-id="${h.id}" title="מחק">🗑</button>
     </div>`;
   }).join('');
-  list.querySelectorAll('.hol-edit').forEach(b=>b.addEventListener('click',()=>editHoliday(b.dataset.id)));
-  list.querySelectorAll('.hol-toggle').forEach(b=>b.addEventListener('click',()=>toggleHoliday(b.dataset.id, b.dataset.active!=='true')));
-  list.querySelectorAll('.hol-del').forEach(b=>b.addEventListener('click',()=>deleteHoliday(b.dataset.id)));
+});
+
+// ── Event delegation for holiday list (survives re-renders) ──
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(!id) return;
+  if(btn.classList.contains('hol-edit'))   editHoliday(id);
+  if(btn.classList.contains('hol-toggle')) toggleHoliday(id, btn.dataset.active!=='true');
+  if(btn.classList.contains('hol-del'))    deleteHoliday(id);
 });
 
 window.saveHoliday = async () => {
@@ -985,9 +993,14 @@ window.toggleHoliday = async (id, active) => {
 };
 
 window.deleteHoliday = async id => {
-  if(!confirm('למחוק חג זה?')) return;
-  try{ await deleteDoc(doc(db,'holidays',id)); toast('נמחק','ok'); }
-  catch{ toast('שגיאה','err'); }
+  if(!window.confirm('למחוק חג זה?')) return;
+  try{
+    await deleteDoc(doc(db,'holidays',id));
+    toast('נמחק','ok');
+  } catch(e){
+    toast('שגיאה: '+e.message,'err');
+    console.error('deleteHoliday error',e);
+  }
 };
 
 // ── Shiurim ──
