@@ -946,12 +946,14 @@ onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => 
     return `<div class="ann-item" style="padding:10px 12px;">
       <div style="flex:1;font-weight:700;font-size:.9rem;">${esc(h.name||'')}</div>
       <span class="badge ${tog}">${lbl}</span>
-      <button class="btn-del" onclick="editHoliday('${h.id}')" title="ערוך" style="color:var(--primary);">✏️</button>
-      <button class="btn-del" onclick="toggleHoliday('${h.id}',${!h.active})" title="${h.active?'כבה':'הדלק'}">${h.active?'🔴':'🟢'}</button>
-      <button class="btn-del" onclick="deleteHoliday('${h.id}')" title="מחק">🗑</button>
+      <button class="btn-del hol-edit" data-id="${h.id}" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del hol-toggle" data-id="${h.id}" data-active="${h.active}" title="${h.active?'כבה':'הדלק'}">${h.active?'🔴':'🟢'}</button>
+      <button class="btn-del hol-del" data-id="${h.id}" title="מחק">🗑</button>
     </div>`;
   }).join('');
-  list.querySelectorAll('[onclick^="editHoliday"]').forEach(b=>b.addEventListener('click',()=>{}));
+  list.querySelectorAll('.hol-edit').forEach(b=>b.addEventListener('click',()=>editHoliday(b.dataset.id)));
+  list.querySelectorAll('.hol-toggle').forEach(b=>b.addEventListener('click',()=>toggleHoliday(b.dataset.id, b.dataset.active!=='true')));
+  list.querySelectorAll('.hol-del').forEach(b=>b.addEventListener('click',()=>deleteHoliday(b.dataset.id)));
 });
 
 window.saveHoliday = async () => {
