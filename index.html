@@ -823,7 +823,13 @@ function buildScreenB(prayers,custom=[]) {
     .filter(({key})=>prayerData[key])
     .map(({key,label})=>`<div class="big-prayer-card ${key===nextKey?'highlight':''}"><span class="bpc-label">${label}</span><span class="bpc-time">${prayerData[key]}</span></div>`);
   const cusCards=custom.map((p,i)=>`<div class="big-prayer-card ${i===nextCusIdx?'highlight':''}"><span class="bpc-label">${p.name||''}</span><span class="bpc-time">${p.time||'--:--'}</span></div>`);
-  document.getElementById('big-prayers-grid').innerHTML=[...stdCards,...cusCards].join('');
+  // Holiday prayers — active holidays
+  const holCards = (_activeHolidays||[]).flatMap(h =>
+    HOL_PRAYER_ORDER.filter(({key})=>h[key]).map(({key,label})=>
+      `<div class="big-prayer-card"><span class="bpc-label">${label}</span><span class="bpc-time">${h[key]}</span></div>`
+    )
+  );
+  document.getElementById('big-prayers-grid').innerHTML=[...stdCards,...cusCards,...holCards].join('');
 }
 
 // ── Firebase: Announcements ──
@@ -839,48 +845,50 @@ onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),sna
   el.innerHTML=snap.docs.map(d=>`<div class="ann-line">${d.data().text}</div>`).join('');
 });
 
-// ── Firebase: Holiday Prayers ──
-// Shown on the left side-panel when enabled=true
-const HOLIDAY_PRAYER_LABELS = {
-  rh_shacharit:'שחרית', rh_musaf:'מוסף', rh_mincha:'מנחה', yk_neilah:'נעילה',
-  suk_shacharit:'שחרית', suk_musaf:'מוסף', suk_mincha:'מנחה', suk_arvit:'ערבית',
-  pss_shacharit:'שחרית', pss_musaf:'מוסף', pss_mincha:'מנחה', pss_arvit:'ערבית',
-};
+// ── Firebase: Holiday Prayers (per-holiday collection) ──
+const HOL_PRAYER_ORDER = [
+  {key:'arvitIn',   label:'ערבית (כניסה)'},
+  {key:'shacharit', label:'שחרית'},
+  {key:'musaf',     label:'מוסף'},
+  {key:'mincha',    label:'מנחה'},
+  {key:'arvitOut',  label:'ערבית (צאת)'},
+];
 
-onSnapshot(doc(db,'prayers','holiday'), snap => {
-  const panel = document.getElementById('holiday-panel');
-  if (!snap.exists() || !snap.data().enabled) {
+let _activeHolidays = [];
+
+onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => {
+  _activeHolidays = snap.docs.map(d=>({id:d.id,...d.data()})).filter(h=>h.active);
+  const panel   = document.getElementById('holiday-panel');
+  const listEl  = document.getElementById('holiday-prayer-list');
+  const titleEl = document.getElementById('holiday-panel-title');
+
+  if (!_activeHolidays.length) {
     if(panel) panel.style.display='none';
     return;
   }
-  const hol = snap.data();
   if(panel) panel.style.display='block';
 
-  // Update holiday panel title
-  const titleEl = document.getElementById('holiday-panel-title');
-  if(titleEl) titleEl.textContent = hol.holidayName || 'תפילות חגים';
+  // Title = name of first active holiday
+  if(titleEl) titleEl.textContent = _activeHolidays[0].name || 'תפילות חגים';
 
-  // Build rows — show only sections that have at least one time set
-  const sections = [
-    { label:'ר"ה / יוה"כ', keys:['rh_shacharit','rh_musaf','rh_mincha','yk_neilah'] },
-    { label:'סוכות / שמ"ע', keys:['suk_shacharit','suk_musaf','suk_mincha','suk_arvit'] },
-    { label:'פסח / שבועות',  keys:['pss_shacharit','pss_musaf','pss_mincha','pss_arvit'] },
-  ];
-
+  // Build prayer rows for all active holidays
   let html = '';
-  sections.forEach(sec => {
-    const rows = sec.keys.filter(k=>hol[k]).map(k=>
-      `<div class="prayer-item"><span class="prayer-name">${HOLIDAY_PRAYER_LABELS[k]}</span><span class="prayer-time">${hol[k]}</span></div>`
-    ).join('');
-    if(rows) html += `<div class="section-title" style="margin-top:6px;">${sec.label}</div>${rows}`;
+  _activeHolidays.forEach(h => {
+    if(_activeHolidays.length > 1)
+      html += `<div class="section-title" style="margin-top:6px;">${esc(h.name||'')}</div>`;
+    HOL_PRAYER_ORDER.forEach(({key,label}) => {
+      if(h[key]) html += `<div class="prayer-item"><span class="prayer-name">${label}</span><span class="prayer-time">${h[key]}</span></div>`;
+    });
   });
-
-  const listEl = document.getElementById('holiday-prayer-list');
   if(listEl) listEl.innerHTML = html;
+
+  // Also rebuild screen B to include holiday prayers
+  refreshPrayers();
 });
 
 // ── Firebase: Custom / Manual Prayers ──
 let customPrayerData = [];
+let _activeHolidays  = [];
 onSnapshot(query(collection(db,'prayers_custom'),orderBy('order','asc')), snap => {
   customPrayerData = snap.docs.map(d=>d.data());
   renderCustomPrayers();

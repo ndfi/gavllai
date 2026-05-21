@@ -215,50 +215,26 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     <div class="card">
       <div class="card-header">
         <div class="ch-icon">🎉</div>
-        <div>
-          <h2>תפילות חגים</h2>
-          <p>מוצגות רק כאשר מופעלות — כבה/הדלק לפי הצורך</p>
-        </div>
-        <div style="margin-right:auto;">
-          <label class="toggle-wrap">
-            <input type="checkbox" id="holidayPrayersEnabled" onchange="toggleHolidayPrayers(this.checked)">
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span class="toggle-label" id="holidayToggleLabel">כבוי</span>
-          </label>
-        </div>
+        <div><h2>תפילות חגים</h2><p>הוסף חג, הדלק/כבה לפי הצורך — שם החג מוצג על הלוח</p></div>
       </div>
-      <div class="card-body" id="holidayPrayersBody">
-        <div class="holiday-disabled-notice" id="holidayDisabledNotice">
-          <span>⬆️ הפעל את תפילות החגים כדי שיוצגו על הלוח</span>
+      <div class="card-body">
+        <div id="holidayList" class="ann-list" style="max-height:420px;min-height:60px;"><div class="empty-state">טוען...</div></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec" id="holFormTitle">הוסף חג</div>
+        <div class="field"><label>שם החג (יוצג על המסך)</label><input type="text" id="hol-name" placeholder='לדוגמה: שבועות תשפ"ו'></div>
+        <div class="sub-label">סדר תפילות: ערבית ← שחרית ← מוסף ← מנחה ← ערבית צאת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>ערבית (כניסת החג)</label><input type="time" id="hol-arvit-in"></div>
+          <div class="field"><label>שחרית</label><input type="time" id="hol-shacharit"></div>
+          <div class="field"><label>מוסף</label><input type="time" id="hol-musaf"></div>
+          <div class="field"><label>מנחה</label><input type="time" id="hol-mincha"></div>
+          <div class="field"><label>ערבית (צאת החג)</label><input type="time" id="hol-arvit-out"></div>
         </div>
-        <div id="holidayPrayersFields">
-          <div class="sub-label">ראש השנה / יום כיפור</div>
-          <div class="prayer-grid">
-            <div class="field"><label>שחרית</label><input type="time" id="ph-rh_shacharit"></div>
-            <div class="field"><label>מוסף</label><input type="time" id="ph-rh_musaf"></div>
-            <div class="field"><label>מנחה</label><input type="time" id="ph-rh_mincha"></div>
-            <div class="field"><label>נעילה (יוה"כ)</label><input type="time" id="ph-yk_neilah"></div>
-          </div>
-          <div class="sub-label">סוכות / שמיני עצרת</div>
-          <div class="prayer-grid">
-            <div class="field"><label>שחרית</label><input type="time" id="ph-suk_shacharit"></div>
-            <div class="field"><label>מוסף</label><input type="time" id="ph-suk_musaf"></div>
-            <div class="field"><label>מנחה</label><input type="time" id="ph-suk_mincha"></div>
-            <div class="field"><label>ערבית</label><input type="time" id="ph-suk_arvit"></div>
-          </div>
-          <div class="sub-label">פסח / שבועות</div>
-          <div class="prayer-grid">
-            <div class="field"><label>שחרית</label><input type="time" id="ph-pss_shacharit"></div>
-            <div class="field"><label>מוסף</label><input type="time" id="ph-pss_musaf"></div>
-            <div class="field"><label>מנחה</label><input type="time" id="ph-pss_mincha"></div>
-            <div class="field"><label>ערבית</label><input type="time" id="ph-pss_arvit"></div>
-          </div>
-          <div class="sub-label">שם החג (יוצג על המסך)</div>
-          <div class="field"><input type="text" id="ph-holidayName" placeholder="לדוגמה: ראש השנה תשפ״ו"></div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn btn-add" onclick="saveHoliday()" style="flex:1;"><span id="holSubmitTxt">➕ הוסף חג</span></button>
+          <button class="btn btn-ghost" id="holCancelBtn" onclick="resetHolForm()" style="width:80px;display:none;">ביטול</button>
         </div>
-        <div style="margin-top:14px;">
-          <button class="btn btn-primary" onclick="saveHolidayPrayers()"><span id="saveHolidayTxt">💾 שמור תפילות חגים</span></button>
-        </div>
+        <input type="hidden" id="hol-editId">
       </div>
     </div>
   </div>
@@ -932,37 +908,84 @@ window.editCustom=async(id)=>{
   document.querySelector('[data-tab=custom]').click();window.scrollTo({top:0,behavior:'smooth'});
 };
 // ── Holiday Prayers ──
-const HP_KEYS=['rh_shacharit','rh_musaf','rh_mincha','yk_neilah','suk_shacharit','suk_musaf','suk_mincha','suk_arvit','pss_shacharit','pss_musaf','pss_mincha','pss_arvit','holidayName'];
+// ── תפילות חגים (per-holiday) ──
+let _holAllDocs = [];
 
-onSnapshot(doc(db,'prayers','holiday'),snap=>{
-  if(!snap.exists()) return;
-  const d=snap.data();
-  HP_KEYS.forEach(k=>{const e=document.getElementById('ph-'+k);if(e&&d[k])e.value=d[k];});
-  const enabled=!!d.enabled;
-  document.getElementById('holidayPrayersEnabled').checked=enabled;
-  document.getElementById('holidayToggleLabel').textContent=enabled?'פעיל':'כבוי';
-  document.getElementById('holidayPrayersFields').classList.toggle('enabled',enabled);
-  document.getElementById('holidayDisabledNotice').style.display=enabled?'none':'block';
-});
-
-window.toggleHolidayPrayers=async(checked)=>{
-  document.getElementById('holidayToggleLabel').textContent=checked?'פעיל':'כבוי';
-  document.getElementById('holidayPrayersFields').classList.toggle('enabled',checked);
-  document.getElementById('holidayDisabledNotice').style.display=checked?'none':'block';
-  try{await setDoc(doc(db,'prayers','holiday'),{enabled:checked},{merge:true});toast(checked?'תפילות חגים הופעלו ✓':'תפילות חגים כובו','ok');}
-  catch{toast('שגיאה','err');}
+window.resetHolForm = () => {
+  ['hol-name','hol-arvit-in','hol-shacharit','hol-musaf','hol-mincha','hol-arvit-out'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('hol-editId').value='';
+  document.getElementById('holFormTitle').textContent='הוסף חג';
+  document.getElementById('holSubmitTxt').textContent='➕ הוסף חג';
+  document.getElementById('holCancelBtn').style.display='none';
 };
 
-window.saveHolidayPrayers=async()=>{
-  const btn=document.querySelector('[onclick="saveHolidayPrayers()"]');
-  document.getElementById('saveHolidayTxt').innerHTML='<span class="spinner"></span>';
-  btn.disabled=true;
-  const data={enabled:document.getElementById('holidayPrayersEnabled').checked};
-  HP_KEYS.forEach(k=>{const v=document.getElementById('ph-'+k)?.value;if(v)data[k]=v;});
-  try{await setDoc(doc(db,'prayers','holiday'),data,{merge:true});toast('תפילות חגים נשמרו!','ok');}
-  catch{toast('שגיאה','err');}
-  document.getElementById('saveHolidayTxt').textContent='💾 שמור תפילות חגים';
-  btn.disabled=false;
+window.editHoliday = id => {
+  const h = _holAllDocs.find(x=>x.id===id); if(!h) return;
+  document.getElementById('hol-name').value       = h.name||'';
+  document.getElementById('hol-arvit-in').value   = h.arvitIn||'';
+  document.getElementById('hol-shacharit').value  = h.shacharit||'';
+  document.getElementById('hol-musaf').value      = h.musaf||'';
+  document.getElementById('hol-mincha').value     = h.mincha||'';
+  document.getElementById('hol-arvit-out').value  = h.arvitOut||'';
+  document.getElementById('hol-editId').value     = id;
+  document.getElementById('holFormTitle').textContent   = '✏️ ערוך חג';
+  document.getElementById('holSubmitTxt').textContent   = '💾 שמור שינויים';
+  document.getElementById('holCancelBtn').style.display = 'block';
+  document.getElementById('hol-name').scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => {
+  _holAllDocs = snap.docs.map(d=>({id:d.id,...d.data()}));
+  const list = document.getElementById('holidayList');
+  if(snap.empty){ list.innerHTML='<div class="empty-state">אין חגים — הוסף חג ראשון</div>'; return; }
+  list.innerHTML = _holAllDocs.map(h => {
+    const tog  = h.active ? 'bon' : 'boff';
+    const lbl  = h.active ? 'פעיל' : 'כבוי';
+    return `<div class="ann-item" style="padding:10px 12px;">
+      <div style="flex:1;font-weight:700;font-size:.9rem;">${esc(h.name||'')}</div>
+      <span class="badge ${tog}">${lbl}</span>
+      <button class="btn-del" onclick="editHoliday('${h.id}')" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del" onclick="toggleHoliday('${h.id}',${!h.active})" title="${h.active?'כבה':'הדלק'}">${h.active?'🔴':'🟢'}</button>
+      <button class="btn-del" onclick="deleteHoliday('${h.id}')" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('[onclick^="editHoliday"]').forEach(b=>b.addEventListener('click',()=>{}));
+});
+
+window.saveHoliday = async () => {
+  const name = document.getElementById('hol-name').value.trim();
+  if(!name){ toast('יש להזין שם חג','err'); return; }
+  const editId = document.getElementById('hol-editId').value;
+  const data = {
+    name,
+    arvitIn:   document.getElementById('hol-arvit-in').value||'',
+    shacharit: document.getElementById('hol-shacharit').value||'',
+    musaf:     document.getElementById('hol-musaf').value||'',
+    mincha:    document.getElementById('hol-mincha').value||'',
+    arvitOut:  document.getElementById('hol-arvit-out').value||'',
+  };
+  try {
+    if(editId){
+      await updateDoc(doc(db,'holidays',editId), {...data, updatedAt:serverTimestamp()});
+    } else {
+      await addDoc(collection(db,'holidays'), {...data, active:false, createdAt:serverTimestamp()});
+    }
+    toast(editId?'עודכן':'נוסף','ok');
+    resetHolForm();
+  } catch(e){ toast('שגיאה: '+e.message,'err'); }
+};
+
+window.toggleHoliday = async (id, active) => {
+  try{ await updateDoc(doc(db,'holidays',id),{active}); }
+  catch(e){ toast('שגיאה','err'); }
+};
+
+window.deleteHoliday = async id => {
+  if(!confirm('למחוק חג זה?')) return;
+  try{ await deleteDoc(doc(db,'holidays',id)); toast('נמחק','ok'); }
+  catch{ toast('שגיאה','err'); }
 };
 
 // ── Shiurim ──
