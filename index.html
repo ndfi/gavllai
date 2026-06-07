@@ -303,16 +303,18 @@
   .sefer-screen-deco.br{bottom:20px;left:30px;}
 
   /* Screen F — עליות לתורה */
-  #screenF{display:flex;flex-direction:column;align-items:stretch;background:linear-gradient(160deg,#1a0e05 0%,#2d1a0a 50%,#1a0e05 100%);padding:clamp(20px,3vh,40px) clamp(30px,4vw,60px);}
-  .aliyot-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;color:var(--gold-light);letter-spacing:4px;text-align:center;text-shadow:0 0 30px rgba(200,164,74,.4);margin-bottom:4px;}
-  .aliyot-subtitle{font-size:clamp(.9rem,1.8vw,1.3rem);color:var(--gold);text-align:center;letter-spacing:2px;margin-bottom:clamp(12px,2vh,24px);}
-  .aliyot-table{width:100%;border-collapse:collapse;}
-  .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.8rem,1.5vw,1.1rem);font-weight:900;padding:clamp(6px,1.2vh,14px) clamp(8px,1.5vw,20px);border-bottom:2px solid var(--gold);letter-spacing:1px;text-align:center;}
-  .aliyot-table td{color:var(--parchment);font-size:clamp(.88rem,1.6vw,1.15rem);padding:clamp(5px,1vh,11px) clamp(8px,1.5vw,20px);border-bottom:1px solid rgba(200,164,74,.15);text-align:center;}
+  #screenF{display:flex;flex-direction:column;align-items:stretch;background:linear-gradient(160deg,#1a0e05 0%,#2d1a0a 50%,#1a0e05 100%);padding:clamp(10px,1.8vh,24px) clamp(16px,2.5vw,36px);}
+  .aliyot-title{font-size:clamp(1.4rem,3.2vw,2.6rem);font-weight:900;color:var(--gold-light);letter-spacing:3px;text-align:center;text-shadow:0 0 20px rgba(200,164,74,.4);margin-bottom:2px;}
+  .aliyot-subtitle{font-size:clamp(.75rem,1.3vw,.95rem);color:var(--gold);text-align:center;letter-spacing:2px;margin-bottom:clamp(6px,1.2vh,14px);}
+  .aliyot-columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(6px,1.2vw,18px);flex:1;}
+  .aliyot-col-wrap{min-width:0;}
+  .aliyot-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.6rem,.95vw,.8rem);font-weight:900;padding:3px 4px;border-bottom:2px solid var(--gold);letter-spacing:.5px;text-align:center;white-space:nowrap;}
+  .aliyot-table td{color:var(--parchment);font-size:clamp(.58rem,.9vw,.78rem);padding:2px 4px;border-bottom:1px solid rgba(200,164,74,.12);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .aliyot-table tr:nth-child(even) td{background:rgba(200,164,74,.05);}
   .aliyot-table tr:last-child td{border-bottom:none;}
-  .aliyot-count{display:inline-block;background:rgba(200,164,74,.2);border:1px solid var(--gold);border-radius:20px;padding:1px 12px;font-weight:900;color:var(--gold-light);}
-  .aliyot-empty{text-align:center;padding:60px 20px;color:var(--gold);font-size:clamp(1.2rem,2.5vw,1.8rem);opacity:.7;font-style:italic;}
+  .aliyot-count{display:inline-block;background:rgba(200,164,74,.2);border:1px solid var(--gold);border-radius:10px;padding:0 6px;font-weight:900;color:var(--gold-light);font-size:.7em;}
+  .aliyot-empty{text-align:center;padding:60px 20px;color:var(--gold);font-size:clamp(1.2rem,2.5vw,1.8rem);opacity:.7;font-style:italic;grid-column:1/-1;}
   body.theme-light #screenF{background:linear-gradient(160deg,#f5f0e4 0%,#ede5ce 50%,#f5f0e4 100%);}
   body.theme-light .aliyot-table th{background:rgba(122,90,16,.15);}
   body.theme-light .aliyot-table td{color:var(--text-bright);}
@@ -1279,14 +1281,28 @@ function showNextScreen(){
 // ── Firebase: עליות לתורה (Screen F) ──
 const HE_MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
+const DAY_NAMES_HE=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+function buildAliyotTableHTML(rows){
+  if(!rows.length) return '';
+  return `<table class="aliyot-table">
+    <thead><tr>
+      <th>יום</th>
+      <th>תאריך עברי</th>
+      <th>תאריך לועזי</th>
+      <th>שם העולה</th>
+      <th>✕</th>
+    </tr></thead>
+    <tbody>${rows.join('')}</tbody>
+  </table>`;
+}
+
 function renderAliyotTable(docs){
-  const screen = document.getElementById('screenF');
   const body   = document.getElementById('aliyot-body');
   const label  = document.getElementById('aliyot-month-label');
+  const now    = new Date();
+  const curY   = now.getFullYear(), curM = now.getMonth()+1;
 
-  // Filter current Gregorian month
-  const now  = new Date();
-  const curY = now.getFullYear(), curM = now.getMonth()+1;
   const monthDocs = docs.filter(d=>{
     if(!d.date) return false;
     const [y,m] = d.date.split('-').map(Number);
@@ -1300,28 +1316,33 @@ function renderAliyotTable(docs){
     return;
   }
 
-  // Count per person this month
+  // Count per person
   const countMap={};
   monthDocs.forEach(d=>{ countMap[d.name]=(countMap[d.name]||0)+1; });
 
-  const rows = monthDocs.map(d=>`
-    <tr>
+  // Build row HTML for each entry
+  const rowsHTML = monthDocs.map(d=>{
+    const dayName = d.date ? DAY_NAMES_HE[new Date(d.date+'T12:00:00').getDay()] : '';
+    return `<tr>
+      <td>${dayName}</td>
       <td>${d.hebrewDate||''}</td>
       <td>${d.date||''}</td>
       <td style="font-weight:700;">${d.name||''}</td>
       <td><span class="aliyot-count">${countMap[d.name]||1}</span></td>
-    </tr>`).join('');
+    </tr>`;
+  });
 
-  body.innerHTML=`
-    <table class="aliyot-table">
-      <thead><tr>
-        <th>תאריך עברי</th>
-        <th>תאריך לועזי</th>
-        <th>שם העולה</th>
-        <th>עליות החודש</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+  // Split into 3 columns evenly
+  const total = rowsHTML.length;
+  const perCol = Math.ceil(total/3);
+  const col1 = rowsHTML.slice(0, perCol);
+  const col2 = rowsHTML.slice(perCol, perCol*2);
+  const col3 = rowsHTML.slice(perCol*2);
+
+  body.innerHTML=
+    `<div class="aliyot-col-wrap">${buildAliyotTableHTML(col1)}</div>`+
+    `<div class="aliyot-col-wrap">${buildAliyotTableHTML(col2)}</div>`+
+    `<div class="aliyot-col-wrap">${buildAliyotTableHTML(col3)}</div>`;
 }
 
 onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
@@ -1346,7 +1367,7 @@ onSnapshot(doc(db,'settings','display'), snapDisp=>{
   <div class="corner-deco bl"></div><div class="corner-deco br"></div>
   <div class="aliyot-title">📖 עליות לתורה</div>
   <div class="aliyot-subtitle" id="aliyot-month-label"></div>
-  <div id="aliyot-body"></div>
+  <div class="aliyot-columns" id="aliyot-body"></div>
 </div>
 
 <div id="screen-progress"></div>
