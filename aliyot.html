@@ -45,12 +45,12 @@
   <div class="card">
     <div class="card-title">➕ הוסף עלייה</div>
     <label>תאריך לועזי</label>
-    <input type="date" id="m-date" onchange="fetchHebrew(this.value)">
+    <input type="date" id="m-date">
     <label>תאריך עברי (מחושב)</label>
     <input type="text" id="m-hdate" readonly placeholder="יחושב אחרי בחירת תאריך">
     <label>שם העולה</label>
     <input type="text" id="m-name" placeholder="ישראל ישראלי">
-    <button class="btn btn-add" onclick="addAliya()">✅ שמור עלייה</button>
+    <button class="btn btn-add" id="addBtn">✅ שמור עלייה</button>
   </div>
   <div id="entryList"><div class="empty">טוען...</div></div>
 </div>
@@ -67,17 +67,35 @@ const db=getFirestore(app);
 const HE_MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 const now=new Date(),curY=now.getFullYear(),curM=now.getMonth()+1;
 document.getElementById('monthLabel').textContent=HE_MONTHS[curM-1]+' '+curY;
-document.getElementById('m-date').value=now.toISOString().slice(0,10);
-fetchHebrew(now.toISOString().slice(0,10));
 
-window.fetchHebrew=async(dateStr)=>{
+const dateInput=document.getElementById('m-date');
+dateInput.value=now.toISOString().slice(0,10);
+
+async function fetchHebrew(dateStr){
   if(!dateStr) return;
   try{
     const r=await fetch(`https://www.hebcal.com/converter?cfg=json&date=${dateStr}&g2h=1&strict=1`);
     const d=await r.json();
     document.getElementById('m-hdate').value=d.hebrew||'';
   }catch{document.getElementById('m-hdate').value='';}
-};
+}
+
+dateInput.addEventListener('change',()=>fetchHebrew(dateInput.value));
+fetchHebrew(dateInput.value);
+
+async function addAliya(){
+  const date=dateInput.value;
+  const name=document.getElementById('m-name').value.trim();
+  const hdate=document.getElementById('m-hdate').value.trim();
+  if(!date||!name){toast('יש למלא תאריך ושם');return;}
+  try{
+    await addDoc(collection(db,'aliyot'),{date,name,hebrewDate:hdate,createdAt:serverTimestamp()});
+    document.getElementById('m-name').value='';
+    toast('נוסף! ✓');
+  }catch{toast('שגיאה');}
+}
+
+document.getElementById('addBtn').addEventListener('click',addAliya);
 
 onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')),snap=>{
   const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -117,18 +135,6 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')),snap=>{
     catch{toast('שגיאה');}
   }));
 });
-
-window.addAliya=async()=>{
-  const date=document.getElementById('m-date').value;
-  const name=document.getElementById('m-name').value.trim();
-  const hdate=document.getElementById('m-hdate').value.trim();
-  if(!date||!name){toast('יש למלא תאריך ושם');return;}
-  try{
-    await addDoc(collection(db,'aliyot'),{date,name,hebrewDate:hdate,createdAt:serverTimestamp()});
-    document.getElementById('m-name').value='';
-    toast('נוסף! ✓');
-  }catch{toast('שגיאה');}
-};
 
 function toast(msg){
   const el=document.getElementById('toast');
