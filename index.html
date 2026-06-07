@@ -309,11 +309,18 @@
   .aliyot-columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(6px,1.2vw,18px);flex:1;}
   .aliyot-col-wrap{min-width:0;}
   .aliyot-table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.6rem,.95vw,.8rem);font-weight:900;padding:3px 4px;border-bottom:2px solid var(--gold);letter-spacing:.5px;text-align:center;white-space:nowrap;}
-  .aliyot-table td{color:var(--parchment);font-size:clamp(.58rem,.9vw,.78rem);padding:2px 4px;border-bottom:1px solid rgba(200,164,74,.12);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.6rem,.95vw,.8rem);font-weight:900;padding:3px 2px;border-bottom:2px solid var(--gold);letter-spacing:.5px;text-align:center;white-space:nowrap;overflow:hidden;}
+  .aliyot-table td{color:var(--parchment);font-size:clamp(.65rem,1vw,.88rem);padding:2px 2px;border-bottom:1px solid rgba(200,164,74,.12);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* Column widths: # tiny, day narrow, hebrew date medium, name wide, count compact */
+  .aliyot-table th:nth-child(1),.aliyot-table td:nth-child(1){width:6%;} /* # */
+  .aliyot-table th:nth-child(2),.aliyot-table td:nth-child(2){width:12%;} /* יום */
+  .aliyot-table th:nth-child(3),.aliyot-table td:nth-child(3){width:22%;} /* עברי */
+  .aliyot-table th:nth-child(4),.aliyot-table td:nth-child(4){width:42%;font-weight:800;font-size:clamp(.7rem,1.1vw,.95rem);} /* שם */
+  .aliyot-table th:nth-child(5),.aliyot-table td:nth-child(5){width:18%;} /* ✕ */
   .aliyot-table tr:nth-child(even) td{background:rgba(200,164,74,.05);}
   .aliyot-table tr:last-child td{border-bottom:none;}
-  .aliyot-count{display:inline-block;background:rgba(200,164,74,.2);border:1px solid var(--gold);border-radius:10px;padding:0 6px;font-weight:900;color:var(--gold-light);font-size:.7em;}
+  .aliyot-empty-row td{opacity:.25;}
+  .aliyot-count{display:inline-block;background:rgba(200,164,74,.25);border:1px solid var(--gold);border-radius:10px;padding:0 5px;font-weight:900;color:var(--gold-light);font-size:.8em;}
   .aliyot-empty-row td{color:rgba(200,164,74,.18)!important;background:none!important;}
   .aliyot-rownum{color:rgba(200,164,74,.4);font-size:.65em;width:18px;}
   .aliyot-name{font-weight:700;}
