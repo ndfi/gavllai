@@ -115,28 +115,46 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')),snap=>{
     groups[key].push(d);
   });
   const DAY_HE=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-  list.innerHTML=Object.entries(groups).map(([month,items])=>`
-    <div class="month-header">${month}</div>
-    ${items.map(d=>{
-      const parts=(d.date||'').split('-').map(Number);
-      const isCur=parts[0]===curY&&parts[1]===curM;
-      const dayName=d.date?DAY_HE[new Date(d.date+'T12:00:00').getDay()]:'';
-      return`<div class="entry">
-        <div class="entry-info">
-          <div class="entry-name">${d.name||''}</div>
-          <div class="entry-dates">${dayName} | ${d.hebrewDate||''} | ${d.date||''}</div>
-        </div>
-        ${isCur?`<span class="entry-count">${countMap[d.name]||1}✕</span>`:''}
-        <button class="del-btn" data-id="${d.id}">🗑</button>
-      </div>`;
-    }).join('')}
-  `).join('');
+  if(!window._collapsed) window._collapsed=new Set();
+  list.innerHTML=Object.entries(groups).map(([month,items])=>{
+    const closed=window._collapsed.has(month);
+    return`<div>
+      <div class="month-header" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;" data-m="${month}" onclick="toggleMonth(this)">
+        <span>${month} <span style="font-weight:400;opacity:.6;font-size:.9em;">(${items.length})</span></span>
+        <span>${closed?'▸':'▾'}</span>
+      </div>
+      <div style="display:${closed?'none':'block'}">
+        ${items.map(d=>{
+          const parts=(d.date||'').split('-').map(Number);
+          const isCur=parts[0]===curY&&parts[1]===curM;
+          const dayName=d.date?DAY_HE[new Date(d.date+'T12:00:00').getDay()]:'';
+          return`<div class="entry">
+            <div class="entry-info">
+              <div class="entry-name">${d.name||''}</div>
+              <div class="entry-dates">${dayName} | ${d.hebrewDate||''} | ${d.date||''}</div>
+            </div>
+            ${isCur?`<span class="entry-count">${countMap[d.name]||1}✕</span>`:''}
+            <button class="del-btn" data-id="${d.id}">🗑</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
   list.querySelectorAll('.del-btn').forEach(b=>b.addEventListener('click',async()=>{
     if(!confirm('למחוק?'))return;
     try{await deleteDoc(doc(db,'aliyot',b.dataset.id));toast('נמחק ✓');}
     catch{toast('שגיאה');}
   }));
 });
+
+function toggleMonth(el){
+  const m=el.dataset.m;
+  if(window._collapsed.has(m)) window._collapsed.delete(m);
+  else window._collapsed.add(m);
+  const entries=el.nextElementSibling;
+  entries.style.display=window._collapsed.has(m)?'none':'block';
+  el.querySelector('span:last-child').textContent=window._collapsed.has(m)?'▸':'▾';
+}
 
 function toast(msg){
   const el=document.getElementById('toast');
