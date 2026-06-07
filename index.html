@@ -301,6 +301,22 @@
   .sefer-screen-deco{position:absolute;font-size:clamp(6rem,15vw,14rem);opacity:.04;pointer-events:none;user-select:none;}
   .sefer-screen-deco.tl{top:20px;right:30px;}
   .sefer-screen-deco.br{bottom:20px;left:30px;}
+
+  /* Screen F — עליות לתורה */
+  #screenF{display:flex;flex-direction:column;align-items:stretch;background:linear-gradient(160deg,#1a0e05 0%,#2d1a0a 50%,#1a0e05 100%);padding:clamp(20px,3vh,40px) clamp(30px,4vw,60px);}
+  .aliyot-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;color:var(--gold-light);letter-spacing:4px;text-align:center;text-shadow:0 0 30px rgba(200,164,74,.4);margin-bottom:4px;}
+  .aliyot-subtitle{font-size:clamp(.9rem,1.8vw,1.3rem);color:var(--gold);text-align:center;letter-spacing:2px;margin-bottom:clamp(12px,2vh,24px);}
+  .aliyot-table{width:100%;border-collapse:collapse;}
+  .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.8rem,1.5vw,1.1rem);font-weight:900;padding:clamp(6px,1.2vh,14px) clamp(8px,1.5vw,20px);border-bottom:2px solid var(--gold);letter-spacing:1px;text-align:center;}
+  .aliyot-table td{color:var(--parchment);font-size:clamp(.88rem,1.6vw,1.15rem);padding:clamp(5px,1vh,11px) clamp(8px,1.5vw,20px);border-bottom:1px solid rgba(200,164,74,.15);text-align:center;}
+  .aliyot-table tr:nth-child(even) td{background:rgba(200,164,74,.05);}
+  .aliyot-table tr:last-child td{border-bottom:none;}
+  .aliyot-count{display:inline-block;background:rgba(200,164,74,.2);border:1px solid var(--gold);border-radius:20px;padding:1px 12px;font-weight:900;color:var(--gold-light);}
+  .aliyot-empty{text-align:center;padding:60px 20px;color:var(--gold);font-size:clamp(1.2rem,2.5vw,1.8rem);opacity:.7;font-style:italic;}
+  body.theme-light #screenF{background:linear-gradient(160deg,#f5f0e4 0%,#ede5ce 50%,#f5f0e4 100%);}
+  body.theme-light .aliyot-table th{background:rgba(122,90,16,.15);}
+  body.theme-light .aliyot-table td{color:var(--text-bright);}
+  body.theme-light .aliyot-table tr:nth-child(even) td{background:rgba(122,90,16,.06);}
 </style>
 </head>
 <body>
@@ -469,7 +485,7 @@ const CYCLE_C_MS = 20000;  // default — מסך C
 const CYCLE_D_MS = 20000;  // default — מסך D (ספירת העומר)
 const CYCLE_E_MS = 25000;  // default — מסך E (ספרי תורה)
 // Dynamic values loaded from Firebase:
-let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000};
+let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000,F:25000};
 
 const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
 const WEEKDAY_PRAYERS = [{key:'shacharit',label:'שחרית'},{key:'mincha',label:'מנחה'},{key:'arvit',label:'ערבית'}];
@@ -778,7 +794,8 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   if(d.cycle_C) CYCLES.C=d.cycle_C*1000;
   if(d.cycle_D) CYCLES.D=d.cycle_D*1000;
   if(d.cycle_E) CYCLES.E=d.cycle_E*1000;
-  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
+  if(d.cycle_F) CYCLES.F=d.cycle_F*1000;
+  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E','F'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
 });
 
 
@@ -1170,7 +1187,7 @@ setInterval(checkOnline, 30000); // background check every 30s
 checkOnline();
 
 // ── Master rotation ──
-const allScreenIds=['screenA','screenB','screenC','screenD','screenE'];
+const allScreenIds=['screenA','screenB','screenC','screenD','screenE','screenF'];
 let rotation=[],rotIdx=0,rotTimer=null;
 
 function isOmerDisplayTime(){
@@ -1186,9 +1203,10 @@ function buildRotation(){
   if(screenCQueue.length) rotation.push('screenC');
   const omerEl = document.getElementById('screenD');
   if(omerEl && omerEl.getAttribute('data-omer-active')==='true' && isOmerDisplayTime()) rotation.push('screenD');
-  // Screen E — ספרי תורה — רק בשישי ושבת
   const day=new Date().getDay();
   if((day===5||day===6) && document.getElementById('screenE').getAttribute('data-sefer-active')==='true') rotation.push('screenE');
+  // Screen F — עליות לתורה — תמיד (אם מופעל)
+  if(document.getElementById('screenF').getAttribute('data-aliyot-active')==='true') rotation.push('screenF');
 }
 
 // ── Firebase: ספרי תורה ──
@@ -1258,8 +1276,79 @@ function showNextScreen(){
     rotTimer=setTimeout(showNextScreen,dur);
   }
 }
-// (rotation started after fetchHebcal resolves — see above)
+// ── Firebase: עליות לתורה (Screen F) ──
+const HE_MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+function renderAliyotTable(docs){
+  const screen = document.getElementById('screenF');
+  const body   = document.getElementById('aliyot-body');
+  const label  = document.getElementById('aliyot-month-label');
+
+  // Filter current Gregorian month
+  const now  = new Date();
+  const curY = now.getFullYear(), curM = now.getMonth()+1;
+  const monthDocs = docs.filter(d=>{
+    if(!d.date) return false;
+    const [y,m] = d.date.split('-').map(Number);
+    return y===curY && m===curM;
+  });
+
+  label.textContent = HE_MONTHS[curM-1] + ' ' + curY;
+
+  if(!monthDocs.length){
+    body.innerHTML=`<div class="aliyot-empty">אין עליות החודש</div>`;
+    return;
+  }
+
+  // Count per person this month
+  const countMap={};
+  monthDocs.forEach(d=>{ countMap[d.name]=(countMap[d.name]||0)+1; });
+
+  const rows = monthDocs.map(d=>`
+    <tr>
+      <td>${d.hebrewDate||''}</td>
+      <td>${d.date||''}</td>
+      <td style="font-weight:700;">${d.name||''}</td>
+      <td><span class="aliyot-count">${countMap[d.name]||1}</span></td>
+    </tr>`).join('');
+
+  body.innerHTML=`
+    <table class="aliyot-table">
+      <thead><tr>
+        <th>תאריך עברי</th>
+        <th>תאריך לועזי</th>
+        <th>שם העולה</th>
+        <th>עליות החודש</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
+  const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderAliyotTable(docs);
+  buildRotation();
+});
+
+// Listen to aliyot on/off setting
+onSnapshot(doc(db,'settings','display'), snapDisp=>{
+  if(!snapDisp.exists()) return;
+  const d = snapDisp.data();
+  const screenF = document.getElementById('screenF');
+  screenF.setAttribute('data-aliyot-active', d.aliyotActive!==false ? 'true':'false');
+  buildRotation();
+});
+
 </script>
+<!-- SCREEN F — עליות לתורה -->
+<div id="screenF" class="screen" data-aliyot-active="true">
+  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+  <div class="aliyot-title">📖 עליות לתורה</div>
+  <div class="aliyot-subtitle" id="aliyot-month-label"></div>
+  <div id="aliyot-body"></div>
+</div>
+
 <div id="screen-progress"></div>
 </body>
 </html>
