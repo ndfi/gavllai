@@ -49,7 +49,8 @@
     <label>תאריך עברי (מחושב)</label>
     <input type="text" id="m-hdate" readonly placeholder="יחושב אחרי בחירת תאריך">
     <label>שם העולה</label>
-    <input type="text" id="m-name" placeholder="ישראל ישראלי">
+    <input type="text" id="m-name" placeholder="ישראל ישראלי" autocomplete="off" list="names-list">
+    <datalist id="names-list"></datalist>
     <button class="btn btn-add" id="addBtn">✅ שמור עלייה</button>
   </div>
   <div id="entryList"><div class="empty">טוען...</div></div>
@@ -69,6 +70,16 @@ const now=new Date(),curY=now.getFullYear(),curM=now.getMonth()+1;
 document.getElementById('monthLabel').textContent=HE_MONTHS[curM-1]+' '+curY;
 
 const dateInput=document.getElementById('m-date');
+const nameInput=document.getElementById('m-name');
+const namesList=document.getElementById('names-list');
+
+let _allNames=new Set();
+
+function updateNamesList(docs){
+  _allNames=new Set(docs.map(d=>d.name).filter(Boolean));
+  namesList.innerHTML=[..._allNames].sort((a,b)=>a.localeCompare(b,'he')).map(n=>`<option value="${n}">`).join('');
+}
+
 dateInput.value=now.toISOString().slice(0,10);
 
 async function fetchHebrew(dateStr){
@@ -99,6 +110,7 @@ document.getElementById('addBtn').addEventListener('click',addAliya);
 
 onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')),snap=>{
   const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+  updateNamesList(docs);
   const countMap={};
   docs.forEach(d=>{
     if(!d.date) return;
