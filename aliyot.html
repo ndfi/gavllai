@@ -31,7 +31,9 @@
   .del-btn:active{background:#ffebee;}
   .month-header{font-size:.85rem;font-weight:900;color:#8b6914;padding:8px 0 4px;border-bottom:2px solid rgba(200,164,74,.3);margin-bottom:8px;letter-spacing:1px;}
   .empty{text-align:center;padding:40px 20px;color:#8b6914;font-size:1rem;opacity:.7;}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#2d1a0a;color:#e8c87a;padding:10px 24px;border-radius:50px;font-weight:700;font-size:.9rem;opacity:0;transition:all .3s;z-index:999;pointer-events:none;white-space:nowrap;}
+  .name-option{padding:11px 16px;cursor:pointer;font-size:1rem;color:#2d1a0a;border-bottom:1px solid #f0e8d0;}
+  .name-option:last-child{border-bottom:none;}
+  .name-option:active,.name-option.hover{background:#fdf5e0;}position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#2d1a0a;color:#e8c87a;padding:10px 24px;border-radius:50px;font-weight:700;font-size:.9rem;opacity:0;transition:all .3s;z-index:999;pointer-events:none;white-space:nowrap;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
@@ -49,8 +51,10 @@
     <label>תאריך עברי (מחושב)</label>
     <input type="text" id="m-hdate" readonly placeholder="יחושב אחרי בחירת תאריך">
     <label>שם העולה</label>
-    <input type="text" id="m-name" placeholder="ישראל ישראלי" autocomplete="off" list="names-list">
-    <datalist id="names-list"></datalist>
+    <div style="position:relative;">
+      <input type="text" id="m-name" placeholder="ישראל ישראלי" autocomplete="off">
+      <div id="name-dropdown" style="display:none;position:absolute;right:0;left:0;background:#fff;border:2px solid #c8a44a;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:999;max-height:200px;overflow-y:auto;margin-top:2px;"></div>
+    </div>
     <button class="btn btn-add" id="addBtn">✅ שמור עלייה</button>
   </div>
   <div id="entryList"><div class="empty">טוען...</div></div>
@@ -73,12 +77,36 @@ const dateInput=document.getElementById('m-date');
 const nameInput=document.getElementById('m-name');
 const namesList=document.getElementById('names-list');
 
-let _allNames=new Set();
+const dateInput=document.getElementById('m-date');
+const nameInput=document.getElementById('m-name');
+const dropdown=document.getElementById('name-dropdown');
+
+let _allNames=[];
 
 function updateNamesList(docs){
-  _allNames=new Set(docs.map(d=>d.name).filter(Boolean));
-  namesList.innerHTML=[..._allNames].sort((a,b)=>a.localeCompare(b,'he')).map(n=>`<option value="${n}">`).join('');
+  const set=new Set(docs.map(d=>d.name).filter(Boolean));
+  _allNames=[...set].sort((a,b)=>a.localeCompare(b,'he'));
 }
+
+function showDropdown(filter){
+  const matches=filter
+    ? _allNames.filter(n=>n.includes(filter))
+    : _allNames;
+  if(!matches.length){dropdown.style.display='none';return;}
+  dropdown.innerHTML=matches.map(n=>`<div class="name-option" data-name="${n}">${n}</div>`).join('');
+  dropdown.style.display='block';
+  dropdown.querySelectorAll('.name-option').forEach(el=>{
+    el.addEventListener('pointerdown',e=>{
+      e.preventDefault();
+      nameInput.value=el.dataset.name;
+      dropdown.style.display='none';
+    });
+  });
+}
+
+nameInput.addEventListener('input',()=>showDropdown(nameInput.value.trim()));
+nameInput.addEventListener('focus',()=>showDropdown(nameInput.value.trim()));
+nameInput.addEventListener('blur',()=>setTimeout(()=>dropdown.style.display='none',150));
 
 dateInput.value=now.toISOString().slice(0,10);
 
