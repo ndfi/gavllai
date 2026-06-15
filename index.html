@@ -309,18 +309,14 @@
   .aliyot-columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(6px,1.2vw,18px);flex:1;}
   .aliyot-col-wrap{min-width:0;}
   .aliyot-table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.5rem,.75vw,.68rem);font-weight:900;padding:3px 1px;border-bottom:2px solid var(--gold);text-align:center;white-space:nowrap;overflow:hidden;}
-  .aliyot-table td{color:var(--parchment);padding:2px 1px;border-bottom:1px solid rgba(200,164,74,.12);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  /* # — מינימלי */
-  .aliyot-table th:nth-child(1),.aliyot-table td:nth-child(1){width:5%;font-size:clamp(.45rem,.65vw,.6rem);opacity:.7;}
-  /* יום */
-  .aliyot-table th:nth-child(2),.aliyot-table td:nth-child(2){width:9%;font-size:clamp(.5rem,.72vw,.65rem);}
-  /* תאריך עברי */
-  .aliyot-table th:nth-child(3),.aliyot-table td:nth-child(3){width:18%;font-size:clamp(.5rem,.72vw,.65rem);}
-  /* שם העולה — עיקרי */
-  .aliyot-table th:nth-child(4),.aliyot-table td:nth-child(4){width:55%;font-size:clamp(.78rem,1.18vw,1.05rem);font-weight:900;text-align:right;padding-right:6px;white-space:normal;line-height:1.2;}
-  /* ✕ ספירה */
-  .aliyot-table th:nth-child(5),.aliyot-table td:nth-child(5){width:13%;font-size:clamp(.5rem,.72vw,.65rem);}
+  .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.45rem,.65vw,.6rem);font-weight:900;padding:3px 1px;border-bottom:2px solid var(--gold);text-align:center;white-space:nowrap;overflow:hidden;}
+  .aliyot-table td{color:var(--parchment);padding:2px 1px;border-bottom:1px solid rgba(200,164,74,.12);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.45rem,.65vw,.6rem);}
+  /* 1:# */ .aliyot-table th:nth-child(1),.aliyot-table td:nth-child(1){width:4%;}
+  /* 2:יום */ .aliyot-table th:nth-child(2),.aliyot-table td:nth-child(2){width:8%;}
+  /* 3:עברי */ .aliyot-table th:nth-child(3),.aliyot-table td:nth-child(3){width:16%;}
+  /* 4:לועזי */ .aliyot-table th:nth-child(4),.aliyot-table td:nth-child(4){width:13%;}
+  /* 5:שם — עיקרי */ .aliyot-table th:nth-child(5),.aliyot-table td:nth-child(5){width:52%;font-size:clamp(.72rem,1.05vw,.95rem);font-weight:900;text-align:right;padding-right:5px;white-space:normal;line-height:1.2;}
+  /* 6:✕ */ .aliyot-table th:nth-child(6),.aliyot-table td:nth-child(6){width:7%;}
   .aliyot-table tr:nth-child(even) td{background:rgba(200,164,74,.05);}
   .aliyot-table tr:last-child td{border-bottom:none;}
   .aliyot-empty-row td{opacity:.18;}
