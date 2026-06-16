@@ -488,7 +488,11 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           <div class="field"><label>תאריך עברי (מחושב)</label><input type="text" id="al-hdate" placeholder="יחושב אוטומטית" readonly style="background:#f5f0e8;"></div>
         </div>
         <div class="field"><label>שם העולה</label><input type="text" id="al-name" placeholder="ישראל ישראלי"></div>
-        <button class="btn btn-add" onclick="saveAliya()" style="margin-top:6px;">➕ הוסף עלייה</button>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn btn-add" onclick="saveAliya()" style="flex:1;"><span id="aliyaSubmitTxt">➕ הוסף עלייה</span></button>
+          <button class="btn btn-ghost" id="aliyaCancelBtn" onclick="resetAliyaForm()" style="width:80px;display:none;">ביטול</button>
+        </div>
+        <input type="hidden" id="al-editId">
       </div>
     </div>
   </div>
@@ -1350,27 +1354,68 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
         <div style="font-weight:700;">${esc(a.name||'')}</div>
         <div style="color:var(--muted);font-size:.78rem;">${a.date||''} | ${a.hebrewDate||''} ${isCurMonth?`<span style="color:var(--primary);font-weight:700;">(${countMap[a.name]||1} החודש)</span>`:''}</div>
       </div>
+      <button class="btn-del al-edit" data-id="${d.id}" data-name="${esc(a.name||'')}" data-date="${a.date||''}" data-hdate="${esc(a.hebrewDate||'')}" title="ערוך" style="color:var(--primary);">✏️</button>
       <button class="btn-del al-del" data-id="${d.id}" title="מחק">🗑</button>
     </div>`;
   }).join('');
+  list.querySelectorAll('.al-edit').forEach(b=>b.addEventListener('click',()=>editAliya(b.dataset)));
   list.querySelectorAll('.al-del').forEach(b=>b.addEventListener('click',()=>deleteAliya(b.dataset.id)));
 });
 
+window.editAliya = ({id, name, date, hdate}) => {
+  document.getElementById('al-editId').value = id;
+  document.getElementById('al-name').value   = name||'';
+  document.getElementById('al-date').value   = date||'';
+  document.getElementById('al-hdate').value  = hdate||'';
+  document.getElementById('aliyaSubmitTxt').textContent = '💾 שמור שינויים';
+  document.getElementById('aliyaCancelBtn').style.display = 'block';
+  document.getElementById('al-name').scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('al-name').focus();
+};
+
+window.resetAliyaForm = () => {
+  document.getElementById('al-editId').value = '';
+  document.getElementById('al-name').value   = '';
+  document.getElementById('al-date').value   = '';
+  document.getElementById('al-hdate').value  = '';
+  document.getElementById('aliyaSubmitTxt').textContent = '➕ הוסף עלייה';
+  document.getElementById('aliyaCancelBtn').style.display = 'none';
+};
+
 window.saveAliya = async () => {
-  const date  = document.getElementById('al-date').value;
-  const name  = document.getElementById('al-name').value.trim();
-  const hdate = document.getElementById('al-hdate').value.trim();
+  const date   = document.getElementById('al-date').value;
+  const name   = document.getElementById('al-name').value.trim();
+  const hdate  = document.getElementById('al-hdate').value.trim();
+  const editId = document.getElementById('al-editId').value;
   if(!date||!name){ toast('יש למלא תאריך ושם','err'); return; }
   try{
-    await addDoc(collection(db,'aliyot'),{date,name,hebrewDate:hdate,createdAt:serverTimestamp()});
-    document.getElementById('al-date').value='';
-    document.getElementById('al-name').value='';
-    document.getElementById('al-hdate').value='';
-    toast('נוסף!','ok');
+    if(editId){
+      await updateDoc(doc(db,'aliyot',editId),{date,name,hebrewDate:hdate});
+      toast('עודכן!','ok');
+    } else {
+      await addDoc(collection(db,'aliyot'),{date,name,hebrewDate:hdate,createdAt:serverTimestamp()});
+      toast('נוסף!','ok');
+    }
+    resetAliyaForm();
   }catch(e){ toast('שגיאה','err'); }
 };
 
-window.deleteAliya = async id => {
+window.resetAliyotMonth = async () => {
+  const now=new Date(), curY=now.getFullYear(), curM=now.getMonth()+1;
+  const monthName=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'][curM-1];
+  if(!window.confirm(`למחוק את כל עליות ${monthName} ${curY}?`)) return;
+  try{
+    const snap=await new Promise(res=>{const u=onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')),s=>{u();res(s);});});
+    const toDelete=snap.docs.filter(d=>{
+      const[y,m]=(d.data().date||'').split('-').map(Number);
+      return y===curY&&m===curM;
+    });
+    await Promise.all(toDelete.map(d=>deleteDoc(doc(db,'aliyot',d.id))));
+    toast(`עליות ${monthName} נמחקו (${toDelete.length})`, 'ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+
   if(!window.confirm('למחוק עלייה זו?')) return;
   try{ await deleteDoc(doc(db,'aliyot',id)); toast('נמחק','ok'); }
   catch(e){ toast('שגיאה','err'); }
