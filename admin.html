@@ -153,6 +153,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     <button class="tab-btn" data-tab="announcements">📢 הודעות</button>
     <button class="tab-btn" data-tab="custom">✨ מסכים</button>
     <button class="tab-btn" data-tab="sefer">📜 ספרי תורה</button>
+    <button class="tab-btn" data-tab="aliyot">📖 עליות לתורה</button>
     <button class="tab-btn" data-tab="settings">⚙️ הגדרות</button>
     <button class="tab-btn" data-tab="export">📋 ייצוא הודעה</button>
   </div>
@@ -474,6 +475,28 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     </div>
   </div>
 
+  <!-- ALIYOT -->
+  <div id="tab-aliyot" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📖</div><div><h2>עליות לתורה</h2><p>ניהול עליות — <a href="aliyot.html" target="_blank" style="color:var(--primary-light);text-decoration:none;">פתח ניהול מובייל ↗</a></p></div></div>
+      <div class="card-body">
+        <div id="aliyotAdminList" class="ann-list" style="max-height:380px;min-height:60px;"><div class="empty-state">טוען...</div></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec">הוסף עלייה</div>
+        <div class="prayer-grid">
+          <div class="field"><label>תאריך לועזי</label><input type="date" id="al-date" onchange="calcHebrewDate(this.value)"></div>
+          <div class="field"><label>תאריך עברי (מחושב)</label><input type="text" id="al-hdate" placeholder="יחושב אוטומטית" readonly style="background:#f5f0e8;"></div>
+        </div>
+        <div class="field"><label>שם העולה</label><input type="text" id="al-name" placeholder="ישראל ישראלי"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn btn-add" onclick="saveAliya()" style="flex:1;"><span id="aliyaSubmitTxt">➕ הוסף עלייה</span></button>
+          <button class="btn btn-ghost" id="aliyaCancelBtn" onclick="resetAliyaForm()" style="width:80px;display:none;">ביטול</button>
+        </div>
+        <input type="hidden" id="al-editId">
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div id="tab-settings" class="tab-panel">
     <div class="card">
@@ -527,7 +550,19 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
         </div>
         <div id="themeStatusLine" style="font-size:.85rem;color:var(--muted);text-align:center;">טוען...</div>
       </div>
-    </div><p>מרענן את לוח התצוגה כל 15 דקות</p></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📖</div><div><h2>מסך עליות לתורה</h2><p>הדלק/כבה את מסך עליות בסיבוב</p></div></div>
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div><div style="font-weight:700;font-size:.95rem;" id="aliyotScreenLabel">טוען...</div></div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="toggle-wrap" id="aliyotToggleWrap" onclick="toggleAliyotScreen()"><div class="toggle-knob" id="aliyotToggleKnob"></div></div>
+          <span id="aliyotToggleTxt" style="font-weight:800;font-size:1rem;">כבוי</span>
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">🔄</div><div><h2>רענון אוטומטי</h2><p>מרענן את לוח התצוגה כל 15 דקות</p></div></div>
       <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
         <div>
           <div style="font-weight:700;font-size:.95rem;" id="autoRefreshLabel">טוען...</div>
@@ -784,6 +819,7 @@ onSnapshot(doc(db,'settings','display'),snap=>{
   }
   applyArUi(!!d.autoRefresh);
   applyThemeUi(d.colorTheme||'dark');
+  applyAliyotUi(d.aliyotActive!==false);
   buildCycleRows(d);
   // Load omer bg
   if(d.omerBgUrl !== undefined){
@@ -1286,6 +1322,124 @@ window.clearOmerBg=async()=>{
     document.getElementById('omer-bg-preview').style.display='none';
     toast('רקע הוסר','ok');
   }catch(e){toast('שגיאה','err');}
+};
+
+// ── עליות לתורה ──
+window.calcHebrewDate = async (dateStr) => {
+  if(!dateStr) return;
+  try{
+    const r = await fetch(`https://www.hebcal.com/converter?cfg=json&date=${dateStr}&g2h=1&strict=1`);
+    const d = await r.json();
+    document.getElementById('al-hdate').value = d.hebrew || '';
+  }catch{ document.getElementById('al-hdate').value = ''; }
+};
+
+onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
+  const list = document.getElementById('aliyotAdminList');
+  if(!list) return;
+  if(snap.empty){ list.innerHTML='<div class="empty-state">אין עליות — הוסף ראשון</div>'; return; }
+  const now=new Date(), curY=now.getFullYear(), curM=now.getMonth()+1;
+  const countMap={};
+  snap.docs.forEach(d=>{
+    const doc=d.data(); if(!doc.date) return;
+    const [y,m]=doc.date.split('-').map(Number);
+    if(y===curY&&m===curM) countMap[doc.name]=(countMap[doc.name]||0)+1;
+  });
+  list.innerHTML = snap.docs.map(d=>{
+    const a=d.data();
+    const parts=(a.date||'').split('-').map(Number);
+    const isCurMonth = parts[0]===curY&&parts[1]===curM;
+    return `<div class="list-item" style="gap:8px;">
+      <div style="flex:1;font-size:.85rem;">
+        <div style="font-weight:700;">${esc(a.name||'')}</div>
+        <div style="color:var(--muted);font-size:.78rem;">${a.date||''} | ${a.hebrewDate||''} ${isCurMonth?`<span style="color:var(--primary);font-weight:700;">(${countMap[a.name]||1} החודש)</span>`:''}</div>
+      </div>
+      <button class="btn-del al-edit" data-id="${d.id}" data-name="${esc(a.name||'')}" data-date="${a.date||''}" data-hdate="${esc(a.hebrewDate||'')}" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del al-del" data-id="${d.id}" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.al-edit').forEach(b=>b.addEventListener('click',()=>editAliya(b.dataset)));
+  list.querySelectorAll('.al-del').forEach(b=>b.addEventListener('click',()=>deleteAliya(b.dataset.id)));
+});
+
+window.editAliya = ({id, name, date, hdate}) => {
+  document.getElementById('al-editId').value = id;
+  document.getElementById('al-name').value   = name||'';
+  document.getElementById('al-date').value   = date||'';
+  document.getElementById('al-hdate').value  = hdate||'';
+  document.getElementById('aliyaSubmitTxt').textContent = '💾 שמור שינויים';
+  document.getElementById('aliyaCancelBtn').style.display = 'block';
+  document.getElementById('al-name').scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('al-name').focus();
+};
+
+window.resetAliyaForm = () => {
+  document.getElementById('al-editId').value = '';
+  document.getElementById('al-name').value   = '';
+  document.getElementById('al-date').value   = '';
+  document.getElementById('al-hdate').value  = '';
+  document.getElementById('aliyaSubmitTxt').textContent = '➕ הוסף עלייה';
+  document.getElementById('aliyaCancelBtn').style.display = 'none';
+};
+
+window.saveAliya = async () => {
+  const date   = document.getElementById('al-date').value;
+  const name   = document.getElementById('al-name').value.trim();
+  const hdate  = document.getElementById('al-hdate').value.trim();
+  const editId = document.getElementById('al-editId').value;
+  if(!date||!name){ toast('יש למלא תאריך ושם','err'); return; }
+  try{
+    if(editId){
+      await updateDoc(doc(db,'aliyot',editId),{date,name,hebrewDate:hdate});
+      toast('עודכן!','ok');
+    } else {
+      await addDoc(collection(db,'aliyot'),{date,name,hebrewDate:hdate,createdAt:serverTimestamp()});
+      toast('נוסף!','ok');
+    }
+    resetAliyaForm();
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+window.resetAliyotMonth = async () => {
+  const now=new Date(), curY=now.getFullYear(), curM=now.getMonth()+1;
+  const monthName=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'][curM-1];
+  if(!window.confirm(`למחוק את כל עליות ${monthName} ${curY}?`)) return;
+  try{
+    const snap=await new Promise(res=>{const u=onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')),s=>{u();res(s);});});
+    const toDelete=snap.docs.filter(d=>{
+      const[y,m]=(d.data().date||'').split('-').map(Number);
+      return y===curY&&m===curM;
+    });
+    await Promise.all(toDelete.map(d=>deleteDoc(doc(db,'aliyot',d.id))));
+    toast(`עליות ${monthName} נמחקו (${toDelete.length})`, 'ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+
+window.deleteAliya = async id => {
+  if(!window.confirm('למחוק עלייה זו?')) return;
+  try{ await deleteDoc(doc(db,'aliyot',id)); toast('נמחק','ok'); }
+  catch(e){ toast('שגיאה','err'); }
+};
+
+// ── Toggle aliyot screen ──
+let _aliyotActive = true;
+function applyAliyotUi(active){
+  _aliyotActive = active;
+  const wrap = document.getElementById('aliyotToggleWrap');
+  const txt  = document.getElementById('aliyotToggleTxt');
+  const lbl  = document.getElementById('aliyotScreenLabel');
+  if(!wrap) return;
+  wrap.classList.toggle('on', active);
+  if(txt) txt.textContent = active ? 'פעיל' : 'כבוי';
+  if(txt) txt.style.color = active ? '#2e7d32' : '#888';
+  if(lbl) lbl.textContent = active ? '✅ מסך עליות לתורה — פעיל' : '⏸ מסך עליות לתורה — כבוי';
+}
+window.toggleAliyotScreen = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'),{aliyotActive:!_aliyotActive},{merge:true});
+    toast(!_aliyotActive ? 'מסך עליות הופעל':'מסך עליות כובה','ok');
+  }catch(e){ toast('שגיאה','err'); }
 };
 
 window.saveCycleSettings=async()=>{
