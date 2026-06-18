@@ -329,6 +329,18 @@
   body.theme-light .aliyot-table th{background:rgba(122,90,16,.15);}
   body.theme-light .aliyot-table td{color:var(--text-bright);}
   body.theme-light .aliyot-table tr:nth-child(even) td{background:rgba(122,90,16,.06);}
+
+  /* Screen G — הלכה יומית */
+  #screenG{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(160deg,#1a0e05 0%,#2d1a0a 55%,#1a0e05 100%);padding:clamp(24px,4vh,52px) clamp(40px,6vw,90px);}
+  .halakha-title{font-family:'Frank Ruhl Libre',serif;font-size:clamp(2rem,4.5vw,3.6rem);font-weight:900;color:var(--gold-light);letter-spacing:4px;text-align:center;margin-bottom:6px;text-shadow:0 0 30px rgba(200,164,74,.4);}
+  .halakha-ref{font-size:clamp(.85rem,1.6vw,1.15rem);color:var(--gold);text-align:center;margin-bottom:clamp(16px,3vh,36px);letter-spacing:2px;opacity:.85;}
+  .halakha-body{max-width:900px;width:100%;background:linear-gradient(145deg,rgba(45,26,10,.75),rgba(26,14,5,.85));border:1px solid rgba(200,164,74,.35);border-radius:20px;padding:clamp(18px,3vh,40px) clamp(24px,4vw,52px);box-shadow:0 0 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(232,200,122,.08);}
+  .halakha-text{font-family:'Frank Ruhl Libre',serif;font-size:clamp(1.05rem,2.1vw,1.65rem);color:var(--parchment);line-height:1.85;text-align:right;direction:rtl;}
+  .halakha-loading{color:var(--gold);font-size:1.3rem;opacity:.7;text-align:center;padding:40px;}
+  .halakha-error{color:#ff9800;font-size:1.1rem;text-align:center;padding:30px;opacity:.8;}
+  body.theme-light #screenG{background:linear-gradient(160deg,#f5f0e4 0%,#ede5ce 55%,#f5f0e4 100%);}
+  body.theme-light .halakha-body{background:rgba(255,255,255,.7);border-color:rgba(122,90,16,.3);}
+  body.theme-light .halakha-text{color:var(--text-bright);}
 </style>
 </head>
 <body>
@@ -497,7 +509,7 @@ const CYCLE_C_MS = 20000;  // default — מסך C
 const CYCLE_D_MS = 20000;  // default — מסך D (ספירת העומר)
 const CYCLE_E_MS = 25000;  // default — מסך E (ספרי תורה)
 // Dynamic values loaded from Firebase:
-let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000,F:25000};
+let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000,F:25000,G:30000};
 
 const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
 const WEEKDAY_PRAYERS = [{key:'shacharit',label:'שחרית'},{key:'mincha',label:'מנחה'},{key:'arvit',label:'ערבית'}];
@@ -807,7 +819,8 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   if(d.cycle_D) CYCLES.D=d.cycle_D*1000;
   if(d.cycle_E) CYCLES.E=d.cycle_E*1000;
   if(d.cycle_F) CYCLES.F=d.cycle_F*1000;
-  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E','F'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
+  if(d.cycle_G) CYCLES.G=d.cycle_G*1000;
+  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E','F','G'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
 });
 
 
@@ -1199,7 +1212,7 @@ setInterval(checkOnline, 30000); // background check every 30s
 checkOnline();
 
 // ── Master rotation ──
-const allScreenIds=['screenA','screenB','screenC','screenD','screenE','screenF'];
+const allScreenIds=['screenA','screenB','screenC','screenD','screenE','screenF','screenG'];
 let rotation=[],rotIdx=0,rotTimer=null;
 
 function isOmerDisplayTime(){
@@ -1217,9 +1230,50 @@ function buildRotation(){
   if(omerEl && omerEl.getAttribute('data-omer-active')==='true' && isOmerDisplayTime()) rotation.push('screenD');
   const day=new Date().getDay();
   if((day===5||day===6) && document.getElementById('screenE').getAttribute('data-sefer-active')==='true') rotation.push('screenE');
-  // Screen F — עליות לתורה — תמיד (אם מופעל)
+  // Screen F — עליות לתורה
   if(document.getElementById('screenF').getAttribute('data-aliyot-active')==='true') rotation.push('screenF');
+  // Screen G — הלכה יומית
+  if(document.getElementById('screenG').getAttribute('data-halakha-active')==='true') rotation.push('screenG');
 }
+
+// ── Sefaria: הלכה יומית ──
+async function fetchHalakhaYomit(){
+  const refEl  = document.getElementById('halakha-ref');
+  const textEl = document.getElementById('halakha-text');
+  try{
+    // Step 1: get today's calendar
+    const calRes = await fetch('https://www.sefaria.org/api/calendars');
+    if(!calRes.ok) throw new Error('calendar fetch failed');
+    const cal = await calRes.json();
+    const item = (cal.calendar_items||[]).find(i=>i.title?.en==='Halakhah Yomit');
+    if(!item) throw new Error('Halakhah Yomit not found in calendar');
+
+    // Display ref
+    refEl.textContent = item.displayValue?.he || item.ref || '';
+
+    // Step 2: fetch text
+    const ref = encodeURIComponent(item.ref);
+    const txtRes = await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he&context=0`);
+    if(!txtRes.ok) throw new Error('text fetch failed');
+    const data = await txtRes.json();
+
+    // Extract Hebrew text — may be string, array, or nested array
+    let he = data.he || '';
+    if(Array.isArray(he)) he = he.flat(5).join(' ');
+    // Strip HTML tags
+    he = he.replace(/<[^>]+>/g,'').trim();
+
+    if(!he) throw new Error('empty text');
+    textEl.innerHTML = `<p>${he}</p>`;
+  } catch(e){
+    refEl.textContent = '';
+    textEl.innerHTML = `<div class="halakha-error">⚠️ לא ניתן לטעון את ההלכה היומית כעת<br><span style="font-size:.8em;opacity:.6;">${e.message}</span></div>`;
+    console.warn('Halakha fetch error:', e);
+  }
+}
+fetchHalakhaYomit();
+// Refresh every hour
+setInterval(fetchHalakhaYomit, 60*60*1000);
 
 // ── Firebase: ספרי תורה ──
 onSnapshot(query(collection(db,'sefer_torah'),orderBy('order','asc')), snap=>{
@@ -1376,6 +1430,8 @@ onSnapshot(doc(db,'settings','display'), snapDisp=>{
   const d = snapDisp.data();
   const screenF = document.getElementById('screenF');
   screenF.setAttribute('data-aliyot-active', d.aliyotActive!==false ? 'true':'false');
+  const screenG = document.getElementById('screenG');
+  screenG.setAttribute('data-halakha-active', d.halakhaActive!==false ? 'true':'false');
   buildRotation();
 });
 
@@ -1387,6 +1443,17 @@ onSnapshot(doc(db,'settings','display'), snapDisp=>{
   <div class="aliyot-title">📖 עליות לתורה</div>
   <div class="aliyot-subtitle" id="aliyot-month-label"></div>
   <div class="aliyot-columns" id="aliyot-body"></div>
+</div>
+
+<!-- SCREEN G — הלכה יומית -->
+<div id="screenG" class="screen" data-halakha-active="true">
+  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+  <div class="halakha-title">📚 הלכה יומית</div>
+  <div class="halakha-ref" id="halakha-ref">טוען...</div>
+  <div class="halakha-body">
+    <div class="halakha-text" id="halakha-text"><div class="halakha-loading">⏳ טוען הלכה יומית...</div></div>
+  </div>
 </div>
 
 <div id="screen-progress"></div>
