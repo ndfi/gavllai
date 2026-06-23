@@ -379,6 +379,7 @@
         <div class="shabbat-only prayer-separator" style="display:none;height:1px;background:linear-gradient(90deg,transparent,rgba(200,164,74,.5),transparent);margin:6px 0;flex-shrink:0;"></div>
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">קבלת שבת</span><span class="prayer-time" id="sp-kabbalat">--:--</span></div>
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">שחרית שבת</span><span class="prayer-time" id="sp-shacharit_shabbat">--:--</span></div>
+        <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">תפילת הילדים</span><span class="prayer-time" id="sp-tefilat_yeladim">--:--</span></div>
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">מנחה שבת</span><span class="prayer-time" id="sp-mincha_shabbat">--:--</span></div>
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">ערבית מוצ"ש</span><span class="prayer-time" id="sp-arvit_motzash">--:--</span></div>
       </div>
@@ -516,11 +517,13 @@ const WEEKDAY_PRAYERS = [{key:'shacharit',label:'שחרית'},{key:'mincha',labe
 const SHABBAT_PRAYERS = [
   {key:'kabbalat',label:'קבלת שבת'},
   {key:'shacharit_shabbat',label:'שחרית שבת'},
+  {key:'tefilat_yeladim',label:'תפילת הילדים'},
   {key:'mincha_shabbat',label:'מנחה שבת'},
   {key:'arvit_motzash',label:'ערבית מוצ"ש'},
 ];
 
 let prayerData   = {};
+let autoArvitMotzash = null; // ערבית מוצ"ש מחושב = צאת שבת − 10 דק׳
 let customSlides = [];
 let footerCustom = [];
 let footerCount  = 3;
@@ -574,6 +577,7 @@ function updateClock() {
   // Rebuild screen B if day just changed (midnight crossover)
   if(updateClock._lastDay !== undefined && updateClock._lastDay !== now.getDay()){
     refreshPrayers();
+    renderCustomPrayers();
   }
   updateClock._lastDay = now.getDay();
 }
@@ -611,6 +615,14 @@ async function fetchHebcal() {
         const d=new Date(havdalah.date);
         d.setMinutes(d.getMinutes()+10+3);
         document.getElementById('sht-havdalah').textContent=fmtISO(d.toISOString());
+        // ערבית מוצ"ש = צאת שבת − 10 דק׳ (נוסחה קבועה)
+        const arvitD = new Date(d);
+        arvitD.setMinutes(arvitD.getMinutes()-10);
+        autoArvitMotzash = fmtISO(arvitD.toISOString());
+        prayerData.arvit_motzash = autoArvitMotzash;
+        const spEl = document.getElementById('sp-arvit_motzash');
+        if(spEl) spEl.textContent = autoArvitMotzash;
+        refreshPrayers();
       }
     }
   } catch(e){ console.error('Hebcal shabbat error',e); }
@@ -827,6 +839,7 @@ onSnapshot(doc(db,'settings','display'), snap=>{
 onSnapshot(doc(db,'prayers','times'),snap=>{
   if(!snap.exists()) return;
   prayerData=snap.data();
+  if(autoArvitMotzash) prayerData.arvit_motzash = autoArvitMotzash; // נוסחה קבועה גוברת על Firebase
   [...WEEKDAY_PRAYERS,...SHABBAT_PRAYERS].forEach(({key})=>{
     const el=document.getElementById(`sp-${key}`);if(el&&prayerData[key])el.textContent=prayerData[key];
   });
@@ -941,15 +954,16 @@ onSnapshot(query(collection(db,'prayers_custom'),orderBy('order','asc')), snap =
 
 function renderCustomPrayers() {
   const isShabUI = isShabbat();
-  const active = customPrayerData.filter(p=>
+  const active = (customPrayerData||[]).filter(p=>
     p.display==='always' ||
     (p.display==='weekday' && !isShabUI) ||
     (p.display==='shabbat' && isShabUI)
   );
 
-  // Add to side panel — after the standard prayer list
-  const sidePanelSection = document.querySelector('#screenA .side-panel .panel-section');
+  // Add to side panel — after the standard prayer list (first panel-section = prayer times)
+  const sidePanelSection = document.querySelector('#screenA .left-panel-inner .panel-section:first-of-type');
   if (sidePanelSection) {
+    // Always remove ALL previously-injected custom rows first, regardless of current filter
     sidePanelSection.querySelectorAll('[data-custom-prayer]').forEach(el=>el.remove());
     active.forEach(p=>{
       const row = document.createElement('div');
@@ -959,6 +973,8 @@ function renderCustomPrayers() {
       sidePanelSection.appendChild(row);
     });
   }
+  // Also refresh footer + screen B so they stay in sync with the same filter
+  refreshPrayers();
 }
 
 // ── Firebase: Shiurim (shown in footer slideshow as extra slide) ──
