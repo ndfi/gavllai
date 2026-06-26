@@ -176,8 +176,9 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
         <div class="prayer-grid">
           <div class="field"><label>קבלת שבת</label><input type="time" id="p-kabbalat"></div>
           <div class="field"><label>שחרית שבת</label><input type="time" id="p-shacharit_shabbat"></div>
+          <div class="field"><label>תפילת הילדים</label><input type="time" id="p-tefilat_yeladim"></div>
           <div class="field"><label>מנחה שבת</label><input type="time" id="p-mincha_shabbat"></div>
-          <div class="field"><label>ערבית מוצ"ש</label><input type="time" id="p-arvit_motzash"></div>
+          <div class="field"><label>ערבית מוצ"ש</label><input type="time" id="p-arvit_motzash" readonly style="background:#f5f0e8;color:#8b6914;font-weight:700;" title="מחושב אוטומטית: צאת שבת − 10 דק׳"></div>
         </div>
         <div style="margin-top:16px;"><button class="btn btn-primary" id="savePrayersBtn" onclick="savePrayers()"><span id="savePrayersTxt">💾 שמור זמני תפילות</span></button></div>
       </div>
@@ -705,7 +706,23 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'
 document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');});});
 
 // Prayers
-const PKEYS=['shacharit','mincha','arvit','kabbalat','shacharit_shabbat','mincha_shabbat','arvit_motzash'];
+// ── ערבית מוצ"ש מחושב: צאת שבת − 10 דק׳ (תצוגה בלבד בadmin) ──
+(async()=>{
+  try{
+    const r=await fetch('https://www.hebcal.com/shabbat?cfg=json&latitude=31.2516&longitude=34.7915&tzid=Asia%2FJerusalem&m=33&b=50');
+    const sh=await r.json();
+    const havdalah=sh.items?.find(i=>i.category==='havdalah');
+    if(havdalah){
+      const d=new Date(havdalah.date);
+      d.setMinutes(d.getMinutes()+13-10); // צאת שבת (+13 כמו בלוח) ואז −10 לערבית
+      const hhmm=d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
+      const el=document.getElementById('p-arvit_motzash');
+      if(el) el.value=hhmm;
+    }
+  }catch(e){}
+})();
+
+const PKEYS=['shacharit','mincha','arvit','kabbalat','shacharit_shabbat','tefilat_yeladim','mincha_shabbat','arvit_motzash'];
 onSnapshot(doc(db,'prayers','times'),s=>{if(!s.exists()){setStatus(true,'מחובר — אין נתונים');return;}const d=s.data();PKEYS.forEach(k=>{const e=document.getElementById('p-'+k);if(e&&d[k])e.value=d[k];});setStatus(true,'מחובר ✓');},e=>{setStatus(false,'שגיאה: '+e.message);toast('שגיאת חיבור','err');});
 // Custom / Manual Prayers
 onSnapshot(query(collection(db,'prayers_custom'),orderBy('order','asc')),snap=>{
