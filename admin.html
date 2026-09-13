@@ -363,6 +363,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           <div class="ipanel" id="ipanel-up-ci">
             <input type="file" id="cs-imageFile" accept="image/*" style="display:none;">
             <button class="btn btn-ghost" style="width:100%;padding:10px;" onclick="document.getElementById('cs-imageFile').click()">📁 בחר תמונה</button>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">מועלה אוטומטית ל-ImgBB · <a href="https://api.imgbb.com/" target="_blank" style="color:var(--primary-light);">קבל מפתח API בחינם ↗</a></div>
             <img id="uploadPreview" class="img-prev" alt="">
             <div id="uploadStatus" style="font-size:.75rem;color:var(--muted);margin-top:5px;"></div>
           </div>
@@ -383,6 +384,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           <div class="ipanel" id="ipanel-up-bg">
             <input type="file" id="cs-bgImageFile" accept="image/*" style="display:none;">
             <button class="btn btn-ghost" style="width:100%;padding:10px;" onclick="document.getElementById('cs-bgImageFile').click()">📁 בחר תמונת רקע</button>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">מועלה אוטומטית ל-ImgBB</div>
             <div id="bgUploadPreview" class="bg-prev"></div>
             <div id="bgUploadStatus" style="font-size:.75rem;color:var(--muted);margin-top:5px;"></div>
           </div>
@@ -693,10 +695,10 @@ dateTo         string   YYYY-MM-DD</pre>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import{getFirestore,doc,collection,onSnapshot,setDoc,addDoc,updateDoc,deleteDoc,orderBy,query,serverTimestamp,getDoc}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-import{getStorage,ref,uploadBytesResumable,getDownloadURL}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+
 
 const app=initializeApp({apiKey:"AIzaSyBl99zWeW0SpVWs18P5GlJ-mDPTsiaSgEM",authDomain:"gavlli-board.firebaseapp.com",projectId:"gavlli-board",storageBucket:"gavlli-board.firebasestorage.app",messagingSenderId:"202183123739",appId:"1:202183123739:web:5e2375d9eae0c0202e29be",measurementId:"G-BZMPZXH2PF"});
-const db=getFirestore(app),storage=getStorage(app);
+const db=getFirestore(app);
 
 const toast=(m,t='ok')=>{const w=document.getElementById('toastWrap'),el=document.createElement('div');el.className=`toast ${t}`;el.textContent=(t==='ok'?'✓ ':'✗ ')+m;w.appendChild(el);setTimeout(()=>el.remove(),3000);};
 const setStatus=(ok,m)=>{document.getElementById('statusDot').className='status-dot '+(ok?'ok':'err');document.getElementById('statusText').textContent=m;};
@@ -898,14 +900,52 @@ document.getElementById('cs-imageUrl').addEventListener('input',e=>{const u=e.ta
 document.getElementById('cs-bgImageUrl').addEventListener('input',e=>{const u=e.target.value.trim(),p=document.getElementById('bgUrlPreview');if(u){p.style.backgroundImage=`url('${u}')`;p.className='bg-prev show';}else p.className='bg-prev';});
 
 let uploadedCI='',uploadedBG='';
-async function doUpload(file,prefix,statusId,previewId,isBg){
-  const st=document.getElementById(statusId);st.textContent='מעלה...';
-  const r=ref(storage,'screens/'+prefix+'_'+Date.now()+'_'+file.name);
-  const task=uploadBytesResumable(r,file);
-  return new Promise((res,rej)=>{task.on('state_changed',s=>st.textContent='מעלה... '+Math.round(s.bytesTransferred/s.totalBytes*100)+'%',e=>{st.textContent='שגיאה';toast('שגיאה','err');rej(e);},async()=>{const u=await getDownloadURL(task.snapshot.ref);st.textContent='✓ הועלה';const p=document.getElementById(previewId);if(isBg){p.style.backgroundImage=`url('${u}')`;p.className='bg-prev show';}else{p.src=u;p.className='img-prev show';}res(u);});});
+// ── ImgBB Upload ──
+// מפתח ImgBB — ניתן לקבל בחינם בכתובת https://api.imgbb.com/
+const IMGBB_API_KEY = 'ec3f4180638be4d3f0db5195ad042ce9';
+
+async function uploadToImgBB(file, statusId, previewId, isBg){
+  const st = document.getElementById(statusId);
+  st.textContent = 'מעלה...';
+  try{
+    const form = new FormData();
+    form.append('image', file);
+    form.append('key', IMGBB_API_KEY);
+    const res = await fetch('https://api.imgbb.com/1/upload', {method:'POST', body:form});
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error?.message || 'שגיאת ImgBB');
+    const url = json.data.url;
+    st.textContent = '✓ הועלה';
+    const p = document.getElementById(previewId);
+    if(isBg){ p.style.backgroundImage=`url('${url}')`; p.className='bg-prev show'; }
+    else     { p.src=url; p.className='img-prev show'; }
+    return url;
+  } catch(e){
+    st.textContent = '❌ שגיאה: '+e.message;
+    toast('שגיאת העלאה: '+e.message,'err');
+    return null;
+  }
 }
-document.getElementById('cs-imageFile').addEventListener('change',async e=>{if(e.target.files[0])uploadedCI=await doUpload(e.target.files[0],'ci','uploadStatus','uploadPreview',false);});
-document.getElementById('cs-bgImageFile').addEventListener('change',async e=>{if(e.target.files[0])uploadedBG=await doUpload(e.target.files[0],'bg','bgUploadStatus','bgUploadPreview',true);});
+
+document.getElementById('cs-imageFile').addEventListener('change',async e=>{
+  if(e.target.files[0]){
+    const url = await uploadToImgBB(e.target.files[0],'uploadStatus','uploadPreview',false);
+    if(url){
+      uploadedCI = url;
+      // Also fill URL field and switch to URL tab for visibility
+      document.getElementById('cs-imageUrl').value = url;
+    }
+  }
+});
+document.getElementById('cs-bgImageFile').addEventListener('change',async e=>{
+  if(e.target.files[0]){
+    const url = await uploadToImgBB(e.target.files[0],'bgUploadStatus','bgUploadPreview',true);
+    if(url){
+      uploadedBG = url;
+      document.getElementById('cs-bgImageUrl').value = url;
+    }
+  }
+});
 
 // Schedule
 document.querySelectorAll('.sbtn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('cs-schedType').value=b.dataset.st;document.querySelectorAll('.spanel').forEach(x=>x.classList.remove('active'));const p=document.getElementById('sp-'+b.dataset.st);if(p)p.classList.add('active');});});
@@ -1151,16 +1191,23 @@ window.handleSeferImg=async(input)=>{
   const previewWrap=document.getElementById('sf-img-preview');
   preview.src=URL.createObjectURL(file);
   previewWrap.style.display='block';
-  // clear URL input if file chosen
   document.getElementById('sf-img-url-input').value='';
   document.getElementById('sf-url-preview').style.display='none';
-  const storRef=ref(storage,`sefer_torah/${Date.now()}_${file.name}`);
-  const task=uploadBytesResumable(storRef,file);
-  task.on('state_changed',null,e=>toast('שגיאת העלאה','err'),async()=>{
-    seferUploadUrl=await getDownloadURL(task.snapshot.ref);
+  document.getElementById('sf-img-name').textContent='מעלה...';
+  try{
+    const form=new FormData(); form.append('image',file); form.append('key',IMGBB_API_KEY);
+    const res=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:form});
+    const json=await res.json();
+    if(!json.success) throw new Error(json.error?.message||'שגיאת ImgBB');
+    seferUploadUrl=json.data.url;
     document.getElementById('sf-img-url').value=seferUploadUrl;
+    document.getElementById('sf-img-name').textContent='✓ '+file.name;
+    preview.src=seferUploadUrl;
     toast('תמונה הועלתה','ok');
-  });
+  }catch(e){
+    document.getElementById('sf-img-name').textContent='❌ שגיאה';
+    toast('שגיאת העלאה: '+e.message,'err');
+  }
 };
 
 window.resetSeferForm=()=>{
