@@ -555,6 +555,29 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
       </div>
     </div>
     <div class="card">
+      <div class="card-header"><div class="ch-icon">✡️</div><div><h2>מסך שבת קודש</h2><p>מוצג בשישי ושבת — פרשה, הפטרה וזמנים</p></div></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+          <div><div style="font-weight:700;font-size:.95rem;" id="shabbatScreenLabel">טוען...</div></div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <div class="toggle-wrap" id="shabbatScreenToggle" onclick="toggleShabbatScreen()"><div class="toggle-knob" id="shabbatScreenKnob"></div></div>
+            <span id="shabbatScreenTxt" style="font-weight:800;font-size:1rem;">כבוי</span>
+          </label>
+        </div>
+        <div class="field">
+          <label>תמונת רקע (URL)</label>
+          <input type="url" id="shabbat-bg-url" placeholder="https://..." oninput="previewShabbatBg(this.value)">
+        </div>
+        <div id="shabbat-bg-preview" style="display:none;margin:8px 0;border-radius:10px;overflow:hidden;max-height:120px;">
+          <img id="shabbat-bg-img" style="width:100%;height:120px;object-fit:cover;" onerror="this.parentElement.style.display='none'">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn btn-primary" onclick="saveShabbatScreenSettings()" style="flex:1;">💾 שמור</button>
+          <button class="btn btn-ghost" onclick="clearShabbatBg()" style="width:80px;">🗑 הסר</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-header"><div class="ch-icon">📚</div><div><h2>מסך הלכה יומית</h2><p>הדלק/כבה את מסך G (Sefaria API)</p></div></div>
       <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
         <div><div style="font-weight:700;font-size:.95rem;" id="halakhaScreenLabel">טוען...</div></div>
@@ -598,6 +621,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           <div class="cycle-row" data-screen="E" data-label="מסך E — ספרי תורה"></div>
           <div class="cycle-row" data-screen="F" data-label="מסך F — עליות לתורה"></div>
           <div class="cycle-row" data-screen="G" data-label="מסך G — הלכה יומית"></div>
+          <div class="cycle-row" data-screen="H" data-label="מסך H — שבת קודש"></div>
         </div>
         <button class="btn btn-primary" onclick="saveCycleSettings()" style="margin-top:16px;">💾 שמור הכל</button>
       </div>
@@ -852,6 +876,7 @@ onSnapshot(doc(db,'settings','display'),snap=>{
   applyThemeUi(d.colorTheme||'dark');
   applyAliyotUi(d.aliyotActive!==false);
   applyHalakhaUi(d.halakhaActive!==false);
+  applyShabbatScreenUi(d.shabbatScreenActive!==false, d.shabbatScreenBg||'');
   buildCycleRows(d);
   // Load omer bg
   if(d.omerBgUrl !== undefined){
@@ -1352,8 +1377,8 @@ window.toggleAutoRefresh = async () => {
 };
 
 
-const SCREEN_LABELS={A:'מסך A — זמני תפילות שבת',B:'מסך B — זמני תפילות שבועי',C:'מסך C — מסכים מותאמים',D:'מסך D — ספירת העומר',E:'מסך E — ספרי תורה',F:'מסך F — עליות לתורה',G:'מסך G — הלכה יומית'};
-const CYCLE_DEFAULTS={A:20,B:20,C:20,D:20,E:25,F:25,G:30};
+const SCREEN_LABELS={A:'מסך A — זמני תפילות שבת',B:'מסך B — זמני תפילות שבועי',C:'מסך C — מסכים מותאמים',D:'מסך D — ספירת העומר',E:'מסך E — ספרי תורה',F:'מסך F — עליות לתורה',G:'מסך G — הלכה יומית',H:'מסך H — שבת קודש'};
+const CYCLE_DEFAULTS={A:20,B:20,C:20,D:20,E:25,F:25,G:30,H:25};
 
 function buildCycleRows(data={}){
   document.querySelectorAll('.cycle-row').forEach(row=>{
@@ -1499,6 +1524,55 @@ window.deleteAliya = async id => {
   catch(e){ toast('שגיאה','err'); }
 };
 
+// ── Screen H — שבת קודש ──
+let _shabbatScreenActive = true;
+
+function applyShabbatScreenUi(active, bgUrl){
+  _shabbatScreenActive = active;
+  const wrap = document.getElementById('shabbatScreenToggle');
+  const txt  = document.getElementById('shabbatScreenTxt');
+  const lbl  = document.getElementById('shabbatScreenLabel');
+  if(wrap) wrap.classList.toggle('on', active);
+  if(txt){ txt.textContent=active?'פעיל':'כבוי'; txt.style.color=active?'#2e7d32':'#888'; }
+  if(lbl) lbl.textContent = active ? '✅ מסך שבת קודש — פעיל (שישי+שבת)' : '⏸ מסך שבת קודש — כבוי';
+  if(bgUrl){
+    document.getElementById('shabbat-bg-url').value = bgUrl;
+    document.getElementById('shabbat-bg-img').src = bgUrl;
+    document.getElementById('shabbat-bg-preview').style.display = 'block';
+  }
+}
+
+window.previewShabbatBg = url => {
+  const wrap = document.getElementById('shabbat-bg-preview');
+  const img  = document.getElementById('shabbat-bg-img');
+  if(url){ img.src=url; wrap.style.display='block'; }
+  else   { wrap.style.display='none'; }
+};
+
+window.toggleShabbatScreen = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'),{shabbatScreenActive:!_shabbatScreenActive},{merge:true});
+    toast(!_shabbatScreenActive?'מסך שבת קודש הופעל':'מסך שבת קודש כובה','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+window.saveShabbatScreenSettings = async () => {
+  const url = document.getElementById('shabbat-bg-url').value.trim();
+  try{
+    await setDoc(doc(db,'settings','display'),{shabbatScreenBg:url,shabbatScreenActive:_shabbatScreenActive},{merge:true});
+    toast('נשמר','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+window.clearShabbatBg = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'),{shabbatScreenBg:''},{merge:true});
+    document.getElementById('shabbat-bg-url').value='';
+    document.getElementById('shabbat-bg-preview').style.display='none';
+    toast('רקע הוסר','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
 // ── Toggle halakha screen ──
 let _halakhaActive = true;
 function applyHalakhaUi(active){
@@ -1540,7 +1614,7 @@ window.toggleAliyotScreen = async () => {
 
 window.saveCycleSettings=async()=>{
   const updates={};
-  ['A','B','C','D','E','F','G'].forEach(s=>{
+  ['A','B','C','D','E','F','G','H'].forEach(s=>{
     const el=document.getElementById('set-cycle-'+s);
     if(el) updates['cycle_'+s]=parseInt(el.value)||20;
   });

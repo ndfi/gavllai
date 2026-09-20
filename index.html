@@ -341,6 +341,19 @@
   body.theme-light #screenG{background:linear-gradient(160deg,#f5f0e4 0%,#ede5ce 55%,#f5f0e4 100%);}
   body.theme-light .halakha-body{background:rgba(255,255,255,.7);border-color:rgba(122,90,16,.3);}
   body.theme-light .halakha-text{color:var(--text-bright);}
+
+  /* Screen H — שבת קודש (פרשה + זמנים) */
+  #screenH{display:flex;align-items:center;justify-content:center;background:#1a0e05;background-size:cover;background-position:center;position:relative;}
+  #screenH::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.38);pointer-events:none;}
+  .sh-card{position:relative;z-index:1;width:clamp(560px,72vw,900px);background:rgba(245,235,205,.93);border-radius:18px;padding:clamp(28px,4vw,54px) clamp(32px,5vw,64px);box-shadow:0 8px 60px rgba(0,0,0,.55),inset 0 0 0 3px rgba(120,60,20,.18);}
+  .sh-title{font-family:'Frank Ruhl Libre',serif;font-size:clamp(2.2rem,5vw,4rem);font-weight:900;color:#6b1a1a;text-align:center;margin-bottom:clamp(18px,3vh,36px);letter-spacing:4px;}
+  .sh-divider{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 clamp(16px,2.5vh,30px);}
+  .sh-divider::before,.sh-divider::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,transparent,#8b3a1a,transparent);}
+  .sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2.5vh,28px) clamp(20px,3vw,40px);}
+  .sh-cell{display:flex;flex-direction:column;gap:6px;}
+  .sh-label{display:inline-block;background:#6b1a1a;color:#f5e8c0;font-family:'Frank Ruhl Libre',serif;font-size:clamp(.85rem,1.6vw,1.15rem);font-weight:700;border-radius:8px;padding:5px 16px;letter-spacing:1px;width:fit-content;}
+  .sh-value{font-family:'Frank Ruhl Libre',serif;font-size:clamp(1.4rem,3.2vw,2.6rem);font-weight:900;color:#3a1a08;padding-right:4px;min-height:2rem;}
+  .sh-value-sm{font-size:clamp(1rem,2vw,1.5rem);}
 </style>
 </head>
 <body>
@@ -510,7 +523,7 @@ const CYCLE_C_MS = 20000;  // default — מסך C
 const CYCLE_D_MS = 20000;  // default — מסך D (ספירת העומר)
 const CYCLE_E_MS = 25000;  // default — מסך E (ספרי תורה)
 // Dynamic values loaded from Firebase:
-let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000,F:25000,G:30000};
+let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000,F:25000,G:30000,H:25000};
 
 const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
 const WEEKDAY_PRAYERS = [{key:'shacharit',label:'שחרית'},{key:'mincha',label:'מנחה'},{key:'arvit',label:'ערבית'}];
@@ -832,7 +845,8 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   if(d.cycle_E) CYCLES.E=d.cycle_E*1000;
   if(d.cycle_F) CYCLES.F=d.cycle_F*1000;
   if(d.cycle_G) CYCLES.G=d.cycle_G*1000;
-  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E','F','G'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
+  if(d.cycle_H) CYCLES.H=d.cycle_H*1000;
+  if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E','F','G','H'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
 });
 
 
@@ -1228,7 +1242,7 @@ setInterval(checkOnline, 30000); // background check every 30s
 checkOnline();
 
 // ── Master rotation ──
-const allScreenIds=['screenA','screenB','screenC','screenD','screenE','screenF','screenG'];
+const allScreenIds=['screenA','screenB','screenC','screenD','screenE','screenF','screenG','screenH'];
 let rotation=[],rotIdx=0,rotTimer=null;
 
 function isOmerDisplayTime(){
@@ -1250,7 +1264,50 @@ function buildRotation(){
   if(document.getElementById('screenF').getAttribute('data-aliyot-active')==='true') rotation.push('screenF');
   // Screen G — הלכה יומית
   if(document.getElementById('screenG').getAttribute('data-halakha-active')==='true') rotation.push('screenG');
+  // Screen H — שבת קודש — שישי ושבת בלבד
+  if((day===5||day===6) && document.getElementById('screenH').getAttribute('data-shabbat-screen-active')==='true') rotation.push('screenH');
 }
+
+// ── Screen H: sync parasha + times from existing elements ──
+function syncScreenH(){
+  const parasha = document.getElementById('parasha')?.textContent||'';
+  const candles = document.getElementById('sht-candles')?.textContent||'--:--';
+  const havdalah= document.getElementById('sht-havdalah')?.textContent||'--:--';
+  if(parasha) document.getElementById('sh-parasha').textContent = parasha;
+  if(candles)  document.getElementById('sh-candles').textContent  = candles;
+  if(havdalah) document.getElementById('sh-havdalah').textContent = havdalah;
+}
+
+// Run sync after Hebcal loads (give it 3 sec), then every 5 min
+setTimeout(syncScreenH, 3000);
+setInterval(syncScreenH, 5*60*1000);
+
+// ── Screen H: haftara from Sefaria calendars ──
+async function fetchHaftara(){
+  try{
+    const res = await fetch('https://www.sefaria.org/api/calendars');
+    const cal = await res.json();
+    const items = cal.calendar_items||[];
+    // Find haftara item
+    const haft = items.find(i=>
+      i.title?.he?.includes('הפטרה') ||
+      i.title?.en?.toLowerCase().includes('haftarah') ||
+      i.title?.en?.toLowerCase().includes('haftara') ||
+      i.category==='haftarah'
+    );
+    if(haft){
+      const he = haft.displayValue?.he || haft.ref || '';
+      document.getElementById('sh-haftara').textContent = he;
+    } else {
+      document.getElementById('sh-haftara').textContent = '';
+    }
+  }catch(e){
+    document.getElementById('sh-haftara').textContent = '';
+    console.warn('Haftara fetch error',e);
+  }
+}
+fetchHaftara();
+setInterval(fetchHaftara, 60*60*1000);
 
 // ── Sefaria: הלכה יומית ──
 async function fetchHalakhaYomit(){
@@ -1448,6 +1505,16 @@ onSnapshot(doc(db,'settings','display'), snapDisp=>{
   screenF.setAttribute('data-aliyot-active', d.aliyotActive!==false ? 'true':'false');
   const screenG = document.getElementById('screenG');
   screenG.setAttribute('data-halakha-active', d.halakhaActive!==false ? 'true':'false');
+  // Screen H
+  const screenH = document.getElementById('screenH');
+  screenH.setAttribute('data-shabbat-screen-active', d.shabbatScreenActive!==false ? 'true':'false');
+  if(d.shabbatScreenBg){
+    screenH.style.backgroundImage=`url('${d.shabbatScreenBg}')`;
+    screenH.style.backgroundSize='cover';
+    screenH.style.backgroundPosition='center';
+  } else {
+    screenH.style.backgroundImage='linear-gradient(160deg,#1a0e05,#2d1a0a)';
+  }
   buildRotation();
 });
 
@@ -1461,7 +1528,33 @@ onSnapshot(doc(db,'settings','display'), snapDisp=>{
   <div class="aliyot-columns" id="aliyot-body"></div>
 </div>
 
-<!-- SCREEN G — הלכה יומית -->
+<!-- SCREEN H — שבת קודש -->
+<div id="screenH" class="screen" data-shabbat-screen-active="true">
+  <div class="sh-card">
+    <div class="sh-title">שבת קודש</div>
+    <div class="sh-divider"></div>
+    <div class="sh-grid">
+      <div class="sh-cell">
+        <span class="sh-label">פרשת השבוע:</span>
+        <span class="sh-value" id="sh-parasha">טוען...</span>
+      </div>
+      <div class="sh-cell">
+        <span class="sh-label">כניסת שבת:</span>
+        <span class="sh-value" id="sh-candles">--:--</span>
+      </div>
+      <div class="sh-cell">
+        <span class="sh-label">הפטרה:</span>
+        <span class="sh-value sh-value-sm" id="sh-haftara">טוען...</span>
+      </div>
+      <div class="sh-cell">
+        <span class="sh-label">צאת שבת:</span>
+        <span class="sh-value" id="sh-havdalah">--:--</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div id="screenG" class="screen" data-halakha-active="true">
   <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
   <div class="corner-deco bl"></div><div class="corner-deco br"></div>
