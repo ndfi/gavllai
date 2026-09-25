@@ -344,16 +344,16 @@
 
   /* Screen H — שבת קודש (פרשה + זמנים) */
   #screenH{display:flex;align-items:center;justify-content:center;background:#1a0e05;background-size:cover;background-position:center;position:relative;}
-  #screenH::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.38);pointer-events:none;}
-  .sh-card{position:relative;z-index:1;width:clamp(560px,72vw,900px);background:rgba(245,235,205,.93);border-radius:18px;padding:clamp(28px,4vw,54px) clamp(32px,5vw,64px);box-shadow:0 8px 60px rgba(0,0,0,.55),inset 0 0 0 3px rgba(120,60,20,.18);}
-  .sh-title{font-family:'Frank Ruhl Libre',serif;font-size:clamp(2.2rem,5vw,4rem);font-weight:900;color:#6b1a1a;text-align:center;margin-bottom:clamp(18px,3vh,36px);letter-spacing:4px;}
-  .sh-divider{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 clamp(16px,2.5vh,30px);}
+  #screenH::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.40);pointer-events:none;}
+  .sh-card{position:relative;z-index:1;width:90vw;max-width:1100px;background:rgba(245,235,205,.94);border-radius:20px;padding:clamp(32px,5vh,64px) clamp(40px,6vw,80px);box-shadow:0 12px 80px rgba(0,0,0,.6),inset 0 0 0 4px rgba(120,60,20,.2);}
+  .sh-title{font-family:'Frank Ruhl Libre',serif;font-size:clamp(3rem,7vw,6rem);font-weight:900;color:#6b1a1a;text-align:center;margin-bottom:clamp(20px,3vh,40px);letter-spacing:6px;}
+  .sh-divider{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 clamp(20px,3vh,40px);}
   .sh-divider::before,.sh-divider::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,transparent,#8b3a1a,transparent);}
-  .sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2.5vh,28px) clamp(20px,3vw,40px);}
-  .sh-cell{display:flex;flex-direction:column;gap:6px;}
-  .sh-label{display:inline-block;background:#6b1a1a;color:#f5e8c0;font-family:'Frank Ruhl Libre',serif;font-size:clamp(.85rem,1.6vw,1.15rem);font-weight:700;border-radius:8px;padding:5px 16px;letter-spacing:1px;width:fit-content;}
-  .sh-value{font-family:'Frank Ruhl Libre',serif;font-size:clamp(1.4rem,3.2vw,2.6rem);font-weight:900;color:#3a1a08;padding-right:4px;min-height:2rem;}
-  .sh-value-sm{font-size:clamp(1rem,2vw,1.5rem);}
+  .sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(22px,4vh,48px) clamp(32px,5vw,64px);}
+  .sh-cell{display:flex;flex-direction:column;gap:10px;}
+  .sh-label{display:inline-block;background:#6b1a1a;color:#f5e8c0;font-family:'Frank Ruhl Libre',serif;font-size:clamp(1rem,1.8vw,1.4rem);font-weight:700;border-radius:10px;padding:7px 20px;letter-spacing:1px;width:fit-content;}
+  .sh-value{font-family:'Frank Ruhl Libre',serif;font-size:clamp(2rem,5vw,4.2rem);font-weight:900;color:#3a1a08;padding-right:4px;line-height:1.1;}
+  .sh-value-sm{font-size:clamp(1.3rem,2.8vw,2.2rem);}
 </style>
 </head>
 <body>
@@ -1270,17 +1270,21 @@ function buildRotation(){
 
 // ── Screen H: sync parasha + times from existing elements ──
 function syncScreenH(){
-  const parasha = document.getElementById('parasha')?.textContent||'';
-  const candles = document.getElementById('sht-candles')?.textContent||'--:--';
-  const havdalah= document.getElementById('sht-havdalah')?.textContent||'--:--';
-  if(parasha) document.getElementById('sh-parasha').textContent = parasha;
-  if(candles)  document.getElementById('sh-candles').textContent  = candles;
-  if(havdalah) document.getElementById('sh-havdalah').textContent = havdalah;
+  const parasha = document.getElementById('parasha')?.textContent?.trim()||'';
+  const candles = document.getElementById('sht-candles')?.textContent?.trim()||'';
+  const havdalah= document.getElementById('sht-havdalah')?.textContent?.trim()||'';
+  if(parasha && parasha!=='טוען...') document.getElementById('sh-parasha').textContent = parasha;
+  if(candles && candles!=='--:--')   document.getElementById('sh-candles').textContent  = candles;
+  if(havdalah && havdalah!=='--:--') document.getElementById('sh-havdalah').textContent = havdalah;
 }
 
-// Run sync after Hebcal loads (give it 3 sec), then every 5 min
-setTimeout(syncScreenH, 3000);
-setInterval(syncScreenH, 5*60*1000);
+// Sync immediately and after each change to parasha/candles/havdalah elements
+syncScreenH();
+['parasha','sht-candles','sht-havdalah'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) new MutationObserver(syncScreenH).observe(el,{childList:true,subtree:true,characterData:true});
+});
+setInterval(syncScreenH, 60*1000);
 
 // ── Screen H: haftara from Sefaria calendars ──
 async function fetchHaftara(){
