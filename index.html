@@ -1255,8 +1255,10 @@ function isOmerDisplayTime(){
   return mins >= 18*60+30 || mins < 0*60+0;
 }
 
+const _previewH = new URLSearchParams(location.search).has('previewH');
+
 function buildRotation(){
-  rotation=['screenA','screenB'];
+  rotation= _previewH ? [] : ['screenA','screenB'];
   if(screenCQueue.length) rotation.push('screenC');
   const omerEl = document.getElementById('screenD');
   if(omerEl && omerEl.getAttribute('data-omer-active')==='true' && isOmerDisplayTime()) rotation.push('screenD');
@@ -1266,8 +1268,8 @@ function buildRotation(){
   if(document.getElementById('screenF').getAttribute('data-aliyot-active')==='true') rotation.push('screenF');
   // Screen G — הלכה יומית
   if(document.getElementById('screenG').getAttribute('data-halakha-active')==='true') rotation.push('screenG');
-  // Screen H — שבת קודש — שישי ושבת בלבד
-  if((day===5||day===6) && document.getElementById('screenH').getAttribute('data-shabbat-screen-active')==='true') rotation.push('screenH');
+  // Screen H — שבת קודש — שישי ושבת בלבד (או תצוגה מקדימה)
+  if((_previewH || day===5||day===6) && document.getElementById('screenH').getAttribute('data-shabbat-screen-active')==='true') rotation.push('screenH');
 }
 
 // ── Screen H: sync parasha + times from existing elements ──
