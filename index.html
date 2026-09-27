@@ -342,18 +342,20 @@
   body.theme-light .halakha-body{background:rgba(255,255,255,.7);border-color:rgba(122,90,16,.3);}
   body.theme-light .halakha-text{color:var(--text-bright);}
 
-  /* Screen H — שבת קודש (פרשה + זמנים) */
-  #screenH{display:flex;align-items:center;justify-content:center;background:#1a0e05;background-size:cover;background-position:center;position:relative;}
-  #screenH::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.40);pointer-events:none;}
-  .sh-card{position:relative;z-index:1;width:90vw;max-width:1100px;background:rgba(245,235,205,.94);border-radius:20px;padding:clamp(32px,5vh,64px) clamp(40px,6vw,80px);box-shadow:0 12px 80px rgba(0,0,0,.6),inset 0 0 0 4px rgba(120,60,20,.2);}
-  .sh-title{font-family:'Frank Ruhl Libre',serif;font-size:clamp(3rem,7vw,6rem);font-weight:900;color:#6b1a1a;text-align:center;margin-bottom:clamp(20px,3vh,40px);letter-spacing:6px;}
-  .sh-divider{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 clamp(20px,3vh,40px);}
-  .sh-divider::before,.sh-divider::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,transparent,#8b3a1a,transparent);}
-  .sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(22px,4vh,48px) clamp(32px,5vw,64px);}
-  .sh-cell{display:flex;flex-direction:column;gap:10px;}
-  .sh-label{display:inline-block;background:#6b1a1a;color:#f5e8c0;font-family:'Frank Ruhl Libre',serif;font-size:clamp(1rem,1.8vw,1.4rem);font-weight:700;border-radius:10px;padding:7px 20px;letter-spacing:1px;width:fit-content;}
-  .sh-value{font-family:'Frank Ruhl Libre',serif;font-size:clamp(2rem,5vw,4.2rem);font-weight:900;color:#3a1a08;padding-right:4px;line-height:1.1;}
-  .sh-value-sm{font-size:clamp(1.3rem,2.8vw,2.2rem);}
+  /* Screen H — שבת קודש — טקסט בלבד על גבי תמונת רקע */
+  #screenH{background:#000 center/cover no-repeat;position:relative;}
+  /* 4 אזורי טקסט ממוקמים בדיוק לפי מיקום התוויות בתמונת הרקע */
+  .sh-overlay{position:absolute;inset:0;display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    /* אזור הטקסט נמצא בחלק המרכזי-ימני של התמונה — מתכוונן ב-admin */
+    padding:28% 8% 14% 35%;}
+  .sh-slot{display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:0 4% 6%;}
+  .sh-slot.right{align-items:flex-end;text-align:right;}
+  .sh-val{font-family:'Frank Ruhl Libre',serif;font-weight:900;color:#3a1a08;line-height:1.1;
+    font-size:clamp(1.8rem,4.5vw,4rem);text-shadow:1px 1px 3px rgba(255,255,255,.4);}
+  .sh-val.sm{font-size:clamp(1.1rem,2.5vw,2.2rem);}
+  .sh-val.time{font-size:clamp(2.4rem,6vw,5.5rem);}
 </style>
 </head>
 <body>
@@ -1519,6 +1521,12 @@ onSnapshot(doc(db,'settings','display'), snapDisp=>{
   } else {
     screenH.style.backgroundImage='linear-gradient(160deg,#1a0e05,#2d1a0a)';
   }
+  // Apply text overlay padding from admin settings
+  const overlay = document.querySelector('.sh-overlay');
+  if(overlay && d.shabbatPad){
+    const p=d.shabbatPad;
+    overlay.style.padding=`${p.top??28}% ${p.right??8}% ${p.bottom??14}% ${p.left??35}%`;
+  }
   buildRotation();
 });
 
@@ -1532,28 +1540,24 @@ onSnapshot(doc(db,'settings','display'), snapDisp=>{
   <div class="aliyot-columns" id="aliyot-body"></div>
 </div>
 
-<!-- SCREEN H — שבת קודש -->
+<!-- SCREEN H — שבת קודש — טקסט על גבי תמונת רקע -->
 <div id="screenH" class="screen" data-shabbat-screen-active="true">
-  <div class="sh-card">
-    <div class="sh-title">שבת קודש</div>
-    <div class="sh-divider"></div>
-    <div class="sh-grid">
-      <div class="sh-cell">
-        <span class="sh-label">פרשת השבוע:</span>
-        <span class="sh-value" id="sh-parasha">טוען...</span>
-      </div>
-      <div class="sh-cell">
-        <span class="sh-label">כניסת שבת:</span>
-        <span class="sh-value" id="sh-candles">--:--</span>
-      </div>
-      <div class="sh-cell">
-        <span class="sh-label">הפטרה:</span>
-        <span class="sh-value sh-value-sm" id="sh-haftara">טוען...</span>
-      </div>
-      <div class="sh-cell">
-        <span class="sh-label">צאת שבת:</span>
-        <span class="sh-value" id="sh-havdalah">--:--</span>
-      </div>
+  <div class="sh-overlay">
+    <!-- ימין עליון: פרשת השבוע -->
+    <div class="sh-slot right">
+      <span class="sh-val" id="sh-parasha"></span>
+    </div>
+    <!-- שמאל עליון: כניסת שבת -->
+    <div class="sh-slot">
+      <span class="sh-val time" id="sh-candles"></span>
+    </div>
+    <!-- ימין תחתון: הפטרה -->
+    <div class="sh-slot right">
+      <span class="sh-val sm" id="sh-haftara"></span>
+    </div>
+    <!-- שמאל תחתון: צאת שבת -->
+    <div class="sh-slot">
+      <span class="sh-val time" id="sh-havdalah"></span>
     </div>
   </div>
 </div>

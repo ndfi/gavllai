@@ -571,9 +571,18 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
         <div id="shabbat-bg-preview" style="display:none;margin:8px 0;border-radius:10px;overflow:hidden;max-height:120px;">
           <img id="shabbat-bg-img" style="width:100%;height:120px;object-fit:cover;" onerror="this.parentElement.style.display='none'">
         </div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:12px 0;"></div>
+        <div class="sub-label">כיוונון מיקום הטקסט על גבי התמונה (% ריווח)</div>
+        <div class="prayer-grid">
+          <div class="field"><label>ריווח מלמעלה %</label><input type="number" id="sh-pad-top" value="28" min="0" max="80" style="width:80px;"></div>
+          <div class="field"><label>ריווח מימין %</label><input type="number" id="sh-pad-right" value="8" min="0" max="80" style="width:80px;"></div>
+          <div class="field"><label>ריווח מלמטה %</label><input type="number" id="sh-pad-bottom" value="14" min="0" max="80" style="width:80px;"></div>
+          <div class="field"><label>ריווח משמאל %</label><input type="number" id="sh-pad-left" value="35" min="0" max="80" style="width:80px;"></div>
+        </div>
         <div style="display:flex;gap:10px;margin-top:8px;">
           <button class="btn btn-primary" onclick="saveShabbatScreenSettings()" style="flex:1;">💾 שמור</button>
           <button class="btn btn-ghost" onclick="clearShabbatBg()" style="width:80px;">🗑 הסר</button>
+          <button class="btn btn-open" onclick="window.open('index.html?previewH=1','_blank')" style="width:auto;padding:9px 16px;font-size:.85rem;" title="פתח תצוגה מקדימה של מסך H">👁 תצוגה</button>
         </div>
       </div>
     </div>
@@ -876,7 +885,7 @@ onSnapshot(doc(db,'settings','display'),snap=>{
   applyThemeUi(d.colorTheme||'dark');
   applyAliyotUi(d.aliyotActive!==false);
   applyHalakhaUi(d.halakhaActive!==false);
-  applyShabbatScreenUi(d.shabbatScreenActive!==false, d.shabbatScreenBg||'');
+  applyShabbatScreenUi(d.shabbatScreenActive!==false, d.shabbatScreenBg||'', d.shabbatPad);
   buildCycleRows(d);
   // Load omer bg
   if(d.omerBgUrl !== undefined){
@@ -1527,7 +1536,7 @@ window.deleteAliya = async id => {
 // ── Screen H — שבת קודש ──
 let _shabbatScreenActive = true;
 
-function applyShabbatScreenUi(active, bgUrl){
+function applyShabbatScreenUi(active, bgUrl, pad){
   _shabbatScreenActive = active;
   const wrap = document.getElementById('shabbatScreenToggle');
   const txt  = document.getElementById('shabbatScreenTxt');
@@ -1539,6 +1548,12 @@ function applyShabbatScreenUi(active, bgUrl){
     document.getElementById('shabbat-bg-url').value = bgUrl;
     document.getElementById('shabbat-bg-img').src = bgUrl;
     document.getElementById('shabbat-bg-preview').style.display = 'block';
+  }
+  if(pad){
+    document.getElementById('sh-pad-top').value    = pad.top    ??28;
+    document.getElementById('sh-pad-right').value  = pad.right  ??8;
+    document.getElementById('sh-pad-bottom').value = pad.bottom ??14;
+    document.getElementById('sh-pad-left').value   = pad.left   ??35;
   }
 }
 
@@ -1558,8 +1573,16 @@ window.toggleShabbatScreen = async () => {
 
 window.saveShabbatScreenSettings = async () => {
   const url = document.getElementById('shabbat-bg-url').value.trim();
+  const padTop    = document.getElementById('sh-pad-top').value||'28';
+  const padRight  = document.getElementById('sh-pad-right').value||'8';
+  const padBottom = document.getElementById('sh-pad-bottom').value||'14';
+  const padLeft   = document.getElementById('sh-pad-left').value||'35';
   try{
-    await setDoc(doc(db,'settings','display'),{shabbatScreenBg:url,shabbatScreenActive:_shabbatScreenActive},{merge:true});
+    await setDoc(doc(db,'settings','display'),{
+      shabbatScreenBg:url,
+      shabbatScreenActive:_shabbatScreenActive,
+      shabbatPad:{top:+padTop,right:+padRight,bottom:+padBottom,left:+padLeft}
+    },{merge:true});
     toast('נשמר','ok');
   }catch(e){ toast('שגיאה','err'); }
 };
