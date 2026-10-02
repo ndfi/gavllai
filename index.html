@@ -343,7 +343,7 @@
   body.theme-light .halakha-text{color:var(--text-bright);}
 
   /* Screen H — שבת קודש — טקסט בלבד על גבי תמונת רקע */
-  #screenH{background:#000 center/cover no-repeat;position:relative;}
+  #screenH{background:#1a0e05 center/cover no-repeat;position:relative;}
   /* 4 אזורי טקסט ממוקמים בדיוק לפי מיקום התוויות בתמונת הרקע */
   .sh-overlay{position:absolute;inset:0;display:grid;
     grid-template-columns:1fr 1fr;
@@ -813,10 +813,11 @@ fetchHebcal().then(()=>{
 });
 setInterval(fetchHebcal, 3600*1000);
 
-// ── רענון אוטומטי (נשלט מניהול) + ערכת צבעים ──
+// ── הגדרות תצוגה — listener יחיד לכל settings/display ──
 let _autoRefreshTimer = null;
 onSnapshot(doc(db,'settings','display'), snap=>{
   const d = snap.exists() ? snap.data() : {};
+
   // Auto refresh
   const enabled = !!d.autoRefresh;
   if(enabled && !_autoRefreshTimer){
@@ -825,8 +826,10 @@ onSnapshot(doc(db,'settings','display'), snap=>{
     clearInterval(_autoRefreshTimer);
     _autoRefreshTimer = null;
   }
+
   // Color theme
   document.body.classList.toggle('theme-light', d.colorTheme==='light');
+
   // Omer background image
   const screenD = document.getElementById('screenD');
   if(d.omerBgUrl){
@@ -839,6 +842,7 @@ onSnapshot(doc(db,'settings','display'), snap=>{
     screenD.style.backgroundSize='';
     screenD.style.backgroundPosition='';
   }
+
   // Per-screen cycle settings
   if(d.cycle_A) CYCLES.A=d.cycle_A*1000;
   if(d.cycle_B) CYCLES.B=d.cycle_B*1000;
@@ -849,6 +853,32 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   if(d.cycle_G) CYCLES.G=d.cycle_G*1000;
   if(d.cycle_H) CYCLES.H=d.cycle_H*1000;
   if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E','F','G','H'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
+
+  // Screen F — עליות לתורה
+  const screenF = document.getElementById('screenF');
+  screenF.setAttribute('data-aliyot-active', d.aliyotActive!==false ? 'true':'false');
+
+  // Screen G — הלכה יומית
+  const screenG = document.getElementById('screenG');
+  screenG.setAttribute('data-halakha-active', d.halakhaActive!==false ? 'true':'false');
+
+  // Screen H — שבת קודש
+  const screenH = document.getElementById('screenH');
+  screenH.setAttribute('data-shabbat-screen-active', d.shabbatScreenActive!==false ? 'true':'false');
+  if(d.shabbatScreenBg){
+    screenH.style.backgroundImage=`url('${d.shabbatScreenBg}')`;
+    screenH.style.backgroundSize='cover';
+    screenH.style.backgroundPosition='center';
+  } else {
+    screenH.style.backgroundImage='';
+  }
+  const overlay = document.querySelector('.sh-overlay');
+  if(overlay && d.shabbatPad){
+    const p=d.shabbatPad;
+    overlay.style.padding=`${p.top??28}% ${p.right??8}% ${p.bottom??14}% ${p.left??35}%`;
+  }
+
+  buildRotation();
 });
 
 
@@ -1505,32 +1535,7 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
   buildRotation();
 });
 
-// Listen to aliyot on/off setting
-onSnapshot(doc(db,'settings','display'), snapDisp=>{
-  if(!snapDisp.exists()) return;
-  const d = snapDisp.data();
-  const screenF = document.getElementById('screenF');
-  screenF.setAttribute('data-aliyot-active', d.aliyotActive!==false ? 'true':'false');
-  const screenG = document.getElementById('screenG');
-  screenG.setAttribute('data-halakha-active', d.halakhaActive!==false ? 'true':'false');
-  // Screen H
-  const screenH = document.getElementById('screenH');
-  screenH.setAttribute('data-shabbat-screen-active', d.shabbatScreenActive!==false ? 'true':'false');
-  if(d.shabbatScreenBg){
-    screenH.style.backgroundImage=`url('${d.shabbatScreenBg}')`;
-    screenH.style.backgroundSize='cover';
-    screenH.style.backgroundPosition='center';
-  } else {
-    screenH.style.backgroundImage='linear-gradient(160deg,#1a0e05,#2d1a0a)';
-  }
-  // Apply text overlay padding from admin settings
-  const overlay = document.querySelector('.sh-overlay');
-  if(overlay && d.shabbatPad){
-    const p=d.shabbatPad;
-    overlay.style.padding=`${p.top??28}% ${p.right??8}% ${p.bottom??14}% ${p.left??35}%`;
-  }
-  buildRotation();
-});
+
 
 </script>
 <!-- SCREEN F — עליות לתורה -->
