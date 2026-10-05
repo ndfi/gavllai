@@ -343,7 +343,7 @@
   body.theme-light .halakha-text{color:var(--text-bright);}
 
   /* Screen H — שבת קודש — טקסט בלבד על גבי תמונת רקע */
-  #screenH{background:#1a0e05 center/cover no-repeat;position:relative;}
+  #screenH{background:#1a0e05;position:relative;overflow:hidden;}
   /* 4 אזורי טקסט ממוקמים בדיוק לפי מיקום התוויות בתמונת הרקע */
   .sh-overlay{position:absolute;inset:0;display:grid;
     grid-template-columns:1fr 1fr;
@@ -865,12 +865,16 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   // Screen H — שבת קודש
   const screenH = document.getElementById('screenH');
   screenH.setAttribute('data-shabbat-screen-active', d.shabbatScreenActive!==false ? 'true':'false');
-  if(d.shabbatScreenBg){
-    screenH.style.backgroundImage=`url('${d.shabbatScreenBg}')`;
-    screenH.style.backgroundSize='cover';
-    screenH.style.backgroundPosition='center';
-  } else {
-    screenH.style.backgroundImage='';
+  const shBgImg = document.getElementById('sh-bg-img');
+  if(d.shabbatScreenBg && shBgImg){
+    shBgImg.src = d.shabbatScreenBg;
+    shBgImg.style.display = 'block';
+    // pre-load even when screen is hidden
+    const preload = new Image();
+    preload.src = d.shabbatScreenBg;
+  } else if(shBgImg){
+    shBgImg.style.display = 'none';
+    shBgImg.src = '';
   }
   const overlay = document.querySelector('.sh-overlay');
   if(overlay && d.shabbatPad){
@@ -1549,7 +1553,8 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
 
 <!-- SCREEN H — שבת קודש — טקסט על גבי תמונת רקע -->
 <div id="screenH" class="screen" data-shabbat-screen-active="true">
-  <div class="sh-overlay">
+  <img id="sh-bg-img" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;">
+  <div class="sh-overlay" style="z-index:1;position:absolute;">
     <!-- ימין עליון: פרשת השבוע -->
     <div class="sh-slot right">
       <span class="sh-val" id="sh-parasha"></span>
