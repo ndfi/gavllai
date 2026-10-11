@@ -39,6 +39,14 @@ input[type=range]{width:100%;accent-color:var(--primary-light);margin-top:4px;}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(200,164,74,.2);background:#fff;}
 textarea{resize:vertical;min-height:70px;}
 .prayer-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cycle-row{display:flex;align-items:center;gap:12px;background:rgba(139,94,26,.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;}
+.cycle-row-label{font-size:.82rem;font-weight:700;color:var(--primary-dark);min-width:200px;flex-shrink:0;}
+.cycle-row input[type=range]{flex:1;accent-color:var(--primary);}
+.cycle-row-val{min-width:64px;font-weight:900;font-size:.95rem;color:var(--primary-dark);text-align:center;background:rgba(139,94,26,.12);border-radius:8px;padding:4px 8px;}
+.toggle-wrap{width:52px;height:28px;background:#ccc;border-radius:14px;position:relative;cursor:pointer;transition:background .25s;}
+.toggle-wrap.on{background:#2e7d32;}
+.toggle-knob{width:22px;height:22px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.toggle-wrap.on .toggle-knob{left:27px;}
 .sub-label{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin:14px 0 10px;padding-top:12px;border-top:1px solid var(--border);}
 .sub-label:first-child{margin-top:0;border-top:none;}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border:none;border-radius:10px;font-family:'Heebo',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
@@ -144,7 +152,10 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     <button class="tab-btn" data-tab="shiurim">📖 שיעורים</button>
     <button class="tab-btn" data-tab="announcements">📢 הודעות</button>
     <button class="tab-btn" data-tab="custom">✨ מסכים</button>
+    <button class="tab-btn" data-tab="sefer">📜 ספרי תורה</button>
+    <button class="tab-btn" data-tab="aliyot">📖 עליות לתורה</button>
     <button class="tab-btn" data-tab="settings">⚙️ הגדרות</button>
+    <button class="tab-btn" data-tab="export">📋 ייצוא הודעה</button>
   </div>
 </div>
 <div class="container">
@@ -165,8 +176,9 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
         <div class="prayer-grid">
           <div class="field"><label>קבלת שבת</label><input type="time" id="p-kabbalat"></div>
           <div class="field"><label>שחרית שבת</label><input type="time" id="p-shacharit_shabbat"></div>
+          <div class="field"><label>תפילת הילדים</label><input type="time" id="p-tefilat_yeladim"></div>
           <div class="field"><label>מנחה שבת</label><input type="time" id="p-mincha_shabbat"></div>
-          <div class="field"><label>ערבית מוצ"ש</label><input type="time" id="p-arvit_motzash"></div>
+          <div class="field"><label>ערבית מוצ"ש</label><input type="time" id="p-arvit_motzash" readonly style="background:#f5f0e8;color:#8b6914;font-weight:700;" title="מחושב אוטומטית: צאת שבת − 10 דק׳"></div>
         </div>
         <div style="margin-top:16px;"><button class="btn btn-primary" id="savePrayersBtn" onclick="savePrayers()"><span id="savePrayersTxt">💾 שמור זמני תפילות</span></button></div>
       </div>
@@ -205,50 +217,26 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     <div class="card">
       <div class="card-header">
         <div class="ch-icon">🎉</div>
-        <div>
-          <h2>תפילות חגים</h2>
-          <p>מוצגות רק כאשר מופעלות — כבה/הדלק לפי הצורך</p>
-        </div>
-        <div style="margin-right:auto;">
-          <label class="toggle-wrap">
-            <input type="checkbox" id="holidayPrayersEnabled" onchange="toggleHolidayPrayers(this.checked)">
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span class="toggle-label" id="holidayToggleLabel">כבוי</span>
-          </label>
-        </div>
+        <div><h2>תפילות חגים</h2><p>הוסף חג, הדלק/כבה לפי הצורך — שם החג מוצג על הלוח</p></div>
       </div>
-      <div class="card-body" id="holidayPrayersBody">
-        <div class="holiday-disabled-notice" id="holidayDisabledNotice">
-          <span>⬆️ הפעל את תפילות החגים כדי שיוצגו על הלוח</span>
+      <div class="card-body">
+        <div id="holidayList" class="ann-list" style="max-height:420px;min-height:60px;"><div class="empty-state">טוען...</div></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec" id="holFormTitle">הוסף חג</div>
+        <div class="field"><label>שם החג (יוצג על המסך)</label><input type="text" id="hol-name" placeholder='לדוגמה: שבועות תשפ"ו'></div>
+        <div class="sub-label">סדר תפילות: ערבית ← שחרית ← מוסף ← מנחה ← ערבית צאת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>ערבית (כניסת החג)</label><input type="time" id="hol-arvit-in"></div>
+          <div class="field"><label>שחרית</label><input type="time" id="hol-shacharit"></div>
+          <div class="field"><label>מוסף</label><input type="time" id="hol-musaf"></div>
+          <div class="field"><label>מנחה</label><input type="time" id="hol-mincha"></div>
+          <div class="field"><label>ערבית (צאת החג)</label><input type="time" id="hol-arvit-out"></div>
         </div>
-        <div id="holidayPrayersFields">
-          <div class="sub-label">ראש השנה / יום כיפור</div>
-          <div class="prayer-grid">
-            <div class="field"><label>שחרית</label><input type="time" id="ph-rh_shacharit"></div>
-            <div class="field"><label>מוסף</label><input type="time" id="ph-rh_musaf"></div>
-            <div class="field"><label>מנחה</label><input type="time" id="ph-rh_mincha"></div>
-            <div class="field"><label>נעילה (יוה"כ)</label><input type="time" id="ph-yk_neilah"></div>
-          </div>
-          <div class="sub-label">סוכות / שמיני עצרת</div>
-          <div class="prayer-grid">
-            <div class="field"><label>שחרית</label><input type="time" id="ph-suk_shacharit"></div>
-            <div class="field"><label>מוסף</label><input type="time" id="ph-suk_musaf"></div>
-            <div class="field"><label>מנחה</label><input type="time" id="ph-suk_mincha"></div>
-            <div class="field"><label>ערבית</label><input type="time" id="ph-suk_arvit"></div>
-          </div>
-          <div class="sub-label">פסח / שבועות</div>
-          <div class="prayer-grid">
-            <div class="field"><label>שחרית</label><input type="time" id="ph-pss_shacharit"></div>
-            <div class="field"><label>מוסף</label><input type="time" id="ph-pss_musaf"></div>
-            <div class="field"><label>מנחה</label><input type="time" id="ph-pss_mincha"></div>
-            <div class="field"><label>ערבית</label><input type="time" id="ph-pss_arvit"></div>
-          </div>
-          <div class="sub-label">שם החג (יוצג על המסך)</div>
-          <div class="field"><input type="text" id="ph-holidayName" placeholder="לדוגמה: ראש השנה תשפ״ו"></div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn btn-add" onclick="saveHoliday()" style="flex:1;"><span id="holSubmitTxt">➕ הוסף חג</span></button>
+          <button class="btn btn-ghost" id="holCancelBtn" onclick="resetHolForm()" style="width:80px;display:none;">ביטול</button>
         </div>
-        <div style="margin-top:14px;">
-          <button class="btn btn-primary" onclick="saveHolidayPrayers()"><span id="saveHolidayTxt">💾 שמור תפילות חגים</span></button>
-        </div>
+        <input type="hidden" id="hol-editId">
       </div>
     </div>
   </div>
@@ -305,8 +293,23 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
       <div class="card-header"><div class="ch-icon">📢</div><div><h2>הודעות</h2><p>מוצגות בפס התחתון של הלוח</p></div></div>
       <div class="card-body">
         <div id="annList" class="ann-list"><div class="empty-state">טוען...</div></div>
-        <div class="field"><label>הודעה חדשה (Ctrl+Enter)</label><textarea id="newAnn" placeholder="כתוב את ההודעה לקהל..." rows="3"></textarea></div>
-        <button class="btn btn-add" onclick="addAnn()">➕ הוסף הודעה</button>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec" id="annFormTitle">הוסף הודעה</div>
+        <div class="field"><label>טקסט ההודעה (Ctrl+Enter לשמירה)</label><textarea id="newAnn" placeholder="כתוב את ההודעה לקהל..." rows="3"></textarea></div>
+        <div class="field">
+          <label>גודל פונט בפס התחתון</label>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <input type="range" id="ann-font-size" min="70" max="160" step="5" value="100"
+              oninput="document.getElementById('ann-font-preview').textContent=this.value+'%'">
+            <span id="ann-font-preview" style="min-width:46px;font-weight:800;color:var(--primary-dark);">100%</span>
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">משפיע על כל ההודעות בפס התחתון</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-add" onclick="saveAnn()" style="flex:1;"><span id="annSubmitTxt">➕ הוסף הודעה</span></button>
+          <button class="btn btn-ghost" id="annCancelBtn" onclick="resetAnnForm()" style="width:80px;display:none;">ביטול</button>
+        </div>
+        <input type="hidden" id="ann-editId">
       </div>
     </div>
   </div>
@@ -360,6 +363,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           <div class="ipanel" id="ipanel-up-ci">
             <input type="file" id="cs-imageFile" accept="image/*" style="display:none;">
             <button class="btn btn-ghost" style="width:100%;padding:10px;" onclick="document.getElementById('cs-imageFile').click()">📁 בחר תמונה</button>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">מועלה אוטומטית ל-ImgBB · <a href="https://api.imgbb.com/" target="_blank" style="color:var(--primary-light);">קבל מפתח API בחינם ↗</a></div>
             <img id="uploadPreview" class="img-prev" alt="">
             <div id="uploadStatus" style="font-size:.75rem;color:var(--muted);margin-top:5px;"></div>
           </div>
@@ -380,6 +384,7 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           <div class="ipanel" id="ipanel-up-bg">
             <input type="file" id="cs-bgImageFile" accept="image/*" style="display:none;">
             <button class="btn btn-ghost" style="width:100%;padding:10px;" onclick="document.getElementById('cs-bgImageFile').click()">📁 בחר תמונת רקע</button>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">מועלה אוטומטית ל-ImgBB</div>
             <div id="bgUploadPreview" class="bg-prev"></div>
             <div id="bgUploadStatus" style="font-size:.75rem;color:var(--muted);margin-top:5px;"></div>
           </div>
@@ -441,93 +446,292 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
     </div>
   </div>
 
+  <!-- SEFER TORAH -->
+  <div id="tab-sefer" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📜</div><div><h2>ספרי תורה</h2><p>מסך מוצג בשישי ושבת בלבד — כיבוי אוטומטי ביום ראשון</p></div></div>
+      <div class="card-body">
+        <div id="seferList" class="ann-list" style="max-height:400px;min-height:60px;"><div class="empty-state">טוען...</div></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec" id="seferFormTitle">הוסף ספר תורה</div>
+        <div class="field"><label>שם הספר</label><input type="text" id="sf-name" placeholder='לדוגמה: "ויקרא", "ספר הזקנים"'></div>
+        <div class="field"><label>תמונה — העלה קובץ</label>
+          <input type="file" id="sf-img-file" accept="image/*" style="display:none" onchange="handleSeferImg(this)">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-open" style="width:auto;padding:9px 16px;font-size:.85rem;" onclick="document.getElementById('sf-img-file').click()">📷 בחר תמונה</button>
+            <span id="sf-img-name" style="font-size:.78rem;color:var(--muted);">לא נבחר קובץ</span>
+          </div>
+          <div id="sf-img-preview" style="margin-top:8px;display:none;"><img id="sf-preview-img" style="max-height:100px;border-radius:8px;border:2px solid var(--border);"></div>
+        </div>
+        <div class="field"><label>— או הכנס קישור לתמונה (URL)</label>
+          <input type="url" id="sf-img-url-input" placeholder="https://..." oninput="previewSeferUrl(this.value)">
+          <div id="sf-url-preview" style="margin-top:8px;display:none;"><img id="sf-url-preview-img" style="max-height:100px;border-radius:8px;border:2px solid var(--border);" onerror="this.parentElement.style.display='none'"></div>
+        </div>
+        <div class="field"><label>סדר הצגה</label><input type="number" id="sf-order" placeholder="1" style="width:80px;"></div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn btn-add" onclick="saveSefer()" style="flex:1;"><span id="seferSubmitTxt">➕ הוסף ספר</span></button>
+          <button class="btn btn-ghost" id="seferCancelBtn" onclick="resetSeferForm()" style="width:80px;display:none;">ביטול</button>
+        </div>
+        <input type="hidden" id="sf-editId">
+        <input type="hidden" id="sf-img-url">
+      </div>
+    </div>
+  </div>
+
+  <!-- ALIYOT -->
+  <div id="tab-aliyot" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📖</div><div><h2>עליות לתורה</h2><p>ניהול עליות — <a href="aliyot.html" target="_blank" style="color:var(--primary-light);text-decoration:none;">פתח ניהול מובייל ↗</a></p></div></div>
+      <div class="card-body">
+        <div id="aliyotAdminList" class="ann-list" style="max-height:380px;min-height:60px;"><div class="empty-state">טוען...</div></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;"></div>
+        <div class="esec">הוסף עלייה</div>
+        <div class="prayer-grid">
+          <div class="field"><label>תאריך לועזי</label><input type="date" id="al-date" onchange="calcHebrewDate(this.value)"></div>
+          <div class="field"><label>תאריך עברי (מחושב)</label><input type="text" id="al-hdate" placeholder="יחושב אוטומטית" readonly style="background:#f5f0e8;"></div>
+        </div>
+        <div class="field"><label>שם העולה</label><input type="text" id="al-name" placeholder="ישראל ישראלי"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn btn-add" onclick="saveAliya()" style="flex:1;"><span id="aliyaSubmitTxt">➕ הוסף עלייה</span></button>
+          <button class="btn btn-ghost" id="aliyaCancelBtn" onclick="resetAliyaForm()" style="width:80px;display:none;">ביטול</button>
+        </div>
+        <input type="hidden" id="al-editId">
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div id="tab-settings" class="tab-panel">
-    <!-- מסך שבת קודש -->
-    <div class="card">
-      <div class="card-header"><div class="ch-icon">🕍</div><div><h2>מסך שבת קודש</h2></div></div>
-      <div class="card-body">
-        <div class="field" style="flex-direction:row;align-items:center;gap:12px;">
-          <label style="margin:0;">הצג מסך שבת קודש</label>
-          <label class="toggle"><input type="checkbox" id="s-shabbatScreenActive"><span class="slider"></span></label>
-        </div>
-        <div class="field" style="margin-top:12px;">
-          <label>תמונת רקע — העלאה ישירה</label>
-          <input type="file" id="s-shabbatBgFile" accept="image/*" style="margin-bottom:6px;">
-          <div id="s-shabbatBgStatus" style="font-size:.75rem;color:var(--muted);margin-bottom:6px;"></div>
-          <label style="font-size:.78rem;margin-top:4px;">או הזן URL ישירות</label>
-          <input type="url" id="s-shabbatBgUrl" placeholder="https://..." style="margin-top:4px;">
-        </div>
-        <div id="s-shabbatBgPreview" style="width:100%;max-height:160px;background-size:cover;background-position:center;border-radius:8px;border:1px solid var(--border);display:none;margin-bottom:12px;aspect-ratio:16/9;"></div>
-        <div class="field">
-          <label>כיוונון מיקום טקסט (ריווח ב-%) — למעלה / ימין / למטה / שמאל</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <label style="font-size:.72rem;">למעלה</label>
-              <input type="number" id="s-padTop" min="0" max="80" style="width:70px;text-align:center;">
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <label style="font-size:.72rem;">ימין</label>
-              <input type="number" id="s-padRight" min="0" max="80" style="width:70px;text-align:center;">
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <label style="font-size:.72rem;">למטה</label>
-              <input type="number" id="s-padBottom" min="0" max="80" style="width:70px;text-align:center;">
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <label style="font-size:.72rem;">שמאל</label>
-              <input type="number" id="s-padLeft" min="0" max="80" style="width:70px;text-align:center;">
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-          <button class="btn" onclick="saveShabbatSettings()">💾 שמור הגדרות שבת</button>
-          <button class="btn btn-open" onclick="window.open('index.html?previewH=1','_blank')">👁 תצוגה מקדימה</button>
-        </div>
-      </div>
-    </div>
-    <!-- מסכים פעילים -->
-    <div class="card">
-      <div class="card-header"><div class="ch-icon">⚙️</div><div><h2>הגדרות כלליות</h2></div></div>
-      <div class="card-body">
-        <div class="field" style="flex-direction:row;align-items:center;gap:12px;">
-          <label style="margin:0;">הצג מסך עליות לתורה</label>
-          <label class="toggle"><input type="checkbox" id="s-aliyotActive"><span class="slider"></span></label>
-        </div>
-        <div class="field" style="flex-direction:row;align-items:center;gap:12px;margin-top:10px;">
-          <label style="margin:0;">הצג מסך הלכה יומית</label>
-          <label class="toggle"><input type="checkbox" id="s-halakhaActive"><span class="slider"></span></label>
-        </div>
-        <div class="field" style="flex-direction:row;align-items:center;gap:12px;margin-top:10px;">
-          <label style="margin:0;">רענון אוטומטי (15 דק')</label>
-          <label class="toggle"><input type="checkbox" id="s-autoRefresh"><span class="slider"></span></label>
-        </div>
-        <div class="field" style="margin-top:12px;">
-          <label>ערכת צבעים</label>
-          <select id="s-colorTheme">
-            <option value="dark">כהה</option>
-            <option value="light">בהיר</option>
-          </select>
-        </div>
-        <button class="btn" style="margin-top:8px;" onclick="saveGeneralSettings()">💾 שמור הגדרות כלליות</button>
-      </div>
-    </div>
-    <!-- לוח תצוגה -->
     <div class="card">
       <div class="card-header"><div class="ch-icon">📺</div><div><h2>לוח תצוגה</h2></div></div>
       <div class="card-body"><button class="btn btn-open" onclick="window.open('index.html','_blank')">📺 פתח לוח תצוגה</button></div>
     </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">🌿</div><div><h2>רקע מסך ספירת העומר</h2><p>הכנס קישור לתמונה שתופיע ברקע</p></div></div>
+      <div class="card-body">
+        <div class="field">
+          <label>קישור לתמונת רקע (URL)</label>
+          <input type="url" id="omer-bg-url" placeholder="https://...">
+        </div>
+        <div id="omer-bg-preview" style="display:none;margin:8px 0;border-radius:10px;overflow:hidden;max-height:140px;">
+          <img id="omer-bg-img" style="width:100%;height:140px;object-fit:cover;" onerror="this.parentElement.style.display='none'">
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label>כהות הרקע (0 = שקוף, 100 = שחור)</label>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <input type="range" id="omer-bg-dim" min="0" max="90" step="5" value="50"
+              oninput="document.getElementById('omer-dim-val').textContent=this.value+'%'">
+            <span id="omer-dim-val" style="min-width:40px;font-weight:800;color:var(--primary-dark);">50%</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn btn-primary" onclick="saveOmerBg()" style="flex:1;">💾 שמור רקע</button>
+          <button class="btn btn-ghost" onclick="clearOmerBg()" style="width:90px;">🗑 הסר</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">🎨</div><div><h2>ערכת צבעים</h2><p>עבור בין ערכה כהה (ברירת מחדל) לבהירה</p></div></div>
+      <div class="card-body">
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;">
+          <div id="theme-dark-preview" onclick="setTheme('dark')" style="flex:1;min-width:140px;cursor:pointer;border:3px solid var(--gold);border-radius:14px;overflow:hidden;transition:box-shadow .2s;">
+            <div style="background:#1a0e05;padding:14px;text-align:center;">
+              <div style="color:#e8c87a;font-weight:900;font-size:.9rem;margin-bottom:6px;">🌙 כהה</div>
+              <div style="background:#2d1a0a;border:1px solid #c8a44a;border-radius:8px;padding:6px 14px;display:inline-block;">
+                <span style="color:#fff8e7;font-size:.85rem;">זמני תפילות</span>
+              </div>
+            </div>
+          </div>
+          <div id="theme-light-preview" onclick="setTheme('light')" style="flex:1;min-width:140px;cursor:pointer;border:2px solid #ccc;border-radius:14px;overflow:hidden;transition:box-shadow .2s;">
+            <div style="background:#f5f0e4;padding:14px;text-align:center;">
+              <div style="color:#5c3f08;font-weight:900;font-size:.9rem;margin-bottom:6px;">☀️ בהיר</div>
+              <div style="background:#ede5ce;border:1px solid #7a5a10;border-radius:8px;padding:6px 14px;display:inline-block;">
+                <span style="color:#1a0e05;font-size:.85rem;">זמני תפילות</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="themeStatusLine" style="font-size:.85rem;color:var(--muted);text-align:center;">טוען...</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">✡️</div><div><h2>מסך שבת קודש</h2><p>מוצג בשישי ושבת — פרשה, הפטרה וזמנים</p></div></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+          <div><div style="font-weight:700;font-size:.95rem;" id="shabbatScreenLabel">טוען...</div></div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <div class="toggle-wrap" id="shabbatScreenToggle" onclick="toggleShabbatScreen()"><div class="toggle-knob" id="shabbatScreenKnob"></div></div>
+            <span id="shabbatScreenTxt" style="font-weight:800;font-size:1rem;">כבוי</span>
+          </label>
+        </div>
+        <div class="field">
+          <label>תמונת רקע (URL)</label>
+          <input type="url" id="shabbat-bg-url" placeholder="https://..." oninput="previewShabbatBg(this.value)">
+        </div>
+        <div id="shabbat-bg-preview" style="display:none;margin:8px 0;border-radius:10px;overflow:hidden;max-height:120px;">
+          <img id="shabbat-bg-img" style="width:100%;height:120px;object-fit:cover;" onerror="this.parentElement.style.display='none'">
+        </div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:12px 0;"></div>
+        <div class="sub-label">כיוונון מיקום הטקסט על גבי התמונה (% ריווח)</div>
+        <div class="prayer-grid">
+          <div class="field"><label>ריווח מלמעלה %</label><input type="number" id="sh-pad-top" value="28" min="0" max="80" style="width:80px;"></div>
+          <div class="field"><label>ריווח מימין %</label><input type="number" id="sh-pad-right" value="8" min="0" max="80" style="width:80px;"></div>
+          <div class="field"><label>ריווח מלמטה %</label><input type="number" id="sh-pad-bottom" value="14" min="0" max="80" style="width:80px;"></div>
+          <div class="field"><label>ריווח משמאל %</label><input type="number" id="sh-pad-left" value="35" min="0" max="80" style="width:80px;"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn btn-primary" onclick="saveShabbatScreenSettings()" style="flex:1;">💾 שמור</button>
+          <button class="btn btn-ghost" onclick="clearShabbatBg()" style="width:80px;">🗑 הסר</button>
+          <button class="btn btn-open" onclick="window.open('index.html?previewH=1','_blank')" style="width:auto;padding:9px 16px;font-size:.85rem;" title="פתח תצוגה מקדימה של מסך H">👁 תצוגה</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📚</div><div><h2>מסך הלכה יומית</h2><p>הדלק/כבה את מסך G (Sefaria API)</p></div></div>
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div><div style="font-weight:700;font-size:.95rem;" id="halakhaScreenLabel">טוען...</div></div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="toggle-wrap" id="halakhaToggleWrap" onclick="toggleHalakhaScreen()"><div class="toggle-knob" id="halakhaToggleKnob"></div></div>
+          <span id="halakhaTxt" style="font-weight:800;font-size:1rem;">כבוי</span>
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📖</div><div><h2>מסך עליות לתורה</h2><p>הדלק/כבה את מסך עליות בסיבוב</p></div></div>
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div><div style="font-weight:700;font-size:.95rem;" id="aliyotScreenLabel">טוען...</div></div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="toggle-wrap" id="aliyotToggleWrap" onclick="toggleAliyotScreen()"><div class="toggle-knob" id="aliyotToggleKnob"></div></div>
+          <span id="aliyotToggleTxt" style="font-weight:800;font-size:1rem;">כבוי</span>
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">🔄</div><div><h2>רענון אוטומטי</h2><p>מרענן את לוח התצוגה כל 15 דקות</p></div></div>
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:.95rem;" id="autoRefreshLabel">טוען...</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:3px;">הגדרה זו משפיעה על לוח התצוגה בזמן אמת</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="toggle-wrap" id="arToggleWrap" onclick="toggleAutoRefresh()">
+            <div class="toggle-knob" id="arToggleKnob"></div>
+          </div>
+          <span id="arToggleTxt" style="font-weight:800;font-size:1rem;">כבוי</span>
+        </label>
+      </div>
+    </div><p>קבע כמה שניות כל מסך מוצג בנפרד</p></div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="cycle-row" data-screen="A" data-label="מסך A — זמני תפילות שבת"></div>
+          <div class="cycle-row" data-screen="B" data-label="מסך B — זמני תפילות שבועי"></div>
+          <div class="cycle-row" data-screen="C" data-label="מסך C — מסכים מותאמים אישית"></div>
+          <div class="cycle-row" data-screen="D" data-label="מסך D — ספירת העומר"></div>
+          <div class="cycle-row" data-screen="E" data-label="מסך E — ספרי תורה"></div>
+          <div class="cycle-row" data-screen="F" data-label="מסך F — עליות לתורה"></div>
+          <div class="cycle-row" data-screen="G" data-label="מסך G — הלכה יומית"></div>
+          <div class="cycle-row" data-screen="H" data-label="מסך H — שבת קודש"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveCycleSettings()" style="margin-top:16px;">💾 שמור הכל</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">ℹ️</div><div><h2>מבנה Firestore — custom_screens</h2></div></div>
+      <div class="card-body">
+        <pre style="font-family:monospace;font-size:.75rem;background:#f5f0e8;padding:12px;border-radius:8px;overflow-x:auto;line-height:1.85;color:#2d1a0a;">title          string
+body           string
+badge          string
+imageUrl       string   תמונת תוכן
+bgImageUrl     string   תמונת רקע
+bgDimOpacity   number   0–0.9
+theme          gold|blue|green|purple|red|dark
+displayMode    fullscreen|footer
+order          number
+active         boolean
+scheduleType   always|days|daterange
+activeDays     number[] [0=א׳ … 6=שבת]
+dateFrom       string   YYYY-MM-DD
+dateTo         string   YYYY-MM-DD</pre>
+      </div>
+    </div>
   </div>
+
+  <!-- EXPORT -->
+  <div id="tab-export" class="tab-panel">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">📋</div><div><h2>ייצוא הודעת שבת</h2><p>צור הודעה מלאה לשיתוף בוואטסאפ / טלגרם</p></div></div>
+      <div class="card-body">
+
+        <div class="field"><label>פרשת השבוע</label><input type="text" id="ex-parasha" placeholder='לדוגמה: אחרי מות - קדושים תשפ"ו'></div>
+        <div class="field"><label>שם בית הכנסת</label><input type="text" id="ex-shulname" placeholder='לדוגמה: "פתח אליהו"'></div>
+
+        <div class="sub-label">🕯 מנחה ערב שבת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>מנחה גדולה</label><input type="time" id="ex-mincha-big"></div>
+          <div class="field"><label>כניסת שבת 🕯</label><input type="time" id="ex-candles"></div>
+          <div class="field"><label>מנחה קטנה (אשרי)</label><input type="time" id="ex-mincha-small"></div>
+        </div>
+
+        <div class="sub-label">✡ קבלת שבת וערבית</div>
+        <div class="prayer-grid">
+          <div class="field"><label>קבלת שבת</label><input type="time" id="ex-kabbalat"></div>
+          <div class="field"><label>הערה (שיר השירים וכו')</label><input type="text" id="ex-kabbalat-note" placeholder="שיר השירים וערבית"></div>
+        </div>
+
+        <div class="sub-label">☀️ שחרית שבת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>פתיחה</label><input type="time" id="ex-shacharit"></div>
+          <div class="field"><label>ק"ש לפי מ"א</label><input type="time" id="ex-kriat-shma"></div>
+        </div>
+
+        <div class="sub-label">👨‍👧 תפילת ילדים (אופציונלי)</div>
+        <div class="prayer-grid">
+          <div class="field"><label>שעת תפילת הילדים</label><input type="time" id="ex-children"></div>
+        </div>
+
+        <div class="sub-label">🌅 מנחה ומוצאי שבת</div>
+        <div class="prayer-grid">
+          <div class="field"><label>מנחה שבת — פתיחה</label><input type="time" id="ex-mincha-shab"></div>
+          <div class="field"><label>צאת השבת</label><input type="time" id="ex-havdalah"></div>
+          <div class="field"><label>לפי רבינו תם</label><input type="time" id="ex-rt"></div>
+          <div class="field"><label>מזמורים</label><input type="time" id="ex-mizmor"></div>
+        </div>
+
+        <div class="sub-label">📅 זמני תפילות ימי חול</div>
+        <div class="prayer-grid">
+          <div class="field"><label>שחרית חול</label><input type="time" id="ex-shacharit-hol"></div>
+          <div class="field"><label>הערת שחרית (הודו וכו')</label><input type="text" id="ex-shacharit-hol-note" placeholder="הודו"></div>
+          <div class="field"><label>מנחה חול</label><input type="time" id="ex-mincha-hol"></div>
+          <div class="field"><label>ערבית חול</label><input type="time" id="ex-arvit-hol"></div>
+        </div>
+
+        <div class="sub-label">📢 הודעות (אופציונלי)</div>
+        <div class="field"><label>שורת הודעה / ברכה</label><textarea id="ex-announcements" rows="3" placeholder="בשורות טובות בעזרת השם&#10;שבת שלום לכולם!"></textarea></div>
+
+        <button class="btn btn-primary" onclick="generateExport()" style="margin-top:8px;">✨ צור הודעה</button>
+
+        <div id="exportResult" style="display:none;margin-top:18px;">
+          <div style="font-weight:700;font-size:.85rem;color:var(--muted);margin-bottom:8px;">📋 הודעה מוכנה לשיתוף:</div>
+          <textarea id="exportText" rows="30" style="font-family:monospace;font-size:.88rem;background:#fafaf8;border:2px solid var(--border);border-radius:10px;padding:12px;width:100%;resize:vertical;direction:rtl;line-height:1.9;" readonly></textarea>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
+            <button class="btn btn-add" onclick="copyExport()" style="flex:1;">📋 העתק להודעה</button>
+            <span id="copyFeedback" style="display:none;color:#1b5e20;font-weight:700;font-size:.9rem;">✓ הועתק!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import{getFirestore,doc,collection,onSnapshot,setDoc,addDoc,updateDoc,deleteDoc,orderBy,query,serverTimestamp,getDoc}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-import{getStorage,ref,uploadBytesResumable,getDownloadURL}from"https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+
 
 const app=initializeApp({apiKey:"AIzaSyBl99zWeW0SpVWs18P5GlJ-mDPTsiaSgEM",authDomain:"gavlli-board.firebaseapp.com",projectId:"gavlli-board",storageBucket:"gavlli-board.firebasestorage.app",messagingSenderId:"202183123739",appId:"1:202183123739:web:5e2375d9eae0c0202e29be",measurementId:"G-BZMPZXH2PF"});
-const db=getFirestore(app),storage=getStorage(app);
+const db=getFirestore(app);
 
 const toast=(m,t='ok')=>{const w=document.getElementById('toastWrap'),el=document.createElement('div');el.className=`toast ${t}`;el.textContent=(t==='ok'?'✓ ':'✗ ')+m;w.appendChild(el);setTimeout(()=>el.remove(),3000);};
 const setStatus=(ok,m)=>{document.getElementById('statusDot').className='status-dot '+(ok?'ok':'err');document.getElementById('statusText').textContent=m;};
@@ -537,7 +741,23 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'
 document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');});});
 
 // Prayers
-const PKEYS=['shacharit','mincha','arvit','kabbalat','shacharit_shabbat','mincha_shabbat','arvit_motzash'];
+// ── ערבית מוצ"ש מחושב: צאת שבת − 10 דק׳ (תצוגה בלבד בadmin) ──
+(async()=>{
+  try{
+    const r=await fetch('https://www.hebcal.com/shabbat?cfg=json&latitude=31.2516&longitude=34.7915&tzid=Asia%2FJerusalem&m=33&b=50');
+    const sh=await r.json();
+    const havdalah=sh.items?.find(i=>i.category==='havdalah');
+    if(havdalah){
+      const d=new Date(havdalah.date);
+      d.setMinutes(d.getMinutes()+13-10); // צאת שבת (+13 כמו בלוח) ואז −10 לערבית
+      const hhmm=d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
+      const el=document.getElementById('p-arvit_motzash');
+      if(el) el.value=hhmm;
+    }
+  }catch(e){}
+})();
+
+const PKEYS=['shacharit','mincha','arvit','kabbalat','shacharit_shabbat','tefilat_yeladim','mincha_shabbat','arvit_motzash'];
 onSnapshot(doc(db,'prayers','times'),s=>{if(!s.exists()){setStatus(true,'מחובר — אין נתונים');return;}const d=s.data();PKEYS.forEach(k=>{const e=document.getElementById('p-'+k);if(e&&d[k])e.value=d[k];});setStatus(true,'מחובר ✓');},e=>{setStatus(false,'שגיאה: '+e.message);toast('שגיאת חיבור','err');});
 // Custom / Manual Prayers
 onSnapshot(query(collection(db,'prayers_custom'),orderBy('order','asc')),snap=>{
@@ -603,7 +823,7 @@ window.addCustomPrayer=async()=>{
   }catch{toast('שגיאה','err');}
 };
 
-async function delCustomPrayer(id){
+window.delCustomPrayer = async function(id){
   if(!confirm('למחוק תפילה זו?'))return;
   try{await deleteDoc(doc(db,'prayers_custom',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}
 }
@@ -611,10 +831,93 @@ async function delCustomPrayer(id){
 window.savePrayers=async()=>{const btn=document.getElementById('savePrayersBtn');document.getElementById('savePrayersTxt').innerHTML='<span class="spinner"></span>';btn.disabled=true;const data={};PKEYS.forEach(k=>{const v=document.getElementById('p-'+k)?.value;if(v)data[k]=v;});try{await setDoc(doc(db,'prayers','times'),data,{merge:true});toast('נשמר!','ok');}catch(e){toast('שגיאה','err');}document.getElementById('savePrayersTxt').textContent='💾 שמור זמני תפילות';btn.disabled=false;};
 
 // Announcements
-onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),snap=>{const el=document.getElementById('annList');if(snap.empty){el.innerHTML='<div class="empty-state">אין הודעות.</div>';return;}el.innerHTML=snap.docs.map(d=>{const dt=d.data().createdAt?.toDate?.()?.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})||'';return`<div class="list-item"><div style="flex:1"><div class="item-text">${esc(d.data().text)}</div>${dt?`<span class="item-meta">${dt}</span>`:''}</div><button class="btn-del" data-id="${d.id}">🗑</button></div>`;}).join('');el.querySelectorAll('.btn-del').forEach(b=>b.addEventListener('click',()=>delAnn(b.dataset.id)));});
-window.addAnn=async()=>{const inp=document.getElementById('newAnn'),txt=inp.value.trim();if(!txt){toast('כתוב הודעה','err');inp.focus();return;}try{await addDoc(collection(db,'announcements'),{text:txt,createdAt:serverTimestamp()});inp.value='';toast('נוסף!','ok');}catch(e){toast('שגיאה','err');}};
-async function delAnn(id){if(!confirm('למחוק?'))return;try{await deleteDoc(doc(db,'announcements',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}}
-document.getElementById('newAnn').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)window.addAnn();});
+// ── הודעות ──
+let _annFontSize=100;
+
+window.resetAnnForm=function(){
+  document.getElementById('newAnn').value='';
+  document.getElementById('ann-editId').value='';
+  document.getElementById('annFormTitle').textContent='הוסף הודעה';
+  document.getElementById('annSubmitTxt').textContent='➕ הוסף הודעה';
+  document.getElementById('annCancelBtn').style.display='none';
+}
+
+window.editAnn=(id,text)=>{
+  document.getElementById('newAnn').value=text;
+  document.getElementById('ann-editId').value=id;
+  document.getElementById('annFormTitle').textContent='✏️ ערוך הודעה';
+  document.getElementById('annSubmitTxt').textContent='💾 שמור שינויים';
+  document.getElementById('annCancelBtn').style.display='block';
+  document.getElementById('newAnn').focus();
+  document.getElementById('newAnn').scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),snap=>{
+  const el=document.getElementById('annList');
+  if(snap.empty){el.innerHTML='<div class="empty-state">אין הודעות.</div>';return;}
+  el.innerHTML=snap.docs.map(d=>{
+    const txt=d.data().text||'';
+    const dt=d.data().createdAt?.toDate?.()?.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})||'';
+    return`<div class="list-item">
+      <div style="flex:1">
+        <div class="item-text">${esc(txt)}</div>
+        ${dt?`<span class="item-meta">${dt}</span>`:''}
+      </div>
+      <button class="btn-del ann-edit-btn" data-id="${d.id}" data-txt="${esc(txt)}" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del ann-del-btn" data-id="${d.id}" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.ann-edit-btn').forEach(b=>b.addEventListener('click',()=>editAnn(b.dataset.id,b.dataset.txt)));
+  el.querySelectorAll('.ann-del-btn').forEach(b=>b.addEventListener('click',()=>delAnn(b.dataset.id)));
+});
+
+// Load font size setting
+onSnapshot(doc(db,'settings','display'),snap=>{
+  if(!snap.exists()) return;
+  const d=snap.data();
+  if(d.annFontSize){
+    _annFontSize=d.annFontSize;
+    const sl=document.getElementById('ann-font-size');
+    const pr=document.getElementById('ann-font-preview');
+    if(sl){sl.value=d.annFontSize; pr.textContent=d.annFontSize+'%';}
+  }
+  applyArUi(!!d.autoRefresh);
+  applyThemeUi(d.colorTheme||'dark');
+  applyAliyotUi(d.aliyotActive!==false);
+  applyHalakhaUi(d.halakhaActive!==false);
+  applyShabbatScreenUi(d.shabbatScreenActive!==false, d.shabbatScreenBg||'', d.shabbatPad);
+  buildCycleRows(d);
+  // Load omer bg
+  if(d.omerBgUrl !== undefined){
+    const urlEl = document.getElementById('omer-bg-url');
+    const dimEl = document.getElementById('omer-bg-dim');
+    const dimValEl = document.getElementById('omer-dim-val');
+    if(urlEl) urlEl.value = d.omerBgUrl||'';
+    if(d.omerBgUrl){ document.getElementById('omer-bg-img').src=d.omerBgUrl; document.getElementById('omer-bg-preview').style.display='block'; }
+    if(dimEl){ dimEl.value=d.omerBgDim||50; dimValEl.textContent=(d.omerBgDim||50)+'%'; }
+  }
+});
+
+window.saveAnn=async()=>{
+  const txt=document.getElementById('newAnn').value.trim();
+  const editId=document.getElementById('ann-editId').value;
+  const fontSize=parseInt(document.getElementById('ann-font-size').value)||100;
+  if(!txt){toast('כתוב הודעה','err');document.getElementById('newAnn').focus();return;}
+  try{
+    if(editId){
+      await updateDoc(doc(db,'announcements',editId),{text:txt});
+    } else {
+      await addDoc(collection(db,'announcements'),{text:txt,createdAt:serverTimestamp()});
+    }
+    // Save font size globally
+    await setDoc(doc(db,'settings','display'),{annFontSize:fontSize},{merge:true});
+    resetAnnForm();
+    toast(editId?'עודכן!':'נוסף!','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+window.delAnn=async function(id){if(!confirm('למחוק?'))return;try{await deleteDoc(doc(db,'announcements',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}}
+document.getElementById('newAnn').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)window.saveAnn();});
 
 // Display mode
 document.querySelectorAll('.mode-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('cs-displayMode').value=b.dataset.mode;const full=b.dataset.mode==='fullscreen';['themeField','badgeField','bgImageField','schedField','orderField'].forEach(id=>document.getElementById(id).style.display=full?'block':'none');});});
@@ -631,14 +934,52 @@ document.getElementById('cs-imageUrl').addEventListener('input',e=>{const u=e.ta
 document.getElementById('cs-bgImageUrl').addEventListener('input',e=>{const u=e.target.value.trim(),p=document.getElementById('bgUrlPreview');if(u){p.style.backgroundImage=`url('${u}')`;p.className='bg-prev show';}else p.className='bg-prev';});
 
 let uploadedCI='',uploadedBG='';
-async function doUpload(file,prefix,statusId,previewId,isBg){
-  const st=document.getElementById(statusId);st.textContent='מעלה...';
-  const r=ref(storage,'screens/'+prefix+'_'+Date.now()+'_'+file.name);
-  const task=uploadBytesResumable(r,file);
-  return new Promise((res,rej)=>{task.on('state_changed',s=>st.textContent='מעלה... '+Math.round(s.bytesTransferred/s.totalBytes*100)+'%',e=>{st.textContent='שגיאה';toast('שגיאה','err');rej(e);},async()=>{const u=await getDownloadURL(task.snapshot.ref);st.textContent='✓ הועלה';const p=document.getElementById(previewId);if(isBg){p.style.backgroundImage=`url('${u}')`;p.className='bg-prev show';}else{p.src=u;p.className='img-prev show';}res(u);});});
+// ── ImgBB Upload ──
+// מפתח ImgBB — ניתן לקבל בחינם בכתובת https://api.imgbb.com/
+const IMGBB_API_KEY = 'ec3f4180638be4d3f0db5195ad042ce9';
+
+async function uploadToImgBB(file, statusId, previewId, isBg){
+  const st = document.getElementById(statusId);
+  st.textContent = 'מעלה...';
+  try{
+    const form = new FormData();
+    form.append('image', file);
+    form.append('key', IMGBB_API_KEY);
+    const res = await fetch('https://api.imgbb.com/1/upload', {method:'POST', body:form});
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error?.message || 'שגיאת ImgBB');
+    const url = json.data.url;
+    st.textContent = '✓ הועלה';
+    const p = document.getElementById(previewId);
+    if(isBg){ p.style.backgroundImage=`url('${url}')`; p.className='bg-prev show'; }
+    else     { p.src=url; p.className='img-prev show'; }
+    return url;
+  } catch(e){
+    st.textContent = '❌ שגיאה: '+e.message;
+    toast('שגיאת העלאה: '+e.message,'err');
+    return null;
+  }
 }
-document.getElementById('cs-imageFile').addEventListener('change',async e=>{if(e.target.files[0])uploadedCI=await doUpload(e.target.files[0],'ci','uploadStatus','uploadPreview',false);});
-document.getElementById('cs-bgImageFile').addEventListener('change',async e=>{if(e.target.files[0])uploadedBG=await doUpload(e.target.files[0],'bg','bgUploadStatus','bgUploadPreview',true);});
+
+document.getElementById('cs-imageFile').addEventListener('change',async e=>{
+  if(e.target.files[0]){
+    const url = await uploadToImgBB(e.target.files[0],'uploadStatus','uploadPreview',false);
+    if(url){
+      uploadedCI = url;
+      // Also fill URL field and switch to URL tab for visibility
+      document.getElementById('cs-imageUrl').value = url;
+    }
+  }
+});
+document.getElementById('cs-bgImageFile').addEventListener('change',async e=>{
+  if(e.target.files[0]){
+    const url = await uploadToImgBB(e.target.files[0],'bgUploadStatus','bgUploadPreview',true);
+    if(url){
+      uploadedBG = url;
+      document.getElementById('cs-bgImageUrl').value = url;
+    }
+  }
+});
 
 // Schedule
 document.querySelectorAll('.sbtn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('cs-schedType').value=b.dataset.st;document.querySelectorAll('.spanel').forEach(x=>x.classList.remove('active'));const p=document.getElementById('sp-'+b.dataset.st);if(p)p.classList.add('active');});});
@@ -707,37 +1048,99 @@ window.editCustom=async(id)=>{
   document.querySelector('[data-tab=custom]').click();window.scrollTo({top:0,behavior:'smooth'});
 };
 // ── Holiday Prayers ──
-const HP_KEYS=['rh_shacharit','rh_musaf','rh_mincha','yk_neilah','suk_shacharit','suk_musaf','suk_mincha','suk_arvit','pss_shacharit','pss_musaf','pss_mincha','pss_arvit','holidayName'];
+// ── תפילות חגים (per-holiday) ──
+let _holAllDocs = [];
 
-onSnapshot(doc(db,'prayers','holiday'),snap=>{
-  if(!snap.exists()) return;
-  const d=snap.data();
-  HP_KEYS.forEach(k=>{const e=document.getElementById('ph-'+k);if(e&&d[k])e.value=d[k];});
-  const enabled=!!d.enabled;
-  document.getElementById('holidayPrayersEnabled').checked=enabled;
-  document.getElementById('holidayToggleLabel').textContent=enabled?'פעיל':'כבוי';
-  document.getElementById('holidayPrayersFields').classList.toggle('enabled',enabled);
-  document.getElementById('holidayDisabledNotice').style.display=enabled?'none':'block';
-});
-
-window.toggleHolidayPrayers=async(checked)=>{
-  document.getElementById('holidayToggleLabel').textContent=checked?'פעיל':'כבוי';
-  document.getElementById('holidayPrayersFields').classList.toggle('enabled',checked);
-  document.getElementById('holidayDisabledNotice').style.display=checked?'none':'block';
-  try{await setDoc(doc(db,'prayers','holiday'),{enabled:checked},{merge:true});toast(checked?'תפילות חגים הופעלו ✓':'תפילות חגים כובו','ok');}
-  catch{toast('שגיאה','err');}
+window.resetHolForm = () => {
+  ['hol-name','hol-arvit-in','hol-shacharit','hol-musaf','hol-mincha','hol-arvit-out'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('hol-editId').value='';
+  document.getElementById('holFormTitle').textContent='הוסף חג';
+  document.getElementById('holSubmitTxt').textContent='➕ הוסף חג';
+  document.getElementById('holCancelBtn').style.display='none';
 };
 
-window.saveHolidayPrayers=async()=>{
-  const btn=document.querySelector('[onclick="saveHolidayPrayers()"]');
-  document.getElementById('saveHolidayTxt').innerHTML='<span class="spinner"></span>';
-  btn.disabled=true;
-  const data={enabled:document.getElementById('holidayPrayersEnabled').checked};
-  HP_KEYS.forEach(k=>{const v=document.getElementById('ph-'+k)?.value;if(v)data[k]=v;});
-  try{await setDoc(doc(db,'prayers','holiday'),data,{merge:true});toast('תפילות חגים נשמרו!','ok');}
-  catch{toast('שגיאה','err');}
-  document.getElementById('saveHolidayTxt').textContent='💾 שמור תפילות חגים';
-  btn.disabled=false;
+window.editHoliday = id => {
+  const h = _holAllDocs.find(x=>x.id===id); if(!h) return;
+  document.getElementById('hol-name').value       = h.name||'';
+  document.getElementById('hol-arvit-in').value   = h.arvitIn||'';
+  document.getElementById('hol-shacharit').value  = h.shacharit||'';
+  document.getElementById('hol-musaf').value      = h.musaf||'';
+  document.getElementById('hol-mincha').value     = h.mincha||'';
+  document.getElementById('hol-arvit-out').value  = h.arvitOut||'';
+  document.getElementById('hol-editId').value     = id;
+  document.getElementById('holFormTitle').textContent   = '✏️ ערוך חג';
+  document.getElementById('holSubmitTxt').textContent   = '💾 שמור שינויים';
+  document.getElementById('holCancelBtn').style.display = 'block';
+  document.getElementById('hol-name').scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => {
+  _holAllDocs = snap.docs.map(d=>({id:d.id,...d.data()}));
+  const list = document.getElementById('holidayList');
+  if(snap.empty){ list.innerHTML='<div class="empty-state">אין חגים — הוסף חג ראשון</div>'; return; }
+  list.innerHTML = _holAllDocs.map(h => {
+    const tog  = h.active ? 'bon' : 'boff';
+    const lbl  = h.active ? 'פעיל' : 'כבוי';
+    return `<div class="ann-item" style="padding:10px 12px;">
+      <div style="flex:1;font-weight:700;font-size:.9rem;">${esc(h.name||'')}</div>
+      <span class="badge ${tog}">${lbl}</span>
+      <button class="btn-del hol-edit" data-id="${h.id}" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del hol-toggle" data-id="${h.id}" data-active="${h.active}" title="${h.active?'כבה':'הדלק'}">${h.active?'🔴':'🟢'}</button>
+      <button class="btn-del hol-del" data-id="${h.id}" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
+});
+
+// ── Event delegation for holiday list (survives re-renders) ──
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(!id) return;
+  if(btn.classList.contains('hol-edit'))   editHoliday(id);
+  if(btn.classList.contains('hol-toggle')) toggleHoliday(id, btn.dataset.active!=='true');
+  if(btn.classList.contains('hol-del'))    deleteHoliday(id);
+});
+
+window.saveHoliday = async () => {
+  const name = document.getElementById('hol-name').value.trim();
+  if(!name){ toast('יש להזין שם חג','err'); return; }
+  const editId = document.getElementById('hol-editId').value;
+  const data = {
+    name,
+    arvitIn:   document.getElementById('hol-arvit-in').value||'',
+    shacharit: document.getElementById('hol-shacharit').value||'',
+    musaf:     document.getElementById('hol-musaf').value||'',
+    mincha:    document.getElementById('hol-mincha').value||'',
+    arvitOut:  document.getElementById('hol-arvit-out').value||'',
+  };
+  try {
+    if(editId){
+      await updateDoc(doc(db,'holidays',editId), {...data, updatedAt:serverTimestamp()});
+    } else {
+      await addDoc(collection(db,'holidays'), {...data, active:false, createdAt:serverTimestamp()});
+    }
+    toast(editId?'עודכן':'נוסף','ok');
+    resetHolForm();
+  } catch(e){ toast('שגיאה: '+e.message,'err'); }
+};
+
+window.toggleHoliday = async (id, active) => {
+  try{ await updateDoc(doc(db,'holidays',id),{active}); }
+  catch(e){ toast('שגיאה','err'); }
+};
+
+window.deleteHoliday = async id => {
+  if(!window.confirm('למחוק חג זה?')) return;
+  try{
+    await deleteDoc(doc(db,'holidays',id));
+    toast('נמחק','ok');
+  } catch(e){
+    toast('שגיאה: '+e.message,'err');
+    console.error('deleteHoliday error',e);
+  }
 };
 
 // ── Shiurim ──
@@ -789,93 +1192,600 @@ window.addShiur=async()=>{
   }catch{toast('שגיאה','err');}
 };
 
-async function delShiur(id){
-  if(!confirm('למחוק שיעור זה?'))return;
-  try{await deleteDoc(doc(db,'shiurim',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}
-}
+window.delShiur=async function(id){
+  if(!window.confirm('למחוק שיעור זה?'))return;
+  try{await deleteDoc(doc(db,'shiurim',id));toast('נמחק','ok');}catch(e){toast('שגיאה','err');}
+};
 
-// ── הגדרות (settings tab) ──
-const IMGBB_KEY='ec3f4180638be4d3f0db5195ad042ce9';
+window.delCustom=async function(id){
+  if(!window.confirm('למחוק מסך זה?'))return;
+  try{await deleteDoc(doc(db,'custom_screens',id));toast('נמחק','ok');}catch(e){toast('שגיאה','err');}
+};
 
-async function uploadToImgBB(file, statusEl){
-  statusEl.textContent='מעלה...';
-  const fd=new FormData();
-  fd.append('image',file);
+// ── ספרי תורה ──
+let seferUploadUrl='';
+let activeSeferim=[]; // for export
+
+window.previewSeferUrl=(url)=>{
+  const wrap=document.getElementById('sf-url-preview');
+  const img=document.getElementById('sf-url-preview-img');
+  if(url && url.startsWith('http')){
+    img.src=url; wrap.style.display='block';
+    // clear file upload if URL given
+    seferUploadUrl=''; document.getElementById('sf-img-url').value='';
+    document.getElementById('sf-img-name').textContent='לא נבחר קובץ';
+    document.getElementById('sf-img-preview').style.display='none';
+  } else { wrap.style.display='none'; }
+};
+
+window.handleSeferImg=async(input)=>{
+  const file=input.files[0]; if(!file) return;
+  document.getElementById('sf-img-name').textContent=file.name;
+  const preview=document.getElementById('sf-preview-img');
+  const previewWrap=document.getElementById('sf-img-preview');
+  preview.src=URL.createObjectURL(file);
+  previewWrap.style.display='block';
+  document.getElementById('sf-img-url-input').value='';
+  document.getElementById('sf-url-preview').style.display='none';
+  document.getElementById('sf-img-name').textContent='מעלה...';
   try{
-    const r=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:'POST',body:fd});
-    const j=await r.json();
-    if(j.success){statusEl.textContent='✓ הועלה';return j.data.url;}
-    statusEl.textContent='שגיאה: '+j.error?.message;return null;
-  }catch(e){statusEl.textContent='שגיאה';return null;}
-}
-
-// Preview helper for shabbat bg
-function updateShabbatPreview(url){
-  const p=document.getElementById('s-shabbatBgPreview');
-  if(url){p.style.backgroundImage=`url('${url}')`;p.style.display='block';}
-  else{p.style.backgroundImage='';p.style.display='none';}
-}
-
-document.getElementById('s-shabbatBgFile').addEventListener('change',async e=>{
-  const file=e.target.files[0]; if(!file)return;
-  const st=document.getElementById('s-shabbatBgStatus');
-  const url=await uploadToImgBB(file,st);
-  if(url){document.getElementById('s-shabbatBgUrl').value=url;updateShabbatPreview(url);}
-});
-document.getElementById('s-shabbatBgUrl').addEventListener('input',e=>{
-  updateShabbatPreview(e.target.value.trim());
-});
-
-// Load settings on start
-onSnapshot(doc(db,'settings','display'),snap=>{
-  if(!snap.exists())return;
-  const d=snap.data();
-  const g=id=>document.getElementById(id);
-  if(g('s-shabbatScreenActive')) g('s-shabbatScreenActive').checked=d.shabbatScreenActive!==false;
-  if(g('s-aliyotActive'))        g('s-aliyotActive').checked=d.aliyotActive!==false;
-  if(g('s-halakhaActive'))       g('s-halakhaActive').checked=d.halakhaActive!==false;
-  if(g('s-autoRefresh'))         g('s-autoRefresh').checked=!!d.autoRefresh;
-  if(g('s-colorTheme'))          g('s-colorTheme').value=d.colorTheme||'dark';
-  if(d.shabbatScreenBg){
-    if(g('s-shabbatBgUrl')) g('s-shabbatBgUrl').value=d.shabbatScreenBg;
-    updateShabbatPreview(d.shabbatScreenBg);
+    const form=new FormData(); form.append('image',file); form.append('key',IMGBB_API_KEY);
+    const res=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:form});
+    const json=await res.json();
+    if(!json.success) throw new Error(json.error?.message||'שגיאת ImgBB');
+    seferUploadUrl=json.data.url;
+    document.getElementById('sf-img-url').value=seferUploadUrl;
+    document.getElementById('sf-img-name').textContent='✓ '+file.name;
+    preview.src=seferUploadUrl;
+    toast('תמונה הועלתה','ok');
+  }catch(e){
+    document.getElementById('sf-img-name').textContent='❌ שגיאה';
+    toast('שגיאת העלאה: '+e.message,'err');
   }
-  const p=d.shabbatPad||{};
-  if(g('s-padTop'))    g('s-padTop').value=p.top??28;
-  if(g('s-padRight'))  g('s-padRight').value=p.right??8;
-  if(g('s-padBottom')) g('s-padBottom').value=p.bottom??14;
-  if(g('s-padLeft'))   g('s-padLeft').value=p.left??35;
+};
+
+window.resetSeferForm=()=>{
+  document.getElementById('sf-name').value='';
+  document.getElementById('sf-order').value='';
+  document.getElementById('sf-img-url').value='';
+  document.getElementById('sf-img-url-input').value='';
+  document.getElementById('sf-editId').value='';
+  document.getElementById('sf-img-name').textContent='לא נבחר קובץ';
+  document.getElementById('sf-img-preview').style.display='none';
+  document.getElementById('sf-url-preview').style.display='none';
+  document.getElementById('seferFormTitle').textContent='הוסף ספר תורה';
+  document.getElementById('seferSubmitTxt').textContent='➕ הוסף ספר';
+  document.getElementById('seferCancelBtn').style.display='none';
+  seferUploadUrl='';
+};
+
+window.editSefer=(id)=>{
+  const s=activeSeferim.find(x=>x.id===id) || seferAllDocs.find(x=>x.id===id);
+  if(!s) return;
+  document.getElementById('sf-name').value=s.name||'';
+  document.getElementById('sf-order').value=s.order||'';
+  document.getElementById('sf-editId').value=id;
+  if(s.imageUrl){
+    document.getElementById('sf-img-url-input').value=s.imageUrl;
+    const img=document.getElementById('sf-url-preview-img');
+    img.src=s.imageUrl;
+    document.getElementById('sf-url-preview').style.display='block';
+    document.getElementById('sf-img-url').value=s.imageUrl;
+  }
+  document.getElementById('seferFormTitle').textContent='✏️ ערוך ספר תורה';
+  document.getElementById('seferSubmitTxt').textContent='💾 שמור שינויים';
+  document.getElementById('seferCancelBtn').style.display='block';
+  document.getElementById('sf-name').scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+let seferAllDocs=[];
+onSnapshot(query(collection(db,'sefer_torah'),orderBy('order','asc')),snap=>{
+  seferAllDocs=snap.docs.map(d=>({id:d.id,...d.data()}));
+  activeSeferim=seferAllDocs.filter(s=>s.active);
+  const list=document.getElementById('seferList');
+  if(snap.empty){list.innerHTML='<div class="empty-state">אין ספרים — הוסף ספר תורה ראשון</div>';return;}
+  list.innerHTML=seferAllDocs.map(s=>{
+    const imgHtml=s.imageUrl?`<img src="${s.imageUrl}" style="width:40px;height:52px;object-fit:contain;border-radius:4px;border:1px solid var(--border);">`:`<span style="font-size:1.8rem;">📜</span>`;
+    const tog=s.active?'bon':'boff';
+    const togLabel=s.active?'פעיל':'כבוי';
+    return `<div class="ann-item" style="display:flex;align-items:center;gap:10px;padding:10px 12px;">
+      <div style="flex-shrink:0;">${imgHtml}</div>
+      <div style="flex:1;font-weight:700;font-size:.9rem;">${esc(s.name||'')}</div>
+      <span class="badge ${tog}">${togLabel}</span>
+      <button class="btn-del" onclick="editSefer('${s.id}')" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del" onclick="toggleSefer('${s.id}',${!s.active})" title="${s.active?'כבה':'הדלק'}">${s.active?'🔴':'🟢'}</button>
+      <button class="btn-del" onclick="deleteSefer('${s.id}')" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
 });
 
-window.saveShabbatSettings=async()=>{
-  const url=document.getElementById('s-shabbatBgUrl').value.trim();
-  const data={
-    shabbatScreenActive: document.getElementById('s-shabbatScreenActive').checked,
-    shabbatPad:{
-      top:    parseInt(document.getElementById('s-padTop').value)||28,
-      right:  parseInt(document.getElementById('s-padRight').value)||8,
-      bottom: parseInt(document.getElementById('s-padBottom').value)||14,
-      left:   parseInt(document.getElementById('s-padLeft').value)||35,
-    },
-  };
-  if(url) data.shabbatScreenBg=url;
+window.saveSefer=async()=>{
+  const name=document.getElementById('sf-name').value.trim();
+  if(!name){toast('יש להזין שם','err');return;}
+  const order=parseInt(document.getElementById('sf-order').value)||99;
+  const urlInput=document.getElementById('sf-img-url-input').value.trim();
+  const imageUrl=urlInput||document.getElementById('sf-img-url').value||seferUploadUrl||'';
+  const editId=document.getElementById('sf-editId').value;
   try{
-    await setDoc(doc(db,'settings','display'),data,{merge:true});
-    toast('הגדרות שבת נשמרו!','ok');
+    if(editId) await updateDoc(doc(db,'sefer_torah',editId),{name,order,imageUrl,updatedAt:serverTimestamp()});
+    else await addDoc(collection(db,'sefer_torah'),{name,order,imageUrl,active:true,createdAt:serverTimestamp()});
+    toast(editId?'עודכן':'נוסף','ok');
+    resetSeferForm();
   }catch(e){toast('שגיאה: '+e.message,'err');}
 };
 
-window.saveGeneralSettings=async()=>{
-  const data={
-    aliyotActive:  document.getElementById('s-aliyotActive').checked,
-    halakhaActive: document.getElementById('s-halakhaActive').checked,
-    autoRefresh:   document.getElementById('s-autoRefresh').checked,
-    colorTheme:    document.getElementById('s-colorTheme').value,
-  };
+window.toggleSefer=async(id,active)=>{
+  try{await updateDoc(doc(db,'sefer_torah',id),{active});}catch(e){toast('שגיאה','err');}
+};
+
+window.deleteSefer=async(id)=>{
+  if(!confirm('למחוק ספר זה?'))return;
+  try{await deleteDoc(doc(db,'sefer_torah',id));toast('נמחק','ok');}catch{toast('שגיאה','err');}
+};
+
+// ── Auto-deactivate sefer on Sunday ──
+(async()=>{
+  if(new Date().getDay()===0){
+    try{
+      const snap=await new Promise(res=>{ const unsub=onSnapshot(collection(db,'sefer_torah'),s=>{unsub();res(s);}); });
+      for(const d of snap.docs){
+        if(d.data().active) await updateDoc(doc(db,'sefer_torah',d.id),{active:false});
+      }
+    }catch(e){}
+  }
+})();
+
+// ── ערכת צבעים ──
+function applyThemeUi(theme){
+  const isDark = theme!=='light';
+  const darkEl=document.getElementById('theme-dark-preview');
+  const lightEl=document.getElementById('theme-light-preview');
+  const status=document.getElementById('themeStatusLine');
+  if(darkEl) darkEl.style.border=isDark?'3px solid var(--gold)':'2px solid #ccc';
+  if(lightEl) lightEl.style.border=!isDark?'3px solid var(--gold)':'2px solid #ccc';
+  if(status) status.textContent='ערכה פעילה: ' + (isDark?'🌙 כהה':'☀️ בהירה');
+}
+
+window.setTheme=async(theme)=>{
   try{
-    await setDoc(doc(db,'settings','display'),data,{merge:true});
-    toast('הגדרות כלליות נשמרו!','ok');
-  }catch(e){toast('שגיאה: '+e.message,'err');}
+    await setDoc(doc(db,'settings','display'),{colorTheme:theme},{merge:true});
+    applyThemeUi(theme);
+    toast('ערכת הצבעים עודכנה','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+
+let _arEnabled = false;
+
+function applyArUi(enabled){
+  _arEnabled = enabled;
+  const wrap = document.getElementById('arToggleWrap');
+  const knob = document.getElementById('arToggleTxt');
+  const lbl  = document.getElementById('autoRefreshLabel');
+  if(!wrap) return;
+  wrap.classList.toggle('on', enabled);
+  knob.textContent = enabled ? 'פעיל' : 'כבוי';
+  knob.style.color = enabled ? '#2e7d32' : '#888';
+  lbl.textContent  = enabled ? '✅ רענון אוטומטי כל 15 דקות — פעיל' : '⏸ רענון אוטומטי — כבוי';
+}
+
+onSnapshot(doc(db,'settings','display'), snap=>{
+  if(!snap.exists()) return;
+  const d = snap.data();
+  applyArUi(!!d.autoRefresh);
+  applyThemeUi(d.colorTheme||'dark');
+  // also load cycle settings
+  buildCycleRows(d);
+});
+
+window.toggleAutoRefresh = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'), {autoRefresh: !_arEnabled}, {merge:true});
+    toast(!_arEnabled ? 'רענון אוטומטי הופעל' : 'רענון אוטומטי כובה', 'ok');
+  } catch(e){ toast('שגיאה','err'); }
+};
+
+
+const SCREEN_LABELS={A:'מסך A — זמני תפילות שבת',B:'מסך B — זמני תפילות שבועי',C:'מסך C — מסכים מותאמים',D:'מסך D — ספירת העומר',E:'מסך E — ספרי תורה',F:'מסך F — עליות לתורה',G:'מסך G — הלכה יומית',H:'מסך H — שבת קודש'};
+const CYCLE_DEFAULTS={A:20,B:20,C:20,D:20,E:25,F:25,G:30,H:25};
+
+function buildCycleRows(data={}){
+  document.querySelectorAll('.cycle-row').forEach(row=>{
+    const s=row.dataset.screen;
+    const val=data['cycle_'+s]||CYCLE_DEFAULTS[s]||20;
+    row.innerHTML=`
+      <span class="cycle-row-label">${SCREEN_LABELS[s]||('מסך '+s)}</span>
+      <input type="range" min="5" max="180" step="5" value="${val}"
+        oninput="this.nextElementSibling.textContent=this.value+' שנ'"
+        id="set-cycle-${s}">
+      <span class="cycle-row-val">${val} שנ</span>`;
+  });
+}
+buildCycleRows();
+
+onSnapshot(doc(db,'settings','display'),snap=>{
+  if(!snap.exists()) return;
+  buildCycleRows(snap.data());
+});
+
+// ── רקע ספירת העומר ──
+document.getElementById('omer-bg-url').addEventListener('input', function(){
+  const url = this.value.trim();
+  const wrap = document.getElementById('omer-bg-preview');
+  const img  = document.getElementById('omer-bg-img');
+  if(url){ img.src=url; wrap.style.display='block'; }
+  else    { wrap.style.display='none'; }
+});
+
+window.saveOmerBg=async()=>{
+  const url = document.getElementById('omer-bg-url').value.trim();
+  const dim = parseInt(document.getElementById('omer-bg-dim').value)||50;
+  try{
+    await setDoc(doc(db,'settings','display'),{omerBgUrl:url,omerBgDim:dim},{merge:true});
+    toast('רקע נשמר','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+window.clearOmerBg=async()=>{
+  try{
+    await setDoc(doc(db,'settings','display'),{omerBgUrl:'',omerBgDim:50},{merge:true});
+    document.getElementById('omer-bg-url').value='';
+    document.getElementById('omer-bg-preview').style.display='none';
+    toast('רקע הוסר','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+// ── עליות לתורה ──
+window.calcHebrewDate = async (dateStr) => {
+  if(!dateStr) return;
+  try{
+    const r = await fetch(`https://www.hebcal.com/converter?cfg=json&date=${dateStr}&g2h=1&strict=1`);
+    const d = await r.json();
+    document.getElementById('al-hdate').value = d.hebrew || '';
+  }catch{ document.getElementById('al-hdate').value = ''; }
+};
+
+onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
+  const list = document.getElementById('aliyotAdminList');
+  if(!list) return;
+  if(snap.empty){ list.innerHTML='<div class="empty-state">אין עליות — הוסף ראשון</div>'; return; }
+  const now=new Date(), curY=now.getFullYear(), curM=now.getMonth()+1;
+  const countMap={};
+  snap.docs.forEach(d=>{
+    const doc=d.data(); if(!doc.date) return;
+    const [y,m]=doc.date.split('-').map(Number);
+    if(y===curY&&m===curM) countMap[doc.name]=(countMap[doc.name]||0)+1;
+  });
+  list.innerHTML = snap.docs.map(d=>{
+    const a=d.data();
+    const parts=(a.date||'').split('-').map(Number);
+    const isCurMonth = parts[0]===curY&&parts[1]===curM;
+    return `<div class="list-item" style="gap:8px;">
+      <div style="flex:1;font-size:.85rem;">
+        <div style="font-weight:700;">${esc(a.name||'')}</div>
+        <div style="color:var(--muted);font-size:.78rem;">${a.date||''} | ${a.hebrewDate||''} ${isCurMonth?`<span style="color:var(--primary);font-weight:700;">(${countMap[a.name]||1} החודש)</span>`:''}</div>
+      </div>
+      <button class="btn-del al-edit" data-id="${d.id}" data-name="${esc(a.name||'')}" data-date="${a.date||''}" data-hdate="${esc(a.hebrewDate||'')}" title="ערוך" style="color:var(--primary);">✏️</button>
+      <button class="btn-del al-del" data-id="${d.id}" title="מחק">🗑</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.al-edit').forEach(b=>b.addEventListener('click',()=>editAliya(b.dataset)));
+  list.querySelectorAll('.al-del').forEach(b=>b.addEventListener('click',()=>deleteAliya(b.dataset.id)));
+});
+
+window.editAliya = ({id, name, date, hdate}) => {
+  document.getElementById('al-editId').value = id;
+  document.getElementById('al-name').value   = name||'';
+  document.getElementById('al-date').value   = date||'';
+  document.getElementById('al-hdate').value  = hdate||'';
+  document.getElementById('aliyaSubmitTxt').textContent = '💾 שמור שינויים';
+  document.getElementById('aliyaCancelBtn').style.display = 'block';
+  document.getElementById('al-name').scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('al-name').focus();
+};
+
+window.resetAliyaForm = () => {
+  document.getElementById('al-editId').value = '';
+  document.getElementById('al-name').value   = '';
+  document.getElementById('al-date').value   = '';
+  document.getElementById('al-hdate').value  = '';
+  document.getElementById('aliyaSubmitTxt').textContent = '➕ הוסף עלייה';
+  document.getElementById('aliyaCancelBtn').style.display = 'none';
+};
+
+window.saveAliya = async () => {
+  const date   = document.getElementById('al-date').value;
+  const name   = document.getElementById('al-name').value.trim();
+  const hdate  = document.getElementById('al-hdate').value.trim();
+  const editId = document.getElementById('al-editId').value;
+  if(!date||!name){ toast('יש למלא תאריך ושם','err'); return; }
+  try{
+    if(editId){
+      await updateDoc(doc(db,'aliyot',editId),{date,name,hebrewDate:hdate});
+      toast('עודכן!','ok');
+    } else {
+      await addDoc(collection(db,'aliyot'),{date,name,hebrewDate:hdate,createdAt:serverTimestamp()});
+      toast('נוסף!','ok');
+    }
+    resetAliyaForm();
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+window.resetAliyotMonth = async () => {
+  const now=new Date(), curY=now.getFullYear(), curM=now.getMonth()+1;
+  const monthName=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'][curM-1];
+  if(!window.confirm(`למחוק את כל עליות ${monthName} ${curY}?`)) return;
+  try{
+    const snap=await new Promise(res=>{const u=onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')),s=>{u();res(s);});});
+    const toDelete=snap.docs.filter(d=>{
+      const[y,m]=(d.data().date||'').split('-').map(Number);
+      return y===curY&&m===curM;
+    });
+    await Promise.all(toDelete.map(d=>deleteDoc(doc(db,'aliyot',d.id))));
+    toast(`עליות ${monthName} נמחקו (${toDelete.length})`, 'ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+
+window.deleteAliya = async id => {
+  if(!window.confirm('למחוק עלייה זו?')) return;
+  try{ await deleteDoc(doc(db,'aliyot',id)); toast('נמחק','ok'); }
+  catch(e){ toast('שגיאה','err'); }
+};
+
+// ── Screen H — שבת קודש ──
+let _shabbatScreenActive = true;
+
+function applyShabbatScreenUi(active, bgUrl, pad){
+  _shabbatScreenActive = active;
+  const wrap = document.getElementById('shabbatScreenToggle');
+  const txt  = document.getElementById('shabbatScreenTxt');
+  const lbl  = document.getElementById('shabbatScreenLabel');
+  if(wrap) wrap.classList.toggle('on', active);
+  if(txt){ txt.textContent=active?'פעיל':'כבוי'; txt.style.color=active?'#2e7d32':'#888'; }
+  if(lbl) lbl.textContent = active ? '✅ מסך שבת קודש — פעיל (שישי+שבת)' : '⏸ מסך שבת קודש — כבוי';
+  if(bgUrl){
+    document.getElementById('shabbat-bg-url').value = bgUrl;
+    document.getElementById('shabbat-bg-img').src = bgUrl;
+    document.getElementById('shabbat-bg-preview').style.display = 'block';
+  }
+  if(pad){
+    document.getElementById('sh-pad-top').value    = pad.top    ??28;
+    document.getElementById('sh-pad-right').value  = pad.right  ??8;
+    document.getElementById('sh-pad-bottom').value = pad.bottom ??14;
+    document.getElementById('sh-pad-left').value   = pad.left   ??35;
+  }
+}
+
+window.previewShabbatBg = url => {
+  const wrap = document.getElementById('shabbat-bg-preview');
+  const img  = document.getElementById('shabbat-bg-img');
+  if(url){ img.src=url; wrap.style.display='block'; }
+  else   { wrap.style.display='none'; }
+};
+
+window.toggleShabbatScreen = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'),{shabbatScreenActive:!_shabbatScreenActive},{merge:true});
+    toast(!_shabbatScreenActive?'מסך שבת קודש הופעל':'מסך שבת קודש כובה','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+window.saveShabbatScreenSettings = async () => {
+  const url = document.getElementById('shabbat-bg-url').value.trim();
+  const padTop    = document.getElementById('sh-pad-top').value||'28';
+  const padRight  = document.getElementById('sh-pad-right').value||'8';
+  const padBottom = document.getElementById('sh-pad-bottom').value||'14';
+  const padLeft   = document.getElementById('sh-pad-left').value||'35';
+  try{
+    await setDoc(doc(db,'settings','display'),{
+      shabbatScreenBg:url,
+      shabbatScreenActive:_shabbatScreenActive,
+      shabbatPad:{top:+padTop,right:+padRight,bottom:+padBottom,left:+padLeft}
+    },{merge:true});
+    toast('נשמר','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+window.clearShabbatBg = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'),{shabbatScreenBg:''},{merge:true});
+    document.getElementById('shabbat-bg-url').value='';
+    document.getElementById('shabbat-bg-preview').style.display='none';
+    toast('רקע הוסר','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+// ── Toggle halakha screen ──
+let _halakhaActive = true;
+function applyHalakhaUi(active){
+  _halakhaActive = active;
+  const wrap = document.getElementById('halakhaToggleWrap');
+  const txt  = document.getElementById('halakhaTxt');
+  const lbl  = document.getElementById('halakhaScreenLabel');
+  if(!wrap) return;
+  wrap.classList.toggle('on', active);
+  if(txt) { txt.textContent = active?'פעיל':'כבוי'; txt.style.color = active?'#2e7d32':'#888'; }
+  if(lbl) lbl.textContent = active ? '✅ מסך הלכה יומית — פעיל' : '⏸ מסך הלכה יומית — כבוי';
+}
+window.toggleHalakhaScreen = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'),{halakhaActive:!_halakhaActive},{merge:true});
+    toast(!_halakhaActive ? 'מסך הלכה הופעל':'מסך הלכה כובה','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+// ── Toggle aliyot screen ──
+let _aliyotActive = true;
+function applyAliyotUi(active){
+  _aliyotActive = active;
+  const wrap = document.getElementById('aliyotToggleWrap');
+  const txt  = document.getElementById('aliyotToggleTxt');
+  const lbl  = document.getElementById('aliyotScreenLabel');
+  if(!wrap) return;
+  wrap.classList.toggle('on', active);
+  if(txt) txt.textContent = active ? 'פעיל' : 'כבוי';
+  if(txt) txt.style.color = active ? '#2e7d32' : '#888';
+  if(lbl) lbl.textContent = active ? '✅ מסך עליות לתורה — פעיל' : '⏸ מסך עליות לתורה — כבוי';
+}
+window.toggleAliyotScreen = async () => {
+  try{
+    await setDoc(doc(db,'settings','display'),{aliyotActive:!_aliyotActive},{merge:true});
+    toast(!_aliyotActive ? 'מסך עליות הופעל':'מסך עליות כובה','ok');
+  }catch(e){ toast('שגיאה','err'); }
+};
+
+window.saveCycleSettings=async()=>{
+  const updates={};
+  ['A','B','C','D','E','F','G','H'].forEach(s=>{
+    const el=document.getElementById('set-cycle-'+s);
+    if(el) updates['cycle_'+s]=parseInt(el.value)||20;
+  });
+  try{
+    await setDoc(doc(db,'settings','display'),updates,{merge:true});
+    toast('זמני מסכים נשמרו','ok');
+  }catch(e){toast('שגיאה','err');}
+};
+
+
+onSnapshot(doc(db,'prayers','times'),snap=>{
+  if(!snap.exists()) return;
+  const d=snap.data();
+  const fill=(id,val)=>{ const el=document.getElementById(id); if(el&&!el.value&&val) el.value=val; };
+  fill('ex-kabbalat',    d.kabbalat);
+  fill('ex-shacharit',   d.shacharit_shabbat);
+  fill('ex-mincha-shab', d.mincha_shabbat);
+  fill('ex-mincha-big',  d.mincha);
+  fill('ex-shacharit-hol', d.shacharit);
+  fill('ex-mincha-hol',  d.mincha);
+  fill('ex-arvit-hol',   d.arvit);
+});
+
+document.querySelector('[data-tab=export]').addEventListener('click', async()=>{
+  if(document.getElementById('ex-candles').value) return;
+  try{
+    const r=await fetch('https://www.hebcal.com/shabbat?cfg=json&latitude=31.2516&longitude=34.7915&tzid=Asia%2FJerusalem&m=30&b=50');
+    const sh=await r.json();
+    if(sh.items){
+      const par=sh.items.find(i=>i.category==='parashat');
+      if(par&&!document.getElementById('ex-parasha').value) document.getElementById('ex-parasha').value=par.hebrew||par.title;
+      const candles=sh.items.find(i=>i.category==='candles');
+      if(candles){
+        const hhmm=new Date(candles.date).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
+        if(!document.getElementById('ex-candles').value) document.getElementById('ex-candles').value=hhmm;
+      }
+      const havdalah=sh.items.find(i=>i.category==='havdalah');
+      if(havdalah){
+        const hhmm=new Date(havdalah.date).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
+        if(!document.getElementById('ex-havdalah').value) document.getElementById('ex-havdalah').value=hhmm;
+      }
+    }
+  }catch(e){}
+});
+
+const SEP = '********************';
+
+window.generateExport=()=>{
+  const v=id=>(document.getElementById(id)?.value||'').trim();
+  const parasha      = v('ex-parasha');
+  const shulname     = v('ex-shulname');
+  const minchabig    = v('ex-mincha-big');
+  const candles      = v('ex-candles');
+  const minchasmall  = v('ex-mincha-small');
+  const kabbalat     = v('ex-kabbalat');
+  const kabNote      = v('ex-kabbalat-note');
+  const shacharit    = v('ex-shacharit');
+  const kriahShma    = v('ex-kriat-shma');
+  const children     = v('ex-children');
+  const minchaShab   = v('ex-mincha-shab');
+  const havdalah     = v('ex-havdalah');
+  const rt           = v('ex-rt');
+  const mizmor       = v('ex-mizmor');
+  const shacharitHol = v('ex-shacharit-hol');
+  const shacharitHolNote = v('ex-shacharit-hol-note');
+  const minchaHol    = v('ex-mincha-hol');
+  const arvitHol     = v('ex-arvit-hol');
+  const announcements= v('ex-announcements');
+
+  let L=[];
+
+  // ── Header
+  if(parasha) L.push(`פרשת ${parasha}`);
+  L.push('זמני תפילות');
+  if(shulname) L.push(`מנחה ע"ש- ${shulname}`);
+
+  // ── Mincha erev shabbat
+  if(minchabig)   L.push(`גדולה : ${minchabig}`);
+  if(candles)     L.push(`כניסת שבת ${candles}`);
+  if(minchasmall) L.push(`קטנה (אשרי) :  ${minchasmall}`);
+  L.push(SEP);
+
+  // ── Kabbalat shabbat
+  if(kabbalat){
+    L.push(` *קבלת שבת: ${kabbalat}* `);
+    if(kabNote) L.push(kabNote);
+  }
+  L.push(SEP);
+
+  // ── Shacharit
+  L.push('שחרית');
+  if(shacharit)  L.push(` *פתיחה: ${shacharit}* `);
+  if(kriahShma)  L.push(`ק"ש לפי מ"א ${kriahShma}`);
+  // ספרי תורה פעילים
+  if(activeSeferim && activeSeferim.length){
+    const names=activeSeferim.map(s=>s.name).filter(Boolean).join(' | ');
+    L.push(`📜 ספרי תורה: ${names}`);
+  }
+  L.push(SEP);
+
+  // ── Children's prayer
+  if(children){
+    L.push('  *תפילת הילדים*');
+    L.push(`תפילת הילדים ${children}`);
+    L.push(SEP);
+  }
+
+  // ── Mincha shabbat + motzash
+  L.push('מנחה של שבת');
+  if(minchaShab) L.push(`"פתיחה":  ${minchaShab}`);
+  if(havdalah)   L.push(` *צאת השבת  : ${havdalah}* `);
+  if(rt)         L.push(`לפי רבינו תם: ${rt}`);
+  if(mizmor)     L.push(` *מזמורים: ${mizmor}* `);
+  L.push(SEP);
+
+  // ── Weekday prayers
+  L.push(' *זמני תפילות ימי חול* ');
+  if(shacharitHol){
+    const note = shacharitHolNote ? ` ${shacharitHolNote}` : '';
+    L.push(`שחרית : ${shacharitHol}${note}`);
+  }
+  if(minchaHol)  L.push(`מנחה : ${minchaHol}`);
+  if(arvitHol)   L.push(` ערבית : ${arvitHol}`);
+  L.push(' *ברוכים הבאים*');
+  L.push(SEP);
+
+  // ── Announcements
+  if(announcements){
+    L.push(' *הודעות חשובות*');
+    L.push(announcements);
+  }
+
+  document.getElementById('exportText').value=L.join('\n');
+  document.getElementById('exportResult').style.display='block';
+  document.getElementById('exportText').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+
+window.copyExport=async()=>{
+  const text=document.getElementById('exportText').value;
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch{
+    document.getElementById('exportText').select();
+    document.execCommand('copy');
+  }
+  const fb=document.getElementById('copyFeedback');
+  fb.style.display='inline';
+  setTimeout(()=>fb.style.display='none',2500);
 };
 </script>
 </body>
