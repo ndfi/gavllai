@@ -565,7 +565,12 @@ input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
           </label>
         </div>
         <div class="field">
-          <label>תמונת רקע (URL)</label>
+          <label>📤 העלאת תמונת רקע</label>
+          <input type="file" id="shabbat-bg-file" accept="image/*" onchange="uploadShabbatBgToImgBB(this)" style="width:100%;padding:8px;border:2px dashed var(--border);border-radius:10px;background:#fafaf8;cursor:pointer;">
+          <div id="shabbat-bg-upload-status" style="font-size:.8rem;color:var(--muted);margin-top:4px;display:none;"></div>
+        </div>
+        <div class="field">
+          <label>תמונת רקע (URL ישיר)</label>
           <input type="url" id="shabbat-bg-url" placeholder="https://..." oninput="previewShabbatBg(this.value)">
         </div>
         <div id="shabbat-bg-preview" style="display:none;margin:8px 0;border-radius:10px;overflow:hidden;max-height:120px;">
@@ -1594,6 +1599,36 @@ window.clearShabbatBg = async () => {
     document.getElementById('shabbat-bg-preview').style.display='none';
     toast('רקע הוסר','ok');
   }catch(e){ toast('שגיאה','err'); }
+};
+
+// ── ImgBB upload for screen H background ──
+const IMGBB_KEY = 'ec3f4180638be4d3f0db5195ad042ce9';
+window.uploadShabbatBgToImgBB = async (input) => {
+  const file = input.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('shabbat-bg-upload-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent = '⏳ מעלה תמונה...';
+  statusEl.style.color = 'var(--muted)';
+  const formData = new FormData();
+  formData.append('image', file);
+  try {
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {method:'POST', body:formData});
+    const data = await res.json();
+    if(data.success){
+      const url = data.data.display_url || data.data.url;
+      document.getElementById('shabbat-bg-url').value = url;
+      previewShabbatBg(url);
+      statusEl.textContent = '✅ הועלה בהצלחה';
+      statusEl.style.color = '#2e7d32';
+      input.value = '';
+    } else {
+      throw new Error(data.error?.message || 'upload failed');
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ שגיאה בהעלאה: ' + e.message;
+    statusEl.style.color = 'var(--danger)';
+  }
 };
 
 // ── Toggle halakha screen ──

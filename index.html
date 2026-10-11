@@ -612,9 +612,17 @@ async function fetchHebcal() {
   } catch(e){ console.error('Hebcal date error',e); }
 
   try {
-    // 2. Shabbat times + parasha
+    // 2. Shabbat times + parasha — anchor to Friday of current week
+    // so after Shabbat ends we still show THIS week's parasha, not next week's
+    const friday = new Date(d);
+    const dow = d.getDay(); // 0=Sun … 6=Sat
+    const daysToFri = dow === 6 ? -1 : (5 - dow); // Sat → prev Fri; else → this Fri
+    friday.setDate(d.getDate() + daysToFri);
+    const fyyyy = friday.getFullYear();
+    const fmm = String(friday.getMonth()+1).padStart(2,'0');
+    const fdd = String(friday.getDate()).padStart(2,'0');
     const sh = await(await fetch(
-      `${HEBCAL}/shabbat?cfg=json&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&m=${CANDLE_MIN}&b=50`
+      `${HEBCAL}/shabbat?cfg=json&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&m=${CANDLE_MIN}&b=50&date=${fyyyy}-${fmm}-${fdd}`
     )).json();
     if(sh.items){
       const par = sh.items.find(i=>i.category==='parashat');
