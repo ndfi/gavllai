@@ -1616,18 +1616,27 @@ window.uploadShabbatBgToImgBB = async (input) => {
     const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {method:'POST', body:formData});
     const data = await res.json();
     if(data.success){
-      const url = data.data.display_url || data.data.url;
+      const url = data.data.url; // direct link (no watermark)
       document.getElementById('shabbat-bg-url').value = url;
       previewShabbatBg(url);
-      statusEl.textContent = '✅ הועלה בהצלחה';
+      statusEl.textContent = '✅ הועלה — שומר...';
       statusEl.style.color = '#2e7d32';
       input.value = '';
+      // שמור אוטומטית ל-Firebase אחרי העלאה מוצלחת
+      try {
+        await setDoc(doc(db,'settings','display'), {shabbatScreenBg: url}, {merge:true});
+        statusEl.textContent = '✅ הועלה ונשמר בהצלחה!';
+        toast('תמונת רקע נשמרה','ok');
+      } catch(e2) {
+        statusEl.textContent = '✅ הועלה — לחץ שמור כדי לשמור';
+      }
     } else {
       throw new Error(data.error?.message || 'upload failed');
     }
   } catch(e) {
     statusEl.textContent = '❌ שגיאה בהעלאה: ' + e.message;
     statusEl.style.color = 'var(--danger)';
+    console.error('ImgBB upload error:', e);
   }
 };
 
