@@ -1569,7 +1569,7 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
 
 <!-- SCREEN H — שבת קודש — טקסט על גבי תמונת רקע -->
 <div id="screenH" class="screen" data-shabbat-screen-active="true">
-<img id="sh-bg-img" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;" onerror="this.style.display='none'; console.error('screenH bg img failed:', this.src)">  <div class="sh-overlay" style="z-index:1;position:absolute;inset:0;">
+<img id="sh-bg-img" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;" onerror="this.style.display='none'; console.error('screenH bg img failed:', this.src)">
     <!-- ימין עליון: פרשת השבוע -->
     <div class="sh-slot right">
       <span class="sh-val" id="sh-parasha"></span>
