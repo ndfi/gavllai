@@ -344,17 +344,18 @@
 
   /* Screen H — שבת קודש — טקסט בלבד על גבי תמונת רקע */
   #screenH{display:flex;align-items:center;justify-content:center;background:#1a0e05;position:relative;overflow:hidden;}
-  /* 4 אזורי טקסט ממוקמים בדיוק לפי מיקום התוויות בתמונת הרקע */
-  .sh-overlay{position:absolute;inset:0;display:grid;
+  body.theme-light #screenH{background:#f5f0e4;}
+  .sh-overlay{position:absolute;inset:0;display:grid;background:transparent;
     grid-template-columns:1fr 1fr;
     grid-template-rows:1fr 1fr;
-    /* אזור הטקסט נמצא בחלק המרכזי-ימני של התמונה — מתכוונן ב-admin */
-    padding:28% 8% 14% 35%;}
-  .sh-slot{display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:0 4% 6%;}
+    padding:10% 8%;}
+  .sh-slot{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:4%;}
   .sh-slot.right{align-items:flex-end;text-align:right;}
-  .sh-val{font-family:'Frank Ruhl Libre',serif;font-weight:900;color:#1a0e05;line-height:1.1;
+  .sh-val{font-family:'Frank Ruhl Libre',serif;font-weight:900;color:#fff8e7;line-height:1.1;
     font-size:clamp(1.8rem,4.5vw,4rem);
-    text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff,0 0 12px rgba(255,255,255,.9);}
+    text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 30px rgba(0,0,0,.7);}
+  body.theme-light .sh-val{color:#1a0e05;
+    text-shadow:0 2px 8px rgba(255,255,255,.9),0 0 20px rgba(255,255,255,.7);}
   .sh-val.sm{font-size:clamp(1.1rem,2.5vw,2.2rem);}
   .sh-val.time{font-size:clamp(2.4rem,6vw,5.5rem);}
 </style>
@@ -599,6 +600,21 @@ function updateClock() {
 }
 setInterval(updateClock,1000); updateClock();
 
+// ── Screen H: sync parasha + times from existing elements ──
+function syncScreenH(){
+  const parasha = document.getElementById('parasha')?.textContent?.trim()||'';
+  const candles = document.getElementById('sht-candles')?.textContent?.trim()||'';
+  const havdalah= document.getElementById('sht-havdalah')?.textContent?.trim()||'';
+  if(parasha && parasha!=='טוען...') document.getElementById('sh-parasha').textContent = parasha;
+  if(candles && candles!=='--:--')   document.getElementById('sh-candles').textContent  = candles;
+  if(havdalah && havdalah!=='--:--') document.getElementById('sh-havdalah').textContent = havdalah;
+}
+['parasha','sht-candles','sht-havdalah'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) new MutationObserver(syncScreenH).observe(el,{childList:true,subtree:true,characterData:true});
+});
+setInterval(syncScreenH, 60*1000);
+
 // ── Hebcal ──
 async function fetchHebcal() {
   const d=new Date(), yyyy=d.getFullYear(),
@@ -648,6 +664,8 @@ async function fetchHebcal() {
         if(spEl) spEl.textContent = autoArvitMotzash;
         refreshPrayers();
       }
+      // ── עדכן מסך H מיד אחרי שהנתונים חזרו ──
+      setTimeout(syncScreenH, 100);
     }
   } catch(e){ console.error('Hebcal shabbat error',e); }
 
@@ -1315,23 +1333,8 @@ function buildRotation(){
   if((_previewH || day===5||day===6) && document.getElementById('screenH').getAttribute('data-shabbat-screen-active')==='true') rotation.push('screenH');
 }
 
-// ── Screen H: sync parasha + times from existing elements ──
-function syncScreenH(){
-  const parasha = document.getElementById('parasha')?.textContent?.trim()||'';
-  const candles = document.getElementById('sht-candles')?.textContent?.trim()||'';
-  const havdalah= document.getElementById('sht-havdalah')?.textContent?.trim()||'';
-  if(parasha && parasha!=='טוען...') document.getElementById('sh-parasha').textContent = parasha;
-  if(candles && candles!=='--:--')   document.getElementById('sh-candles').textContent  = candles;
-  if(havdalah && havdalah!=='--:--') document.getElementById('sh-havdalah').textContent = havdalah;
-}
-
-// Sync immediately and after each change to parasha/candles/havdalah elements
+// syncScreenH already defined and observers set above fetchHebcal
 syncScreenH();
-['parasha','sht-candles','sht-havdalah'].forEach(id=>{
-  const el = document.getElementById(id);
-  if(el) new MutationObserver(syncScreenH).observe(el,{childList:true,subtree:true,characterData:true});
-});
-setInterval(syncScreenH, 60*1000);
 
 // ── Screen H: haftara from Sefaria calendars ──
 async function fetchHaftara(){
@@ -1562,7 +1565,7 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
 
 <!-- SCREEN H — שבת קודש — טקסט על גבי תמונת רקע -->
 <div id="screenH" class="screen" data-shabbat-screen-active="true">
-  <img id="sh-bg-img" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;">
+  <img id="sh-bg-img" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;" onerror="console.error('screenH bg img failed:',this.src)">
   <div class="sh-overlay" style="z-index:1;position:absolute;">
     <!-- ימין עליון: פרשת השבוע -->
     <div class="sh-slot right">
