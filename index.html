@@ -906,7 +906,11 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   const overlay = document.querySelector('.sh-overlay');
   if(overlay && d.shabbatPad){
     const p=d.shabbatPad;
-    overlay.style.padding=`${p.top??28}% ${p.right??8}% ${p.bottom??14}% ${p.left??35}%`;
+    // Clamp values to reasonable range so text never goes off-screen
+    const clamp=(v,min,max)=>Math.min(max,Math.max(min,Number(v)||0));
+    overlay.style.padding=`${clamp(p.top??10,0,40)}% ${clamp(p.right??8,0,40)}% ${clamp(p.bottom??10,0,40)}% ${clamp(p.left??8,0,40)}%`;
+  } else if(overlay){
+    overlay.style.padding='';
   }
 
   buildRotation();
@@ -1566,7 +1570,7 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
 <!-- SCREEN H — שבת קודש — טקסט על גבי תמונת רקע -->
 <div id="screenH" class="screen" data-shabbat-screen-active="true">
   <img id="sh-bg-img" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;" onerror="console.error('screenH bg img failed:',this.src)">
-  <div class="sh-overlay" style="z-index:1;position:absolute;">
+  <div class="sh-overlay" style="z-index:1;position:absolute;inset:0;">
     <!-- ימין עליון: פרשת השבוע -->
     <div class="sh-slot right">
       <span class="sh-val" id="sh-parasha"></span>
