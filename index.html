@@ -516,16 +516,16 @@
   <img id="sh-bg-img" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;" onerror="this.style.display='none'; console.error('screenH bg img failed:', this.src)">
   <div class="sh-overlay" style="position:absolute;inset:0;z-index:1;">
     <div class="sh-slot right">
-      <span class="sh-val" id="sh-parasha"></span>
+      <span class="sh-val" id="sh-parasha">טוען...</span>
     </div>
     <div class="sh-slot">
-      <span class="sh-val time" id="sh-candles"></span>
+      <span class="sh-val time" id="sh-candles">--:--</span>
     </div>
     <div class="sh-slot right">
       <span class="sh-val sm" id="sh-haftara"></span>
     </div>
     <div class="sh-slot">
-      <span class="sh-val time" id="sh-havdalah"></span>
+      <span class="sh-val time" id="sh-havdalah">--:--</span>
     </div>
   </div>
 </div>
@@ -627,13 +627,21 @@ function updateClock() {
 }
 setInterval(updateClock,1000); updateClock();
 
+// ── Screen H: sync parasha + times (מתוקן כך שיציג מיד ערכים) ──
 function syncScreenH(){
-  const parasha = document.getElementById('parasha')?.textContent?.trim()||'';
-  const candles = document.getElementById('sht-candles')?.textContent?.trim()||'';
-  const havdalah= document.getElementById('sht-havdalah')?.textContent?.trim()||'';
-  if(parasha && parasha!=='טוען...') document.getElementById('sh-parasha').textContent = parasha;
-  if(candles && candles!=='--:--')   document.getElementById('sh-candles').textContent  = candles;
-  if(havdalah && havdalah!=='--:--') document.getElementById('sh-havdalah').textContent = havdalah;
+  const parasha  = document.getElementById('parasha')?.textContent?.trim();
+  const candles  = document.getElementById('sht-candles')?.textContent?.trim();
+  const havdalah = document.getElementById('sht-havdalah')?.textContent?.trim();
+
+  if(parasha && parasha !== 'טוען...') {
+    document.getElementById('sh-parasha').textContent = parasha;
+  }
+  if(candles && candles !== '--:--') {
+    document.getElementById('sh-candles').textContent = candles;
+  }
+  if(havdalah && havdalah !== '--:--') {
+    document.getElementById('sh-havdalah').textContent = havdalah;
+  }
 }
 ['parasha','sht-candles','sht-havdalah'].forEach(id=>{
   const el = document.getElementById(id);
