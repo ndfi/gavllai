@@ -93,7 +93,6 @@
     font-size:clamp(1.4rem,3vw,2.1rem); color:var(--gold-light);
     font-family:'Frank Ruhl Libre',serif; font-weight:900;
   }
-  /* omer small badge in header (kept for footer reference) */
   #omerCount { display:none; }
 
   /* Shabbat times strip — shown Fri/Sat in header area */
@@ -109,13 +108,11 @@
   .side-panel{display:flex;flex-direction:column;overflow:hidden;}
   .panel-section{flex:0 0 auto;border-bottom:1px solid rgba(200,164,74,.2);padding:8px 18px;display:flex;flex-direction:column;justify-content:center;}
   .panel-section:last-child{border-bottom:none;}
-  /* Left prayer panel scrolls when shabbat items overflow */
   .left-panel-inner{display:flex;flex-direction:column;height:100%;overflow-y:auto;scrollbar-width:none;}
   .left-panel-inner::-webkit-scrollbar{display:none;}
   .section-title{font-size:clamp(.82rem,1.52vw,1.05rem);color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
   .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(200,164,74,.5),transparent);}
 
-  /* Prayer items — +30% font sizes */
   .prayer-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(200,164,74,.08);}
   .prayer-item:last-child{border-bottom:none;}
   .prayer-name{font-size:clamp(1.23rem,2.46vw,1.52rem);color:var(--parchment);font-weight:900;letter-spacing:.5px;}
@@ -204,7 +201,6 @@
       repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(100,180,120,.018) 40px,rgba(100,180,120,.018) 41px);
     pointer-events:none;
   }
-  /* Green-gold palette for Omer */
   .omer-screen-wrap {
     position:relative; z-index:1;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -311,12 +307,12 @@
   .aliyot-table{width:100%;border-collapse:collapse;table-layout:fixed;}
   .aliyot-table th{background:linear-gradient(135deg,rgba(200,164,74,.25),rgba(139,94,26,.2));color:var(--gold-light);font-size:clamp(.45rem,.65vw,.6rem);font-weight:900;padding:3px 1px;border-bottom:2px solid var(--gold);text-align:center;white-space:nowrap;overflow:hidden;}
   .aliyot-table td{color:var(--parchment);padding:2px 1px;border-bottom:1px solid rgba(200,164,74,.12);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.45rem,.65vw,.6rem);}
-  /* 1:# */ .aliyot-table th:nth-child(1),.aliyot-table td:nth-child(1){width:4%;}
-  /* 2:יום */ .aliyot-table th:nth-child(2),.aliyot-table td:nth-child(2){width:8%;}
-  /* 3:עברי */ .aliyot-table th:nth-child(3),.aliyot-table td:nth-child(3){width:16%;}
-  /* 4:לועזי */ .aliyot-table th:nth-child(4),.aliyot-table td:nth-child(4){width:13%;}
-  /* 5:שם — עיקרי */ .aliyot-table th:nth-child(5),.aliyot-table td:nth-child(5){width:52%;font-size:clamp(.72rem,1.05vw,.95rem);font-weight:900;text-align:right;padding-right:5px;white-space:normal;line-height:1.2;}
-  /* 6:✕ */ .aliyot-table th:nth-child(6),.aliyot-table td:nth-child(6){width:7%;}
+  .aliyot-table th:nth-child(1),.aliyot-table td:nth-child(1){width:4%;}
+  .aliyot-table th:nth-child(2),.aliyot-table td:nth-child(2){width:8%;}
+  .aliyot-table th:nth-child(3),.aliyot-table td:nth-child(3){width:16%;}
+  .aliyot-table th:nth-child(4),.aliyot-table td:nth-child(4){width:13%;}
+  .aliyot-table th:nth-child(5),.aliyot-table td:nth-child(5){width:52%;font-size:clamp(.72rem,1.05vw,.95rem);font-weight:900;text-align:right;padding-right:5px;white-space:normal;line-height:1.2;}
+  .aliyot-table th:nth-child(6),.aliyot-table td:nth-child(6){width:7%;}
   .aliyot-table tr:nth-child(even) td{background:rgba(200,164,74,.05);}
   .aliyot-table tr:last-child td{border-bottom:none;}
   .aliyot-empty-row td{opacity:.18;}
@@ -342,7 +338,7 @@
   body.theme-light .halakha-body{background:rgba(255,255,255,.7);border-color:rgba(122,90,16,.3);}
   body.theme-light .halakha-text{color:var(--text-bright);}
 
-  /* Screen H — שבת קודש — טקסט בלבד על גבי תמונת רקע */
+  /* Screen H — שבת קודש — טקסט על גבי תמונת רקע */
   #screenH{display:flex;align-items:center;justify-content:center;background:#1a0e05;position:relative;overflow:hidden;}
   body.theme-light #screenH{background:#f5f0e4;}
   .sh-overlay{position:absolute;inset:0;display:grid;background:transparent;
@@ -380,7 +376,6 @@
     </div>
   </div>
 
-  <!-- Shabbat times strip — visible Fri/Sat -->
   <div class="shabbat-times-strip" id="shabbatStrip">
     <div class="sht-item"><span class="sht-label">🕯 כניסת שבת</span><span class="sht-time" id="sht-candles">--:--</span></div>
     <div class="sht-sep"></div>
@@ -404,7 +399,6 @@
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">מנחה שבת</span><span class="prayer-time" id="sp-mincha_shabbat">--:--</span></div>
         <div class="prayer-item shabbat-only" style="display:none;"><span class="prayer-name">ערבית מוצ"ש</span><span class="prayer-time" id="sp-arvit_motzash">--:--</span></div>
       </div>
-      <!-- Holiday prayers panel — shown only when enabled in admin -->
       <div class="panel-section" id="holiday-panel" style="display:none;">
         <div class="section-title" id="holiday-panel-title">תפילות חגים</div>
         <div id="holiday-prayer-list"></div>
@@ -486,7 +480,7 @@
   </div>
 </div>
 
-<!-- SCREEN E — ספרי תורה (שישי ושבת בלבד) -->
+<!-- SCREEN E — ספרי תורה -->
 <div id="screenE" class="screen">
   <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
   <div class="corner-deco bl"></div><div class="corner-deco br"></div>
@@ -497,6 +491,44 @@
   <div class="sefer-grid" id="sefer-grid"></div>
 </div>
 
+<!-- SCREEN F — עליות לתורה -->
+<div id="screenF" class="screen" data-aliyot-active="true">
+  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+  <div class="aliyot-title">📖 עליות לתורה</div>
+  <div class="aliyot-subtitle" id="aliyot-month-label"></div>
+  <div class="aliyot-columns" id="aliyot-body"></div>
+</div>
+
+<!-- SCREEN G — הלכה יומית -->
+<div id="screenG" class="screen" data-halakha-active="true">
+  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+  <div class="halakha-title">📚 הלכה יומית</div>
+  <div class="halakha-ref" id="halakha-ref">טוען...</div>
+  <div class="halakha-body">
+    <div class="halakha-text" id="halakha-text"><div class="halakha-loading">⏳ טוען הלכה יומית...</div></div>
+  </div>
+</div>
+
+<!-- SCREEN H — שבת קודש -->
+<div id="screenH" class="screen" data-shabbat-screen-active="true">
+  <img id="sh-bg-img" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;" onerror="this.style.display='none'; console.error('screenH bg img failed:', this.src)">
+  <div class="sh-overlay" style="position:absolute;inset:0;z-index:1;">
+    <div class="sh-slot right">
+      <span class="sh-val" id="sh-parasha"></span>
+    </div>
+    <div class="sh-slot">
+      <span class="sh-val time" id="sh-candles"></span>
+    </div>
+    <div class="sh-slot right">
+      <span class="sh-val sm" id="sh-haftara"></span>
+    </div>
+    <div class="sh-slot">
+      <span class="sh-val time" id="sh-havdalah"></span>
+    </div>
+  </div>
+</div>
 
 <div id="offlineBanner">
   ⚠️ אין חיבור לאינטרנט — מנסה להתחבר מחדש...
@@ -519,18 +551,15 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 
-// ── Config ──
-// באר שבע
 const LOCATION   = { lat:31.2516, lng:34.7915, tzid:'Asia/Jerusalem', city:'Be\'er Sheva' };
 const HEBCAL     = 'https://www.hebcal.com';
-const CANDLE_MIN = 20; // דקות לפני שקיעה להדלקת נרות — ישראל (מנהג רגיל)
-const FOOTER_INT = 10000;  // 10 שניות בין שקופיות footer
-const CYCLE_A_MS = 20000;  // default — מסך A
-const CYCLE_B_MS = 20000;  // default — מסך B
-const CYCLE_C_MS = 20000;  // default — מסך C
-const CYCLE_D_MS = 20000;  // default — מסך D (ספירת העומר)
-const CYCLE_E_MS = 25000;  // default — מסך E (ספרי תורה)
-// Dynamic values loaded from Firebase:
+const CANDLE_MIN = 20; 
+const FOOTER_INT = 10000;  
+const CYCLE_A_MS = 20000;  
+const CYCLE_B_MS = 20000;  
+const CYCLE_C_MS = 20000;  
+const CYCLE_D_MS = 20000;  
+const CYCLE_E_MS = 25000;  
 let CYCLES={A:20000,B:20000,C:20000,D:20000,E:25000,F:25000,G:30000,H:25000};
 
 const DAYS_HE = ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת קודש'];
@@ -544,7 +573,7 @@ const SHABBAT_PRAYERS = [
 ];
 
 let prayerData   = {};
-let autoArvitMotzash = null; // ערבית מוצ"ש מחושב = צאת שבת − 10 דק׳
+let autoArvitMotzash = null; 
 let customSlides = [];
 let footerCustom = [];
 let footerCount  = 3;
@@ -552,14 +581,12 @@ let footerCount  = 3;
 const isShabbat = () => { const d=new Date().getDay(); return d===5||d===6; };
 const fmt = iso => iso ? new Date(iso).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'}) : '--:--';
 
-// ── isSlideActive: check schedule rules ──
 function isSlideActive(slide) {
   if (!slide.active) return false;
   const now = new Date();
-  const todayStr = now.toISOString().slice(0,10); // YYYY-MM-DD
-  const dayIdx   = now.getDay(); // 0=Sun … 6=Sat
+  const todayStr = now.toISOString().slice(0,10); 
+  const dayIdx   = now.getDay(); 
 
-  // Date range filter — 'daterange' (admin) or 'dateRange' (legacy)
   if (slide.scheduleType === 'daterange' || slide.scheduleType === 'dateRange') {
     const from = slide.dateFrom || '';
     const to   = slide.dateTo   || '';
@@ -567,7 +594,6 @@ function isSlideActive(slide) {
     if (to   && todayStr > to  ) return false;
   }
 
-  // Days-of-week filter
   if (slide.scheduleType === 'days' && slide.activeDays?.length) {
     if (!slide.activeDays.includes(dayIdx)) return false;
   }
@@ -575,14 +601,12 @@ function isSlideActive(slide) {
   return true;
 }
 
-// ── Clock ──
 function updateClock() {
   const now=new Date();
   document.getElementById('ch').textContent=String(now.getHours()).padStart(2,'0');
   document.getElementById('cm').textContent=String(now.getMinutes()).padStart(2,'0');
   const dayText=DAYS_HE[now.getDay()];
   document.getElementById('dayName').textContent=dayText;
-  // ← update screen B subtitle live
   const sbSub=document.getElementById('sb-subtitle');
   if(sbSub) sbSub.textContent=dayText;
   document.getElementById('shabbatBanner').style.display=now.getDay()===6?'block':'none';
@@ -595,7 +619,6 @@ function updateClock() {
     const t=el.textContent.trim();
     if(t&&t!=='--:--'){const[h,m]=t.split(':').map(Number),diff=h*60+m-nowMins;if(diff>0&&diff<30)el.classList.add('upcoming');}
   });
-  // Rebuild screen B if day just changed (midnight crossover)
   if(updateClock._lastDay !== undefined && updateClock._lastDay !== now.getDay()){
     refreshPrayers();
     renderCustomPrayers();
@@ -604,7 +627,6 @@ function updateClock() {
 }
 setInterval(updateClock,1000); updateClock();
 
-// ── Screen H: sync parasha + times from existing elements ──
 function syncScreenH(){
   const parasha = document.getElementById('parasha')?.textContent?.trim()||'';
   const candles = document.getElementById('sht-candles')?.textContent?.trim()||'';
@@ -619,13 +641,11 @@ function syncScreenH(){
 });
 setInterval(syncScreenH, 60*1000);
 
-// ── Hebcal ──
 async function fetchHebcal() {
   const d=new Date(), yyyy=d.getFullYear(),
     mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
   let hd = {};
   try {
-    // 1. Hebrew date
     const hdRes = await fetch(`${HEBCAL}/converter?cfg=json&gy=${yyyy}&gm=${mm}&gd=${dd}&g2h=1`);
     hd = await hdRes.json();
     if(hd.hebrew) document.getElementById('hebrewDate').textContent = hd.hebrew;
@@ -633,11 +653,9 @@ async function fetchHebcal() {
   } catch(e){ console.error('Hebcal date error',e); }
 
   try {
-    // 2. Shabbat times + parasha — anchor to Friday of current week
-    // so after Shabbat ends we still show THIS week's parasha, not next week's
     const friday = new Date(d);
-    const dow = d.getDay(); // 0=Sun … 6=Sat
-    const daysToFri = dow === 6 ? -1 : (5 - dow); // Sat → prev Fri; else → this Fri
+    const dow = d.getDay(); 
+    const daysToFri = dow === 6 ? -1 : (5 - dow); 
     friday.setDate(d.getDate() + daysToFri);
     const fyyyy = friday.getFullYear();
     const fmm = String(friday.getMonth()+1).padStart(2,'0');
@@ -659,7 +677,6 @@ async function fetchHebcal() {
         const d=new Date(havdalah.date);
         d.setMinutes(d.getMinutes()+10+3);
         document.getElementById('sht-havdalah').textContent=fmtISO(d.toISOString());
-        // ערבית מוצ"ש = צאת שבת − 10 דק׳ (נוסחה קבועה)
         const arvitD = new Date(d);
         arvitD.setMinutes(arvitD.getMinutes()-10);
         autoArvitMotzash = fmtISO(arvitD.toISOString());
@@ -668,14 +685,11 @@ async function fetchHebcal() {
         if(spEl) spEl.textContent = autoArvitMotzash;
         refreshPrayers();
       }
-      // ── עדכן מסך H מיד אחרי שהנתונים חזרו ──
       setTimeout(syncScreenH, 100);
     }
   } catch(e){ console.error('Hebcal shabbat error',e); }
 
   try {
-    // 3. Events, holidays, omer
-    // Fetch full year so omer items are always included (Hebcal omits them on month-only queries sometimes)
     const evUrl = `${HEBCAL}/hebcal?v=1&cfg=json&year=${yyyy}`
       + `&maj=on&min=on&mf=on&ss=on&c=on&omer=on&lg=he`
       + `&geo=pos&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}`;
@@ -688,7 +702,6 @@ async function fetchHebcal() {
         return dt === todayStr;
       });
 
-      // ── OMER ──
       const omerItem = todayItems.find(i => i.category==='omer');
       let omerNum = null;
       if(omerItem){
@@ -700,50 +713,40 @@ async function fetchHebcal() {
           if (!omerNum) omerNum = extractOmerNum(omerItem.hebrew || omerItem.title || '');
         }
       }
-      // Fallback: calculate locally if API didn't return omer item
       if (!omerNum) omerNum = calcOmerDayLocal();
       if(omerNum && omerNum >= 1 && omerNum <= 49) renderOmerScreen(Math.min(omerNum + 1, 49));
       else document.getElementById('screenD').setAttribute('data-omer-active','false');
 
-      // ── HOLIDAY / ROSH CHODESH for header ──
       const HOLIDAY_CATS = ['holiday','roshchodesh','minor'];
       const todayHoliday = todayItems.find(i=>HOLIDAY_CATS.includes(i.category));
 
-      // ── TACHANUN logic ──
       const noTachanun = calcNoTachanun(todayItems, hd);
       renderTodayInfo(todayHoliday, noTachanun);
 
-      // ── Next upcoming holiday ──
       const futureHol = ev.items.find(i=>
         i.category==='holiday' && (i.date||'') > todayStr
       );
       if(futureHol){
         window._nextHolidayText = `לקראת: ${futureHol.hebrew||futureHol.title}`;
-        // Re-render to show it
         renderTodayInfo(todayHoliday, noTachanun);
       }
     }
   } catch(e){ console.error('Hebcal events error',e); }
 
   try {
-    // 4. Zmanim
     await fetchZmanim(yyyy, mm, dd);
   } catch(e){ console.error('Zmanim error',e); }
 }
 
-// Format ISO datetime string (may include offset) to HH:MM
 function fmtISO(s) {
   if(!s) return '--:--';
   const d=new Date(s);
   return d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Jerusalem'});
 }
 
-// Render the today-info panel in the header (top-left)
 function calcNoTachanun(todayItems, hd) {
-  // No tachanun on holidays, Rosh Chodesh, Chol Hamoed, special days
   const noTachanunCats = ['holiday','roshchodesh','minor'];
   if (todayItems.some(i => noTachanunCats.includes(i.category))) return true;
-  // Shabbat
   const dow = new Date().getDay();
   if (dow === 6) return true;
   return false;
@@ -753,19 +756,16 @@ function renderTodayInfo(holidayItem, noTachanun, hd) {
   const el = document.getElementById('todayInfo');
   let html = '';
 
-  // Holiday / Rosh Chodesh name
   if (holidayItem) {
     const name = holidayItem.hebrew || holidayItem.title || '';
     const icon = holidayItem.category==='roshchodesh' ? '🌙' : '✡';
     html += `<div class="today-holiday"><span class="today-holiday-icon">${icon}</span>${name}</div>`;
   }
 
-  // Tachanun notice
   if (noTachanun) {
     html += `<div class="today-tachanun no-tachanun">🚫 היום אין אומרים תחנון</div>`;
   }
 
-  // Next holiday (small)
   if (window._nextHolidayText) {
     html += `<div class="today-next-holiday">${window._nextHolidayText}</div>`;
   }
@@ -777,22 +777,17 @@ async function fetchZmanim(yyyy,mm,dd) {
   const res=await(await fetch(
     `${HEBCAL}/zmanim?cfg=json&latitude=${LOCATION.lat}&longitude=${LOCATION.lng}&tzid=${LOCATION.tzid}&date=${yyyy}-${mm}-${dd}`
   )).json();
-  // Hebcal returns either { times: {...} } or { items: [...] } depending on version
   const z = res.times || res;
   if(!z) return;
 
-  // Helper: field may be ISO string OR "HH:MM:SS" local time
   const fz = val => {
     if(!val) return '--:--';
-    // If it looks like HH:MM:SS (no T, no date)
     if(/^\d{2}:\d{2}/.test(val)) return val.slice(0,5);
     return fmt(val);
   };
 
-  // Hebcal uses different key names across versions — try both
   const pick = (...keys) => { for(const k of keys){ if(z[k]) return z[k]; } return null; };
 
-  // Helper: subtract minutes from a zmanim value (ISO string or HH:MM:SS)
   const subMins = (val, mins) => {
     if(!val) return val;
     if(/^\d{2}:\d{2}/.test(val)){
@@ -814,7 +809,7 @@ async function fetchZmanim(yyyy,mm,dd) {
   document.getElementById('sht-sunset').textContent = fz(pick('sunset','sunsetISO'));
 
   const shma    = pick('sofZmanShmaGRA','sofZmanShma','kriyatShma');
-  const tfilla  = pick('sofZmanTfilaGRA','sofZmanTfilla','sofZmanTfila');
+  const tfilla  = pick('sofZmanTfilaGRA','sofZmanTfilla','sofZmanTfilla');
   const chatzot = pick('chatzot','midday');
   const minchaG = pick('minchaGedola','minchaGedolah');
   const plag    = pick('plagHaMincha','plag');
@@ -838,18 +833,16 @@ async function fetchZmanim(yyyy,mm,dd) {
     {name:'צאת הכוכבים',time:fz(tzeit)},
   ].map(i=>`<div class="fz-card"><span class="fz-name">${i.name}</span><span class="fz-time">${i.time}</span></div>`).join('');
 }
-// Run Hebcal first, then start rotation so omer flag is already set
+
 fetchHebcal().then(()=>{
   setTimeout(showNextScreen, CYCLE_A_MS);
 });
 setInterval(fetchHebcal, 3600*1000);
 
-// ── הגדרות תצוגה — listener יחיד לכל settings/display ──
 let _autoRefreshTimer = null;
 onSnapshot(doc(db,'settings','display'), snap=>{
   const d = snap.exists() ? snap.data() : {};
 
-  // Auto refresh
   const enabled = !!d.autoRefresh;
   if(enabled && !_autoRefreshTimer){
     _autoRefreshTimer = setInterval(()=>location.reload(), 15 * 60 * 1000);
@@ -858,10 +851,8 @@ onSnapshot(doc(db,'settings','display'), snap=>{
     _autoRefreshTimer = null;
   }
 
-  // Color theme
   document.body.classList.toggle('theme-light', d.colorTheme==='light');
 
-  // Omer background image
   const screenD = document.getElementById('screenD');
   if(d.omerBgUrl){
     const dim = (d.omerBgDim ?? 50) / 100;
@@ -874,7 +865,6 @@ onSnapshot(doc(db,'settings','display'), snap=>{
     screenD.style.backgroundPosition='';
   }
 
-  // Per-screen cycle settings
   if(d.cycle_A) CYCLES.A=d.cycle_A*1000;
   if(d.cycle_B) CYCLES.B=d.cycle_B*1000;
   if(d.cycle_C) CYCLES.C=d.cycle_C*1000;
@@ -885,22 +875,18 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   if(d.cycle_H) CYCLES.H=d.cycle_H*1000;
   if(d.cycleSeconds && !d.cycle_A) ['A','B','C','D','E','F','G','H'].forEach(k=>CYCLES[k]=d.cycleSeconds*1000);
 
-  // Screen F — עליות לתורה
   const screenF = document.getElementById('screenF');
   screenF.setAttribute('data-aliyot-active', d.aliyotActive!==false ? 'true':'false');
 
-  // Screen G — הלכה יומית
   const screenG = document.getElementById('screenG');
   screenG.setAttribute('data-halakha-active', d.halakhaActive!==false ? 'true':'false');
 
-  // Screen H — שבת קודש
   const screenH = document.getElementById('screenH');
   screenH.setAttribute('data-shabbat-screen-active', d.shabbatScreenActive!==false ? 'true':'false');
   const shBgImg = document.getElementById('sh-bg-img');
   if(d.shabbatScreenBg && shBgImg){
     shBgImg.src = d.shabbatScreenBg;
     shBgImg.style.display = 'block';
-    // pre-load even when screen is hidden
     const preload = new Image();
     preload.src = d.shabbatScreenBg;
   } else if(shBgImg){
@@ -910,7 +896,6 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   const overlay = document.querySelector('.sh-overlay');
   if(overlay && d.shabbatPad){
     const p=d.shabbatPad;
-    // Clamp values to reasonable range so text never goes off-screen
     const clamp=(v,min,max)=>Math.min(max,Math.max(min,Number(v)||0));
     overlay.style.padding=`${clamp(p.top??10,0,40)}% ${clamp(p.right??8,0,40)}% ${clamp(p.bottom??10,0,40)}% ${clamp(p.left??8,0,40)}%`;
   } else if(overlay){
@@ -920,11 +905,10 @@ onSnapshot(doc(db,'settings','display'), snap=>{
   buildRotation();
 });
 
-
 onSnapshot(doc(db,'prayers','times'),snap=>{
   if(!snap.exists()) return;
   prayerData=snap.data();
-  if(autoArvitMotzash) prayerData.arvit_motzash = autoArvitMotzash; // נוסחה קבועה גוברת על Firebase
+  if(autoArvitMotzash) prayerData.arvit_motzash = autoArvitMotzash; 
   [...WEEKDAY_PRAYERS,...SHABBAT_PRAYERS].forEach(({key})=>{
     const el=document.getElementById(`sp-${key}`);if(el&&prayerData[key])el.textContent=prayerData[key];
   });
@@ -933,7 +917,6 @@ onSnapshot(doc(db,'prayers','times'),snap=>{
 
 function refreshPrayers() {
   const isShabUI=isShabbat();
-  // Screen A left panel: show all prayers always, shabbat-only toggled by CSS class
   const prayers=isShabUI?[...WEEKDAY_PRAYERS,...SHABBAT_PRAYERS]:WEEKDAY_PRAYERS;
   const custom=(customPrayerData||[]).filter(p=>
     p.display==='always'||(p.display==='weekday'&&!isShabUI)||(p.display==='shabbat'&&isShabUI)
@@ -943,7 +926,6 @@ function refreshPrayers() {
     .map(({key,label})=>`<div class="fp-card"><span class="fp-name">${label}</span><span class="fp-time">${prayerData[key]}</span></div>`);
   const cusCards=custom.map(p=>`<div class="fp-card"><span class="fp-name">${p.name||''}</span><span class="fp-time">${p.time||'--:--'}</span></div>`);
   document.getElementById('fp-container').innerHTML=[...stdCards,...cusCards].join('');
-  // Screen B: shabbat → only shabbat prayers; weekday → only weekday prayers
   const screenBPrayers = isShabUI ? SHABBAT_PRAYERS : WEEKDAY_PRAYERS;
   buildScreenB(screenBPrayers,custom);
 }
@@ -967,7 +949,6 @@ function buildScreenB(prayers,custom=[]) {
     .filter(({key})=>prayerData[key])
     .map(({key,label})=>`<div class="big-prayer-card ${key===nextKey?'highlight':''}"><span class="bpc-label">${label}</span><span class="bpc-time">${prayerData[key]}</span></div>`);
   const cusCards=custom.map((p,i)=>`<div class="big-prayer-card ${i===nextCusIdx?'highlight':''}"><span class="bpc-label">${p.name||''}</span><span class="bpc-time">${p.time||'--:--'}</span></div>`);
-  // Holiday prayers — active holidays
   const holCards = (_activeHolidays||[]).flatMap(h =>
     HOL_PRAYER_ORDER.filter(({key})=>h[key]).map(({key,label})=>
       `<div class="big-prayer-card"><span class="bpc-label">${label}</span><span class="bpc-time">${h[key]}</span></div>`
@@ -976,7 +957,6 @@ function buildScreenB(prayers,custom=[]) {
   document.getElementById('big-prayers-grid').innerHTML=[...stdCards,...cusCards,...holCards].join('');
 }
 
-// ── Firebase: Announcements ──
 onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),snap=>{
   const el=document.getElementById('fa-container');
   if(snap.empty){
@@ -989,7 +969,6 @@ onSnapshot(query(collection(db,'announcements'),orderBy('createdAt','desc')),sna
   el.innerHTML=snap.docs.map(d=>`<div class="ann-line">${d.data().text}</div>`).join('');
 });
 
-// ── Firebase: Holiday Prayers (per-holiday collection) ──
 const HOL_PRAYER_ORDER = [
   {key:'arvitIn',   label:'ערבית (כניסה)'},
   {key:'shacharit', label:'שחרית'},
@@ -1012,10 +991,8 @@ onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => 
   }
   if(panel) panel.style.display='block';
 
-  // Title = name of first active holiday
   if(titleEl) titleEl.textContent = _activeHolidays[0].name || 'תפילות חגים';
 
-  // Build prayer rows for all active holidays
   let html = '';
   _activeHolidays.forEach(h => {
     if(_activeHolidays.length > 1)
@@ -1025,12 +1002,9 @@ onSnapshot(query(collection(db,'holidays'),orderBy('createdAt','asc')), snap => 
     });
   });
   if(listEl) listEl.innerHTML = html;
-
-  // Also rebuild screen B to include holiday prayers
   refreshPrayers();
 });
 
-// ── Firebase: Custom / Manual Prayers ──
 let customPrayerData = [];
 onSnapshot(query(collection(db,'prayers_custom'),orderBy('order','asc')), snap => {
   customPrayerData = snap.docs.map(d=>d.data());
@@ -1045,10 +1019,8 @@ function renderCustomPrayers() {
     (p.display==='shabbat' && isShabUI)
   );
 
-  // Add to side panel — after the standard prayer list (first panel-section = prayer times)
   const sidePanelSection = document.querySelector('#screenA .left-panel-inner .panel-section:first-of-type');
   if (sidePanelSection) {
-    // Always remove ALL previously-injected custom rows first, regardless of current filter
     sidePanelSection.querySelectorAll('[data-custom-prayer]').forEach(el=>el.remove());
     active.forEach(p=>{
       const row = document.createElement('div');
@@ -1058,15 +1030,12 @@ function renderCustomPrayers() {
       sidePanelSection.appendChild(row);
     });
   }
-  // Also refresh footer + screen B so they stay in sync with the same filter
   refreshPrayers();
 }
 
-// ── Firebase: Shiurim (shown in footer slideshow as extra slide) ──
 const DAY_SHORT = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','שבת'];
 
 onSnapshot(query(collection(db,'shiurim'),orderBy('createdAt','desc')), snap => {
-  // Remove old shiurim footer slides
   document.querySelectorAll('.footer-slide[data-shiur]').forEach(el=>el.remove());
   document.querySelectorAll('.dot[data-shiur]').forEach(el=>el.remove());
 
@@ -1075,7 +1044,6 @@ onSnapshot(query(collection(db,'shiurim'),orderBy('createdAt','desc')), snap => 
   const footer = document.querySelector('.footer');
   const dotsEl = document.getElementById('footerDots');
 
-  // Group into pages of 3 items per slide
   const items = snap.docs.map(d=>d.data());
   const pages = [];
   for(let i=0;i<items.length;i+=3) pages.push(items.slice(i,i+3));
@@ -1097,11 +1065,9 @@ onSnapshot(query(collection(db,'shiurim'),orderBy('createdAt','desc')), snap => 
     dotsEl.appendChild(dot);
   });
 
-  // Recalculate total footer count
   footerCount = document.querySelectorAll('.footer-slide').length;
 });
 
-// ── Firebase: Custom Screens ──
 onSnapshot(query(collection(db,'custom_screens'),orderBy('order','asc')),snap=>{
   customSlides=[];footerCustom=[];
   snap.docs.forEach(d=>{
@@ -1114,7 +1080,6 @@ onSnapshot(query(collection(db,'custom_screens'),orderBy('order','asc')),snap=>{
   rebuildScreenCQueue();
 });
 
-// ── Footer custom slides ──
 function rebuildFooterCustomSlides() {
   document.querySelectorAll('.footer-slide[data-custom]').forEach(el=>el.remove());
   document.querySelectorAll('.dot[data-custom]').forEach(el=>el.remove());
@@ -1137,7 +1102,6 @@ function buildFooterCustomHTML(slide) {
   return `<div class="footer-custom-slide" style="justify-content:center;"><div class="footer-cs-text" style="text-align:center;max-width:100%;">${slide.title?`<div class="footer-cs-title">${slide.title}</div>`:''} ${slide.body?`<div class="footer-cs-body">${slide.body}</div>`:''}</div></div>`;
 }
 
-// ── Footer slideshow ──
 let footerIdx=0;
 setInterval(()=>{
   footerIdx=(footerIdx+1)%footerCount;
@@ -1145,7 +1109,6 @@ setInterval(()=>{
   document.querySelectorAll('.dot').forEach((el,i)=>el.classList.toggle('active',i===footerIdx));
 },FOOTER_INT);
 
-// ── Screen C queue ──
 let screenCQueue=[],screenCIdx=0;
 function rebuildScreenCQueue(){screenCQueue=[...customSlides];screenCIdx=0;}
 
@@ -1164,7 +1127,6 @@ function renderScreenC(slide) {
 
   sc.className=`screen theme-${slide.theme||'gold'}`;
 
-  // Background image
   if(slide.bgImageUrl) {
     bgImg.style.backgroundImage=`url('${slide.bgImageUrl}')`;
     const dim=slide.bgDimOpacity??0.55;
@@ -1173,7 +1135,6 @@ function renderScreenC(slide) {
   } else {
     bgImg.style.backgroundImage='none';
     bgDimmer.style.background='transparent';
-    // restore theme bg
     const themeBgs={gold:'linear-gradient(160deg,#1a0e05 0%,#2d1a0a 40%,#1a0e05 100%)',blue:'linear-gradient(160deg,#050d1a,#0a1a2d)',green:'linear-gradient(160deg,#050f07,#0a1f0d)',purple:'linear-gradient(160deg,#0d0515,#1a0a2d)',red:'linear-gradient(160deg,#150505,#2d0a0a)'};
     sc.style.background=themeBgs[slide.theme||'gold']||themeBgs.gold;
   }
@@ -1190,7 +1151,6 @@ function renderScreenC(slide) {
   inner.innerHTML=html;
 }
 
-// ── Hebrew number → text ──
 const ONES = ['','אחד','שניים','שלושה','ארבעה','חמישה','שישה','שבעה','שמונה','תשעה',
               'עשרה','אחד עשר','שנים עשר','שלושה עשר','ארבעה עשר','חמישה עשר',
               'שישה עשר','שבעה עשר','שמונה עשר','תשעה עשר'];
@@ -1198,18 +1158,15 @@ const TENS = ['','','עשרים','שלושים','ארבעים'];
 const WEEKS_HE = ['','שבוע אחד','שבועיים','שלושה שבועות','ארבעה שבועות',
                   'חמישה שבועות','שישה שבועות','שבעה שבועות'];
 
-// Standard order (tens first) — used for weeks remainder
 function numToHebrew(n) {
   if (n < 20) return ONES[n];
   const t = Math.floor(n/10), o = n%10;
   return o===0 ? TENS[t] : TENS[t]+' ו'+ONES[o];
 }
 
-// Omer order: units BEFORE tens (e.g. "חמשה וארבעים")
-// Uses traditional omer forms (חמשה, ששה, שלשה etc.)
 const OMER_ONES = ['','אחד','שניים','שלשה','ארבעה','חמשה','ששה','שבעה','שמונה','תשעה'];
 function omerNumToHebrew(n) {
-  if (n < 20) return ONES[n];          // 1–19 same as standard
+  if (n < 20) return ONES[n];          
   const t = Math.floor(n/10), o = n%10;
   return o===0 ? TENS[t] : OMER_ONES[o]+' ו'+TENS[t];
 }
@@ -1236,16 +1193,12 @@ function weeksLine(day) {
   return WEEKS_HE[w] + ' ו' + numToHebrew(r) + ' ימים';
 }
 
-// Extract number from Hebrew string like "ב׳ בעומר" or use API omer field
 function extractOmerNum(str) {
   const m = str && str.match(/(\d+)/);
   return m ? parseInt(m[1]) : null;
 }
 
-// ── Local Omer day calculation (fallback when API doesn't return omer item) ──
 function calcOmerDayLocal() {
-  // Omer starts on 16 Nisan (night of seder 2 / day after first seder)
-  // We store Pesach start dates (16 Nisan = day after first seder) for years 2024-2030
   const PESACH_16 = {
     2024: new Date('2024-04-23'),
     2025: new Date('2025-04-14'),
@@ -1260,12 +1213,11 @@ function calcOmerDayLocal() {
   const pesach = PESACH_16[yr];
   if (!pesach) return null;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diff = Math.round((today - pesach) / 86400000) + 1; // +1 because 16 Nisan = day 1
+  const diff = Math.round((today - pesach) / 86400000) + 1; 
   if (diff >= 1 && diff <= 49) return diff;
   return null;
 }
 
-// Render Screen D with omer data
 function renderOmerScreen(day) {
   const mainText  = omerFullText(day);
   const weeksStr  = weeksLine(day);
@@ -1275,10 +1227,9 @@ function renderOmerScreen(day) {
   document.getElementById('screenD').setAttribute('data-omer-active','true');
 }
 
-// ── Offline detection + auto-refresh ──
 let offlineTimer = null;
 let offlineSeconds = 0;
-const OFFLINE_RETRY_SECS = 180; // נסה שוב כל 3 דקות
+const OFFLINE_RETRY_SECS = 180; 
 
 function checkOnline() {
   const banner = document.getElementById('offlineBanner');
@@ -1297,7 +1248,6 @@ function checkOnline() {
         } else {
           cd.textContent = ' — מרענן...';
           clearInterval(offlineTimer); offlineTimer=null;
-          // Try a lightweight ping; if it succeeds reload, else restart counter
           fetch('https://www.hebcal.com/ping', {mode:'no-cors',cache:'no-store'})
             .then(()=>location.reload())
             .catch(()=>{ offlineSeconds=OFFLINE_RETRY_SECS; offlineTimer=setInterval(arguments.callee,1000); });
@@ -1309,10 +1259,9 @@ function checkOnline() {
 
 window.addEventListener('online',  ()=>{ checkOnline(); fetchHebcal(); });
 window.addEventListener('offline', checkOnline);
-setInterval(checkOnline, 30000); // background check every 30s
+setInterval(checkOnline, 30000); 
 checkOnline();
 
-// ── Master rotation ──
 const allScreenIds=['screenA','screenB','screenC','screenD','screenE','screenF','screenG','screenH'];
 let rotation=[],rotIdx=0,rotTimer=null;
 
@@ -1320,7 +1269,6 @@ function isOmerDisplayTime(){
   const now=new Date();
   const h=now.getHours(),m=now.getMinutes();
   const mins=h*60+m;
-  // מציג רק בין 18:30 ל-00:00
   return mins >= 18*60+30 || mins < 0*60+0;
 }
 
@@ -1333,24 +1281,18 @@ function buildRotation(){
   if(omerEl && omerEl.getAttribute('data-omer-active')==='true' && isOmerDisplayTime()) rotation.push('screenD');
   const day=new Date().getDay();
   if((day===5||day===6) && document.getElementById('screenE').getAttribute('data-sefer-active')==='true') rotation.push('screenE');
-  // Screen F — עליות לתורה
   if(document.getElementById('screenF').getAttribute('data-aliyot-active')==='true') rotation.push('screenF');
-  // Screen G — הלכה יומית
   if(document.getElementById('screenG').getAttribute('data-halakha-active')==='true') rotation.push('screenG');
-  // Screen H — שבת קודש — שישי ושבת בלבד (או תצוגה מקדימה)
   if((_previewH || day===5||day===6) && document.getElementById('screenH').getAttribute('data-shabbat-screen-active')==='true') rotation.push('screenH');
 }
 
-// syncScreenH already defined and observers set above fetchHebcal
 syncScreenH();
 
-// ── Screen H: haftara from Sefaria calendars ──
 async function fetchHaftara(){
   try{
     const res = await fetch('https://www.sefaria.org/api/calendars');
     const cal = await res.json();
     const items = cal.calendar_items||[];
-    // Find haftara item
     const haft = items.find(i=>
       i.title?.he?.includes('הפטרה') ||
       i.title?.en?.toLowerCase().includes('haftarah') ||
@@ -1371,31 +1313,25 @@ async function fetchHaftara(){
 fetchHaftara();
 setInterval(fetchHaftara, 60*60*1000);
 
-// ── Sefaria: הלכה יומית ──
 async function fetchHalakhaYomit(){
   const refEl  = document.getElementById('halakha-ref');
   const textEl = document.getElementById('halakha-text');
   try{
-    // Step 1: get today's calendar
     const calRes = await fetch('https://www.sefaria.org/api/calendars');
     if(!calRes.ok) throw new Error('calendar fetch failed');
     const cal = await calRes.json();
     const item = (cal.calendar_items||[]).find(i=>i.title?.en==='Halakhah Yomit');
     if(!item) throw new Error('Halakhah Yomit not found in calendar');
 
-    // Display ref
     refEl.textContent = item.displayValue?.he || item.ref || '';
 
-    // Step 2: fetch text
     const ref = encodeURIComponent(item.ref);
     const txtRes = await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he&context=0`);
     if(!txtRes.ok) throw new Error('text fetch failed');
     const data = await txtRes.json();
 
-    // Extract Hebrew text — may be string, array, or nested array
     let he = data.he || '';
     if(Array.isArray(he)) he = he.flat(5).join(' ');
-    // Strip HTML tags
     he = he.replace(/<[^>]+>/g,'').trim();
 
     if(!he) throw new Error('empty text');
@@ -1407,10 +1343,8 @@ async function fetchHalakhaYomit(){
   }
 }
 fetchHalakhaYomit();
-// Refresh every hour
 setInterval(fetchHalakhaYomit, 60*60*1000);
 
-// ── Firebase: ספרי תורה ──
 onSnapshot(query(collection(db,'sefer_torah'),orderBy('order','asc')), snap=>{
   const seferim = snap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.active);
   const grid = document.getElementById('sefer-grid');
@@ -1427,13 +1361,11 @@ onSnapshot(query(collection(db,'sefer_torah'),orderBy('order','asc')), snap=>{
       : `<div class="sefer-card-icon">📜</div>`;
     return `<div class="sefer-card">${img}<div class="sefer-card-name">${s.name||''}</div></div>`;
   }).join('');
-  // Update parasha label
   const parEl = document.getElementById('parasha');
   const label = document.getElementById('sefer-parasha-label');
   if(label && parEl) label.textContent = parEl.textContent || '';
 });
 
-// Also update sefer parasha label when parasha loads
 const _origParasha = document.getElementById('parasha');
 if(_origParasha){
   const observer = new MutationObserver(()=>{
@@ -1448,10 +1380,8 @@ function startProgress(durationMs){
   const bar=document.getElementById('screen-progress');
   if(!bar) return;
   if(_progressRaf){ cancelAnimationFrame(_progressRaf); _progressRaf=null; }
-  // Reset instantly without transition
   bar.style.transition='none';
   bar.style.width='0%';
-  // Double RAF guarantees browser has painted the reset before starting animation
   _progressRaf=requestAnimationFrame(()=>{
     _progressRaf=requestAnimationFrame(()=>{
       bar.style.transition=`width ${durationMs}ms linear`;
@@ -1477,14 +1407,12 @@ function showNextScreen(){
     rotTimer=setTimeout(showNextScreen,dur);
   }
 }
-// ── Firebase: עליות לתורה (Screen F) ──
-const HE_MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
+const HE_MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 const DAY_NAMES_HE=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-const ROWS_PER_COL = 20; // 60 total slots = 3 × 20
+const ROWS_PER_COL = 20; 
 
 function buildAliyotColHTML(entries, startIdx){
-  // entries: array of {dayName, hebrewDate, date, name, count} or null for empty
   const rows = Array.from({length:ROWS_PER_COL},(_, i)=>{
     const e = entries[i];
     const n = startIdx+i+1;
@@ -1519,14 +1447,13 @@ function renderAliyotTable(docs){
 
   const monthDocs = docs
     .filter(d=>{ if(!d.date) return false; const[y,m]=d.date.split('-').map(Number); return y===curY&&m===curM; })
-    .sort((a,b)=>a.date>b.date?1:-1); // oldest first = top
+    .sort((a,b)=>a.date>b.date?1:-1); 
 
   label.textContent = HE_MONTHS[curM-1] + ' ' + curY;
 
   const countMap={};
   monthDocs.forEach(d=>{ countMap[d.name]=(countMap[d.name]||0)+1; });
 
-  // Build entry objects (running count per person = cumulative up to this row)
   const cumCount={};
   const entries = monthDocs.map(d=>{
     cumCount[d.name]=(cumCount[d.name]||0)+1;
@@ -1539,10 +1466,9 @@ function renderAliyotTable(docs){
     };
   });
 
-  // Fill right col first (RTL: right col = first in DOM)
-  const col1 = entries.slice(0, ROWS_PER_COL);           // right col: entries 1-20
-  const col2 = entries.slice(ROWS_PER_COL, ROWS_PER_COL*2);   // mid col: 21-40
-  const col3 = entries.slice(ROWS_PER_COL*2, ROWS_PER_COL*3); // left col: 41-60
+  const col1 = entries.slice(0, ROWS_PER_COL);           
+  const col2 = entries.slice(ROWS_PER_COL, ROWS_PER_COL*2);   
+  const col3 = entries.slice(ROWS_PER_COL*2, ROWS_PER_COL*3); 
 
   body.innerHTML=
     `<div class="aliyot-col-wrap">${buildAliyotColHTML(col1, 0)}</div>`+
@@ -1558,52 +1484,7 @@ onSnapshot(query(collection(db,'aliyot'),orderBy('date','desc')), snap=>{
   renderAliyotTable(docs);
   buildRotation();
 });
-
-
-
 </script>
-<!-- SCREEN F — עליות לתורה -->
-<div id="screenF" class="screen" data-aliyot-active="true">
-  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
-  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
-  <div class="aliyot-title">📖 עליות לתורה</div>
-  <div class="aliyot-subtitle" id="aliyot-month-label"></div>
-  <div class="aliyot-columns" id="aliyot-body"></div>
-</div>
-
-<!-- SCREEN H — שבת קודש — טקסט על גבי תמונת רקע -->
-<div id="screenH" class="screen" data-shabbat-screen-active="true">
-  <img id="sh-bg-img" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;" onerror="this.style.display='none'; console.error('screenH bg img failed:', this.src)">
-  <div class="sh-overlay" style="position:absolute;inset:0;z-index:1;">
-    <!-- ימין עליון: פרשת השבוע -->
-    <div class="sh-slot right">
-      <span class="sh-val" id="sh-parasha"></span>
-    </div>
-    <!-- שמאל עליון: כניסת שבת -->
-    <div class="sh-slot">
-      <span class="sh-val time" id="sh-candles"></span>
-    </div>
-    <!-- ימין תחתון: הפטרה -->
-    <div class="sh-slot right">
-      <span class="sh-val sm" id="sh-haftara"></span>
-    </div>
-    <!-- שמאל תחתון: צאת שבת -->
-    <div class="sh-slot">
-      <span class="sh-val time" id="sh-havdalah"></span>
-    </div>
-  </div>
-</div>
-
-
-<div id="screenG" class="screen" data-halakha-active="true">
-  <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
-  <div class="corner-deco bl"></div><div class="corner-deco br"></div>
-  <div class="halakha-title">📚 הלכה יומית</div>
-  <div class="halakha-ref" id="halakha-ref">טוען...</div>
-  <div class="halakha-body">
-    <div class="halakha-text" id="halakha-text"><div class="halakha-loading">⏳ טוען הלכה יומית...</div></div>
-  </div>
-</div>
 
 <div id="screen-progress"></div>
 </body>
